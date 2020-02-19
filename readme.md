@@ -9,5 +9,12 @@ Add to base template before </head> tag:
 {% endif %}
 ~~~
 
+Development:
+~~~
+npx babel --presets=@babel/env --source-maps --watch src/index.js --out-file dist/twig-visual.js
+~~~
 
-
+Production:
+~~~
+npx babel --presets=@babel/env src/index.js --out-file dist/twig-visual.js
+~~~
