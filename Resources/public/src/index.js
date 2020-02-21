@@ -1,7 +1,45 @@
 
 class TwigVisual {
 
-    constructor() {
+    constructor(options) {
+        this.options = Object.assign({
+            uiOptions: {
+                field: {
+                    components: []
+                },
+                photogallery: {
+                    components: []
+                },
+                menu: {
+                    components: []
+                },
+                breadcrumbs: {
+                    components: []
+                },
+                "shopping-cart": {
+                    components: [
+                        {
+                            name: "totalPrice", title: "Общая цена", xpath: ""
+                        },
+                        {
+                            name: "totalCount", title: "Общее количество", xpath: ""
+                        },
+                        {
+                            name: "lickCheckout", title: "Ссылка на оформление", xpath: ""
+                        },
+                        {
+                            name: "buttonClean", title: "Кнопка очистки", xpath: ""
+                        }
+                    ]
+                },
+                "products-list": {
+                    components: []
+                },
+                comments: {
+                    components: []
+                }
+            }
+        }, options);
         this.container = this.createContainer();
         this.state = 'inactive';
 
@@ -34,12 +72,14 @@ class TwigVisual {
 
     selectModeToggle() {
         if (this.state === 'inactive') {
+            this.container.style.display = 'none';
             document.addEventListener('mouseover', this.listenerOnMouseOver);
             document.addEventListener('mouseout', this.listenerOnMouseOut);
             document.addEventListener('wheel', this.listenerOnMouseWheel, {passive: false});
             document.addEventListener('click', this.listenerOnMouseClick);
             this.state = 'active';
         } else {
+            this.container.style.display = 'block';
             document.removeEventListener('mouseover', this.listenerOnMouseOver);
             document.removeEventListener('mouseout', this.listenerOnMouseOut);
             document.removeEventListener('wheel', this.listenerOnMouseWheel);
@@ -55,7 +95,7 @@ class TwigVisual {
         }
         this.currentElements = [];
         this.updateXPathInfo(e.target);
-        e.target.classList.add('twig-visual-selected');
+        e.target.classList.add('twv-selected');
     }
 
     onMouseOut(e) {
@@ -64,9 +104,9 @@ class TwigVisual {
             return;
         }
         this.currentElements = [];
-        const elements = Array.from(document.querySelectorAll('.twig-visual-selected'));
+        const elements = Array.from(document.querySelectorAll('.twv-selected'));
         elements.forEach((element) => {
-            element.classList.remove('twig-visual-selected');
+            element.classList.remove('twv-selected');
         });
     }
 
@@ -80,13 +120,13 @@ class TwigVisual {
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
         this.currentElements = [];
-        currentElement.classList.remove('twig-visual-selected');
+        currentElement.classList.remove('twv-selected');
 
-        this.updateXPathInfo(currentElement);
+        if (document.querySelector('.twv-info')) {
+            this.removeEl(document.querySelector('.twv-info'));
+        }
         const xpath = this.getXPathForElement(currentElement);
-
-        console.log('onSelectedElementClick', currentElement, xpath);
-        console.log(this.getElementByXPath(xpath));
+        this.createSelectionOptions(xpath);
 
         this.selectModeToggle();
     }
@@ -101,14 +141,14 @@ class TwigVisual {
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
         if (e.deltaY < 0) {
-            currentElement.classList.remove('twig-visual-selected');
+            currentElement.classList.remove('twv-selected');
             this.currentElements.push(currentElement.parentNode);
 
             this.updateXPathInfo(currentElement.parentNode);
 
-            currentElement.parentNode.classList.add('twig-visual-selected');
+            currentElement.parentNode.classList.add('twv-selected');
         } else {
-            currentElement.classList.remove('twig-visual-selected');
+            currentElement.classList.remove('twv-selected');
             this.currentElements.splice(this.currentElements.length - 1, 1);
             currentElement = this.currentElements.length > 0
                 ? this.currentElements[this.currentElements.length - 1]
@@ -116,13 +156,19 @@ class TwigVisual {
 
             this.updateXPathInfo(currentElement);
 
-            currentElement.classList.add('twig-visual-selected');
+            currentElement.classList.add('twv-selected');
         }
     }
 
     updateXPathInfo(element) {
-        this.container.querySelector('.twv-selection-info').style.display = 'block';
-        this.container.querySelector('.twv-selection-info').innerHTML = '<div><b>XPath:</b></div><div>' + this.getXPathForElement(element) + '</div>';
+        let div = document.querySelector('.twv-info');
+        if (!div) {
+            div = document.createElement('div');
+            div.className = 'twv-info small';
+            document.body.appendChild(div);
+        }
+        div.style.display = 'block';
+        div.innerHTML = '<div>' + this.getXPathForElement(element) + '</div>';
     }
 
     getXPathForElement(element) {
@@ -166,11 +212,75 @@ class TwigVisual {
         containerEl.className = 'twig-visual-container';
         containerEl.innerHTML = `
 <button type="button" class="twv-btn twv-btn-block twv-mb-3 twv-button-start-select">Select</button>
-<div class="twv-small twv-selection-info" style="display: none;"></div>
+<div class="twv-inner"></div>
 `;
         document.body.appendChild(containerEl);
         return containerEl;
     }
+
+    createSelectionOptions(xpath) {
+        const elementSelected = this.getElementByXPath(xpath);
+        if (!elementSelected) {
+            throw new Error('Element for XPath not found.');
+        }
+
+        this.container.querySelector('.twv-inner').innerHTML = '';
+
+        const xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
+        const div = document.createElement('div');
+        div.innerHTML = `<div class="twv-mb-3 twv-ui-element-select">
+        <select class="twv-select">
+        <option value="">- Элемент интерфейса -</option>
+        <option value="field">Поле контента</option>
+        <option value="photogallery">Фото-галерея</option>
+        <option value="menu">Меню</option>
+        <option value="breadcrumbs">Хлебные кношки</option>
+        <option value="shopping-cart">Корзина товаров</option>
+        <option value="products-list">Избранные товары</option>
+        <option value="comments">Отзывы</option>
+</select>
+</div>
+<b>XPath:</b>
+<div class="twv-p-1 twv-mb-3 twv-small twv-bg-gray">
+    <div class="twv-text-overflow" title="${xpathEscaped}">${xpath}</div>
+</div>
+<div class="twv-ui-components"></div>
+        `;
+        this.container.querySelector('.twv-inner').appendChild(div);
+
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+
+        this.container.querySelector('.twv-ui-element-select').addEventListener('change', (e) => {
+            componentsContainer.innerHTML = '';
+            if (!this.options.uiOptions[e.target.value]) {
+                return;
+            }
+
+            const opt = this.options.uiOptions[e.target.value];
+            opt.components.forEach((cmp) => {
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'twv-btn twv-mb-2';
+                button.textContent = cmp.title;
+
+                componentsContainer.appendChild(button);
+            });
+
+            console.log(e.target.value, this.options.uiOptions[e.target.value]);
+
+        });
+
+        const compStyles = window.getComputedStyle(elementSelected);
+        const position = compStyles.getPropertyValue('position');
+
+        console.log(xpath, elementSelected, position);
+
+    }
+
+    removeEl(el) {
+        el.parentNode.removeChild(el);
+    };
 }
 
 let twigVisual;

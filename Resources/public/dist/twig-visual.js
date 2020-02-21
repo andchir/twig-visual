@@ -9,9 +9,50 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var TwigVisual =
 /*#__PURE__*/
 function () {
-  function TwigVisual() {
+  function TwigVisual(options) {
     _classCallCheck(this, TwigVisual);
 
+    this.options = Object.assign({
+      uiOptions: {
+        field: {
+          components: []
+        },
+        photogallery: {
+          components: []
+        },
+        menu: {
+          components: []
+        },
+        breadcrumbs: {
+          components: []
+        },
+        "shopping-cart": {
+          components: [{
+            name: "totalPrice",
+            title: "Общая цена",
+            xpath: ""
+          }, {
+            name: "totalCount",
+            title: "Общее количество",
+            xpath: ""
+          }, {
+            name: "lickCheckout",
+            title: "Ссылка на оформление",
+            xpath: ""
+          }, {
+            name: "buttonClean",
+            title: "Кнопка очистки",
+            xpath: ""
+          }]
+        },
+        "products-list": {
+          components: []
+        },
+        comments: {
+          components: []
+        }
+      }
+    }, options);
     this.container = this.createContainer();
     this.state = 'inactive';
     this.listenerOnMouseOver = this.onMouseOver.bind(this);
@@ -39,7 +80,7 @@ function () {
     key: "selectModeToggle",
     value: function selectModeToggle() {
       if (this.state === 'inactive') {
-        // this.container.style.display = 'none';
+        this.container.style.display = 'none';
         document.addEventListener('mouseover', this.listenerOnMouseOver);
         document.addEventListener('mouseout', this.listenerOnMouseOut);
         document.addEventListener('wheel', this.listenerOnMouseWheel, {
@@ -48,7 +89,7 @@ function () {
         document.addEventListener('click', this.listenerOnMouseClick);
         this.state = 'active';
       } else {
-        // this.container.style.display = 'block';
+        this.container.style.display = 'block';
         document.removeEventListener('mouseover', this.listenerOnMouseOver);
         document.removeEventListener('mouseout', this.listenerOnMouseOut);
         document.removeEventListener('wheel', this.listenerOnMouseWheel);
@@ -65,7 +106,7 @@ function () {
 
       this.currentElements = [];
       this.updateXPathInfo(e.target);
-      e.target.classList.add('twig-visual-selected');
+      e.target.classList.add('twv-selected');
     }
   }, {
     key: "onMouseOut",
@@ -75,9 +116,9 @@ function () {
       }
 
       this.currentElements = [];
-      var elements = Array.from(document.querySelectorAll('.twig-visual-selected'));
+      var elements = Array.from(document.querySelectorAll('.twv-selected'));
       elements.forEach(function (element) {
-        element.classList.remove('twig-visual-selected');
+        element.classList.remove('twv-selected');
       });
     }
   }, {
@@ -90,11 +131,14 @@ function () {
       e.preventDefault();
       var currentElement = this.currentElements.length > 0 ? this.currentElements[this.currentElements.length - 1] : e.target;
       this.currentElements = [];
-      currentElement.classList.remove('twig-visual-selected');
-      this.updateXPathInfo(currentElement);
+      currentElement.classList.remove('twv-selected');
+
+      if (document.querySelector('.twv-info')) {
+        this.removeEl(document.querySelector('.twv-info'));
+      }
+
       var xpath = this.getXPathForElement(currentElement);
-      console.log('onSelectedElementClick', currentElement, xpath);
-      console.log(this.getElementByXPath(xpath));
+      this.createSelectionOptions(xpath);
       this.selectModeToggle();
     }
   }, {
@@ -108,23 +152,31 @@ function () {
       var currentElement = this.currentElements.length > 0 ? this.currentElements[this.currentElements.length - 1] : e.target;
 
       if (e.deltaY < 0) {
-        currentElement.classList.remove('twig-visual-selected');
+        currentElement.classList.remove('twv-selected');
         this.currentElements.push(currentElement.parentNode);
         this.updateXPathInfo(currentElement.parentNode);
-        currentElement.parentNode.classList.add('twig-visual-selected');
+        currentElement.parentNode.classList.add('twv-selected');
       } else {
-        currentElement.classList.remove('twig-visual-selected');
+        currentElement.classList.remove('twv-selected');
         this.currentElements.splice(this.currentElements.length - 1, 1);
         currentElement = this.currentElements.length > 0 ? this.currentElements[this.currentElements.length - 1] : e.target;
         this.updateXPathInfo(currentElement);
-        currentElement.classList.add('twig-visual-selected');
+        currentElement.classList.add('twv-selected');
       }
     }
   }, {
     key: "updateXPathInfo",
     value: function updateXPathInfo(element) {
-      this.container.querySelector('.twv-selection-info').style.display = 'block';
-      this.container.querySelector('.twv-selection-info').innerHTML = '<div><b>XPath:</b></div><div>' + this.getXPathForElement(element) + '</div>';
+      var div = document.querySelector('.twv-info');
+
+      if (!div) {
+        div = document.createElement('div');
+        div.className = 'twv-info small';
+        document.body.appendChild(div);
+      }
+
+      div.style.display = 'block';
+      div.innerHTML = '<div>' + this.getXPathForElement(element) + '</div>';
     }
   }, {
     key: "getXPathForElement",
@@ -167,9 +219,52 @@ function () {
       var containerEl = document.createElement('div');
       containerEl.id = 'twig-visual-container';
       containerEl.className = 'twig-visual-container';
-      containerEl.innerHTML = "\n<button type=\"button\" class=\"twv-btn twv-btn-block twv-mb-3 twv-button-start-select\">Select</button>\n<div class=\"twv-small twv-selection-info\" style=\"display: none;\"></div>\n";
+      containerEl.innerHTML = "\n<button type=\"button\" class=\"twv-btn twv-btn-block twv-mb-3 twv-button-start-select\">Select</button>\n<div class=\"twv-inner\"></div>\n";
       document.body.appendChild(containerEl);
       return containerEl;
+    }
+  }, {
+    key: "createSelectionOptions",
+    value: function createSelectionOptions(xpath) {
+      var _this2 = this;
+
+      var elementSelected = this.getElementByXPath(xpath);
+
+      if (!elementSelected) {
+        throw new Error('Element for XPath not found.');
+      }
+
+      this.container.querySelector('.twv-inner').innerHTML = '';
+      var xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
+      var div = document.createElement('div');
+      div.innerHTML = "<div class=\"twv-mb-3 twv-ui-element-select\">\n        <select class=\"twv-select\">\n        <option value=\"\">- \u042D\u043B\u0435\u043C\u0435\u043D\u0442 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430 -</option>\n        <option value=\"field\">\u041F\u043E\u043B\u0435 \u043A\u043E\u043D\u0442\u0435\u043D\u0442\u0430</option>\n        <option value=\"photogallery\">\u0424\u043E\u0442\u043E-\u0433\u0430\u043B\u0435\u0440\u0435\u044F</option>\n        <option value=\"menu\">\u041C\u0435\u043D\u044E</option>\n        <option value=\"breadcrumbs\">\u0425\u043B\u0435\u0431\u043D\u044B\u0435 \u043A\u043D\u043E\u0448\u043A\u0438</option>\n        <option value=\"shopping-cart\">\u041A\u043E\u0440\u0437\u0438\u043D\u0430 \u0442\u043E\u0432\u0430\u0440\u043E\u0432</option>\n        <option value=\"products-list\">\u0418\u0437\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0442\u043E\u0432\u0430\u0440\u044B</option>\n        <option value=\"comments\">\u041E\u0442\u0437\u044B\u0432\u044B</option>\n</select>\n</div>\n<b>XPath:</b>\n<div class=\"twv-p-1 twv-mb-3 twv-small twv-bg-gray\">\n    <div class=\"twv-text-overflow\" title=\"".concat(xpathEscaped, "\">").concat(xpath, "</div>\n</div>\n<div class=\"twv-ui-components\"></div>\n        ");
+      this.container.querySelector('.twv-inner').appendChild(div);
+      var componentsContainer = this.container.querySelector('.twv-ui-components');
+      this.container.querySelector('.twv-ui-element-select').addEventListener('change', function (e) {
+        componentsContainer.innerHTML = '';
+
+        if (!_this2.options.uiOptions[e.target.value]) {
+          return;
+        }
+
+        var opt = _this2.options.uiOptions[e.target.value];
+        opt.components.forEach(function (cmp) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'twv-btn twv-mb-2';
+          button.textContent = cmp.title;
+          componentsContainer.appendChild(button);
+        });
+        console.log(e.target.value, _this2.options.uiOptions[e.target.value]);
+      });
+      var compStyles = window.getComputedStyle(elementSelected);
+      var position = compStyles.getPropertyValue('position');
+      console.log(xpath, elementSelected, position);
+    }
+  }, {
+    key: "removeEl",
+    value: function removeEl(el) {
+      el.parentNode.removeChild(el);
     }
   }], [{
     key: "onReady",
