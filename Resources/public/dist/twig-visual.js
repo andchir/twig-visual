@@ -12,6 +12,7 @@ function () {
   function TwigVisual(options) {
     _classCallCheck(this, TwigVisual);
 
+    this.data = {};
     this.options = Object.assign({
       uiOptions: {
         field: {
@@ -75,6 +76,11 @@ function () {
 
         _this.selectModeToggle();
       });
+      buttonStart.parentNode.querySelector('.twv-block-active-status-button-cancel').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        _this.selectionCancel();
+      });
     }
   }, {
     key: "selectModeToggle",
@@ -100,7 +106,7 @@ function () {
   }, {
     key: "onMouseOver",
     value: function onMouseOver(e) {
-      if (e.target.classList.contains('twig-visual-container') || e.target.parentNode.classList && e.target.parentNode.classList.contains('twig-visual-container')) {
+      if (this.getXPathForElement(e.target).indexOf('twig-visual-container') > -1) {
         return;
       }
 
@@ -111,7 +117,7 @@ function () {
   }, {
     key: "onMouseOut",
     value: function onMouseOut(e) {
-      if (e.target.classList.contains('twig-visual-container') || e.target.parentNode.classList && e.target.parentNode.classList.contains('twig-visual-container')) {
+      if (this.getXPathForElement(e.target).indexOf('twig-visual-container') > -1) {
         return;
       }
 
@@ -124,27 +130,51 @@ function () {
   }, {
     key: "onSelectedElementClick",
     value: function onSelectedElementClick(e) {
-      if (e.target.classList.contains('twig-visual-container') || e.target.parentNode.classList.contains('twig-visual-container')) {
+      if (this.getXPathForElement(e.target).indexOf('twig-visual-container') > -1) {
         return;
       }
 
       e.preventDefault();
+      this.selectModeToggle();
       var currentElement = this.currentElements.length > 0 ? this.currentElements[this.currentElements.length - 1] : e.target;
+      this.selectionCancel(currentElement);
+      var xpath = this.getXPathForElement(currentElement);
+      this.createSelectionOptions(xpath);
+    }
+  }, {
+    key: "selectionCancel",
+    value: function selectionCancel() {
+      var currentElement = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+      if (!currentElement && this.currentElements.length > 0) {
+        currentElement = this.currentElements[this.currentElements.length - 1];
+      }
+
+      this.data = {};
       this.currentElements = [];
-      currentElement.classList.remove('twv-selected');
+      currentElement && currentElement.classList.remove('twv-selected');
+      this.state = 'inactive';
+      var buttonStart = this.container.querySelector('.twv-button-start-select');
 
       if (document.querySelector('.twv-info')) {
         this.removeEl(document.querySelector('.twv-info'));
       }
 
-      var xpath = this.getXPathForElement(currentElement);
-      this.createSelectionOptions(xpath);
-      this.selectModeToggle();
+      buttonStart.parentNode.classList.remove('twv-block-active-status-active');
+      this.container.querySelector('.twv-inner').innerHTML = '';
+
+      if (document.querySelector('.twv-back-overlay')) {
+        this.removeEl(document.querySelector('.twv-back-overlay'));
+      }
+
+      if (document.querySelector('.twv-selected-element')) {
+        document.querySelector('.twv-selected-element').classList.remove('twv-selected-element');
+      }
     }
   }, {
     key: "onMouseWheel",
     value: function onMouseWheel(e) {
-      if (e.target.classList.contains('twig-visual-container') || e.target.parentNode.classList.contains('twig-visual-container')) {
+      if (this.getXPathForElement(e.target).indexOf('twig-visual-container') > -1) {
         return;
       }
 
@@ -167,6 +197,12 @@ function () {
   }, {
     key: "updateXPathInfo",
     value: function updateXPathInfo(element) {
+      var xpath = this.getXPathForElement(element);
+
+      if (xpath.indexOf('twig-visual-container') > -1) {
+        return;
+      }
+
       var div = document.querySelector('.twv-info');
 
       if (!div) {
@@ -176,7 +212,7 @@ function () {
       }
 
       div.style.display = 'block';
-      div.innerHTML = '<div>' + this.getXPathForElement(element) + '</div>';
+      div.innerHTML = "<div>".concat(xpath, "</div>");
     }
   }, {
     key: "getXPathForElement",
@@ -216,17 +252,45 @@ function () {
   }, {
     key: "createContainer",
     value: function createContainer() {
+      var _this2 = this;
+
       var containerEl = document.createElement('div');
       containerEl.id = 'twig-visual-container';
-      containerEl.className = 'twig-visual-container';
-      containerEl.innerHTML = "\n<button type=\"button\" class=\"twv-btn twv-btn-block twv-mb-3 twv-button-start-select\">Select</button>\n<div class=\"twv-inner\"></div>\n";
+      containerEl.className = 'twig-visual-container twv-panel-right';
+      containerEl.innerHTML = "\n<div class=\"twv-panel-header\">\n    <button class=\"twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E\">\n        <i class=\"twv-icon-arrow_back\"></i>\n    </button>\n    <button class=\"twv-btn twv-btn-sm twv-button-panel-right\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E\">\n        <i class=\"twv-icon-arrow_forward\"></i>\n    </button>\n</div>\n<div class=\"twv-block-active-status twv-mb-3\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-mb-3 twv-block-active-status-inactive-content twv-button-start-select\">\n        <i class=\"twv-icon-center_focus_strong\"></i>\n        \u0412\u044B\u0431\u0440\u0430\u0442\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442\n    </button>\n    <div class=\"twv-block-active-status-active-content\">\n        <div class=\"twv-input-group\">\n            <span class=\"twv-input-group-text twv-flex-fill\" title=\"\u042D\u043B\u0435\u043C\u0435\u043D\u0442 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430\">\n                <i class=\"twv-icon-done twv-mr-2 twv-text-success\"></i>\n                \u0412\u044B\u0431\u0440\u0430\u043D\u043E\n            </span>\n            <div class=\"twv-input-group-append\">\n                <button class=\"twv-btn twv-block-active-status-button-cancel\" title=\"\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C\">\n                    <i class=\"twv-icon-clearclose\"></i>\n                </button>\n            </div>\n        </div>\n    </div>\n</div>\n<div class=\"twv-inner\"></div>\n";
       document.body.appendChild(containerEl);
+      containerEl.querySelector('.twv-button-panel-left').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        _this2.panelMove('left');
+      });
+      containerEl.querySelector('.twv-button-panel-right').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        _this2.panelMove('right');
+      });
       return containerEl;
+    }
+  }, {
+    key: "panelMove",
+    value: function panelMove(direction) {
+      var newClassName = "twv-panel-".concat(direction);
+
+      if (this.container.classList.contains(newClassName)) {
+        this.container.classList.add('twv-panel-hidden');
+        return;
+      } else if (this.container.classList.contains('twv-panel-hidden')) {
+        this.container.classList.remove('twv-panel-hidden');
+        return;
+      }
+
+      this.container.classList.remove('twv-panel-' + (direction === 'left' ? 'right' : 'left'));
+      this.container.classList.add(newClassName);
     }
   }, {
     key: "createSelectionOptions",
     value: function createSelectionOptions(xpath) {
-      var _this2 = this;
+      var _this3 = this;
 
       var elementSelected = this.getElementByXPath(xpath);
 
@@ -234,32 +298,46 @@ function () {
         throw new Error('Element for XPath not found.');
       }
 
+      var buttonStart = this.container.querySelector('.twv-button-start-select');
+      buttonStart.parentNode.classList.add('twv-block-active-status-active');
       this.container.querySelector('.twv-inner').innerHTML = '';
       var xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
       var div = document.createElement('div');
-      div.innerHTML = "<div class=\"twv-mb-3 twv-ui-element-select\">\n        <select class=\"twv-select\">\n        <option value=\"\">- \u042D\u043B\u0435\u043C\u0435\u043D\u0442 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430 -</option>\n        <option value=\"field\">\u041F\u043E\u043B\u0435 \u043A\u043E\u043D\u0442\u0435\u043D\u0442\u0430</option>\n        <option value=\"photogallery\">\u0424\u043E\u0442\u043E-\u0433\u0430\u043B\u0435\u0440\u0435\u044F</option>\n        <option value=\"menu\">\u041C\u0435\u043D\u044E</option>\n        <option value=\"breadcrumbs\">\u0425\u043B\u0435\u0431\u043D\u044B\u0435 \u043A\u043D\u043E\u0448\u043A\u0438</option>\n        <option value=\"shopping-cart\">\u041A\u043E\u0440\u0437\u0438\u043D\u0430 \u0442\u043E\u0432\u0430\u0440\u043E\u0432</option>\n        <option value=\"products-list\">\u0418\u0437\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0442\u043E\u0432\u0430\u0440\u044B</option>\n        <option value=\"comments\">\u041E\u0442\u0437\u044B\u0432\u044B</option>\n</select>\n</div>\n<b>XPath:</b>\n<div class=\"twv-p-1 twv-mb-3 twv-small twv-bg-gray\">\n    <div class=\"twv-text-overflow\" title=\"".concat(xpathEscaped, "\">").concat(xpath, "</div>\n</div>\n<div class=\"twv-ui-components\"></div>\n        ");
+      div.innerHTML = "\n<b>XPath:</b>\n<div class=\"twv-p-1 twv-mb-3 twv-small twv-bg-gray\">\n    <div class=\"twv-text-overflow\" title=\"".concat(xpathEscaped, "\">").concat(xpath, "</div>\n</div>\n<div class=\"twv-mb-3 twv-ui-element-select\">\n    <select class=\"twv-select\">\n        <option value=\"\">- \u0422\u0438\u043F \u0431\u043B\u043E\u043A\u0430 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430 -</option>\n        <option value=\"field\">\u041F\u043E\u043B\u0435 \u043A\u043E\u043D\u0442\u0435\u043D\u0442\u0430</option>\n        <option value=\"photogallery\">\u0424\u043E\u0442\u043E-\u0433\u0430\u043B\u0435\u0440\u0435\u044F</option>\n        <option value=\"menu\">\u041C\u0435\u043D\u044E</option>\n        <option value=\"breadcrumbs\">\u0425\u043B\u0435\u0431\u043D\u044B\u0435 \u043A\u043D\u043E\u0448\u043A\u0438</option>\n        <option value=\"shopping-cart\">\u041A\u043E\u0440\u0437\u0438\u043D\u0430 \u0442\u043E\u0432\u0430\u0440\u043E\u0432</option>\n        <option value=\"products-list\">\u0418\u0437\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0442\u043E\u0432\u0430\u0440\u044B</option>\n        <option value=\"comments\">\u041E\u0442\u0437\u044B\u0432\u044B</option>\n    </select>\n</div>\n<div class=\"twv-ui-components\"></div>\n        ");
       this.container.querySelector('.twv-inner').appendChild(div);
       var componentsContainer = this.container.querySelector('.twv-ui-components');
       this.container.querySelector('.twv-ui-element-select').addEventListener('change', function (e) {
         componentsContainer.innerHTML = '';
 
-        if (!_this2.options.uiOptions[e.target.value]) {
+        if (!_this3.options.uiOptions[e.target.value]) {
           return;
         }
 
-        var opt = _this2.options.uiOptions[e.target.value];
+        var opt = _this3.options.uiOptions[e.target.value];
         opt.components.forEach(function (cmp) {
-          var button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'twv-btn twv-mb-2';
-          button.textContent = cmp.title;
-          componentsContainer.appendChild(button);
+          var div = document.createElement('div');
+          div.className = 'twv-mb-2';
+          div.innerHTML = "\n                <button class=\"twv-btn twv-btn-block\">".concat(cmp.title, "</button>\n                ");
+          componentsContainer.appendChild(div);
         });
-        console.log(e.target.value, _this2.options.uiOptions[e.target.value]);
+        console.log(e.target.value, _this3.options.uiOptions[e.target.value]);
       });
       var compStyles = window.getComputedStyle(elementSelected);
       var position = compStyles.getPropertyValue('position');
-      console.log(xpath, elementSelected, position);
+      var backgroundColor = compStyles.getPropertyValue('background-color');
+
+      if (position === 'static') {
+        elementSelected.style.position = 'relative';
+      }
+
+      if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {// elementSelected.style.backgroundColor = '#fff';
+      }
+
+      var backgroundOverlay = document.createElement('div');
+      backgroundOverlay.className = 'twv-back-overlay';
+      document.body.appendChild(backgroundOverlay);
+      elementSelected.classList.add('twv-selected-element');
+      console.log(xpath, backgroundColor, elementSelected, position);
     }
   }, {
     key: "removeEl",
