@@ -1,12 +1,12 @@
 
 .twv-small { font-size: 85%; }
 .twv-selected { box-shadow: 0 0 0 2px #007bff; cursor: pointer; }
+.twv-selected-success { box-shadow: 0 0 0 2px #28a745; }
 .twv-selected-element { z-index: 701; box-shadow: 0 0 15px rgba(255, 255, 255, 0.9); }
-.twv-inner {  }
 .twv-info { position: fixed; left: 0; bottom: 0; max-width: 90%; z-index: 888; padding: 7px 15px; color: #fff; background-color: rgba(0, 0, 0, .5); border-top-right-radius: 6px; border-top: 1px solid rgba(0,0,0,0.3); border-right: 1px solid rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(0,0,0,0.2); pointer-events: none; }
 .twv-bg-gray { background-color: rgba(0,0,0,0.2); }
 .twv-text-overflow { width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-.twv-back-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(4px); z-index: 700; }
+.twv-back-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.3); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 700; }
 .twv-flex-fill { -ms-flex: 1 1 auto; flex: 1 1 auto; }
 .twv-text-success { color: #28a745; }
 
@@ -44,7 +44,7 @@
 .twv-input-group-append .twv-btn, .twv-input-group-prepend .twv-btn { position: relative; z-index: 2; }
 
 /* select */
-.twv-select { display: inline-block; width: 100%; height: calc(1.5em + 0.75rem + 2px); padding: 0.375rem 1.75rem 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #495057; vertical-align: middle; background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px; border: 1px solid #ced4da; border-radius: 0.25rem; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+.twv-custom-select { display: inline-block; width: 100%; height: calc(1.5em + 0.75rem + 2px); padding: 0.375rem 1.75rem 0.375rem 0.75rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #495057; vertical-align: middle; background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right 0.75rem center/8px 10px; border: 1px solid #ced4da; border-radius: 0.25rem; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
 
 /* twv-block-active-status */
 .twv-block-active-status { position: relative; }
