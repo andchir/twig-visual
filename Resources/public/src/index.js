@@ -15,24 +15,38 @@ class TwigVisual {
                     components: []
                 },
                 menu: {
-                    components: []
+                    components: [
+                        {
+                            name: "firstItem", title: "Пункт меню первого уровня", type: ""
+                        },
+                        {
+                            name: "secondItem", title: "Пункт меню второго уровня", type: ""
+                        }
+                    ]
                 },
                 breadcrumbs: {
-                    components: []
+                    components: [
+                        {
+                            name: "linkHomePage", title: "Ссылка на главную страницу", type: ""
+                        },
+                        {
+                            name: "item", title: "Ссылка", type: ""
+                        }
+                    ]
                 },
                 "shopping-cart": {
                     components: [
                         {
-                            name: "totalPrice", title: "Общая цена", xpath: ""
+                            name: "totalPrice", title: "Общая цена", type: ""
                         },
                         {
-                            name: "totalCount", title: "Общее количество", xpath: ""
+                            name: "totalCount", title: "Общее количество", type: ""
                         },
                         {
-                            name: "lickCheckout", title: "Ссылка на оформление", xpath: ""
+                            name: "lickCheckout", title: "Ссылка на оформление", type: ""
                         },
                         {
-                            name: "buttonClean", title: "Кнопка очистки", xpath: ""
+                            name: "buttonClean", title: "Кнопка очистки", type: ""
                         }
                     ]
                 },
@@ -72,6 +86,7 @@ class TwigVisual {
         const buttonStart = this.container.querySelector('.twv-button-start-select');
         buttonStart.addEventListener('click', (e) => {
             e.preventDefault();
+            e.target.setAttribute('disabled', 'disabled');
             this.selectModeToggle(document.body, 'source');
         });
         
@@ -145,13 +160,7 @@ class TwigVisual {
         // Clear selection
         if (this.data[this.dataKey]) {
             const xpath = this.data[this.dataKey];
-            const element = this.getElementByXPath(xpath);
-            if (element.dataset.twvTitle) {
-                element.setAttribute('title', element.dataset.twvTitle);
-            } else {
-                element.removeAttribute('title');
-            }
-            element.classList.remove('twv-selected-success');
+            this.removeSelectionInnerByXPath(xpath);
         }
         
         const xpath = this.getXPathForElement(currentElement);
@@ -254,6 +263,20 @@ class TwigVisual {
         });
     }
 
+    /**
+     * Remove selection by XPath
+     * @param xpath
+     */
+    removeSelectionInnerByXPath(xpath) {
+        const element = this.getElementByXPath(xpath);
+        if (element.dataset.twvTitle) {
+            element.setAttribute('title', element.dataset.twvTitle);
+        } else {
+            element.removeAttribute('title');
+        }
+        element.classList.remove('twv-selected-success');
+    }
+
     updateXPathInfo(element) {
         const xpath = this.getXPathForElement(element, true);
         if (xpath.indexOf('twig-visual-container') > -1) {
@@ -320,7 +343,7 @@ class TwigVisual {
 <div class="twv-mb-3">
     <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
         <i class="twv-icon-center_focus_strong"></i>
-        Выбрать элемент
+        Блок интерфейса
     </button>
 </div>
 <div class="twv-inner"></div>
@@ -415,11 +438,17 @@ class TwigVisual {
             if (!this.options.uiOptions[e.target.value]) {
                 return;
             }
-            this.data = {};
+            
+            // Clean components data
+            Object.keys(this.data).forEach((key) => {
+                if (key !== 'source') {
+                    delete this.data[key];
+                }
+            });
+            
             const opt = this.options.uiOptions[e.target.value];
             this.components = opt.components;
             this.components.forEach((cmp) => {
-                
                 const div = document.createElement('div');
                 div.className = 'twv-mb-2';
                 div.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
@@ -431,6 +460,7 @@ class TwigVisual {
                     if (this.state === 'active') {
                         return;
                     }
+                    e.target.setAttribute('disabled', 'disabled');
                     this.selectModeToggle(elementSelected, cmp.name, false);
                 });
             });
@@ -462,7 +492,13 @@ class TwigVisual {
             return buttonEl.dataset.twvKey === dataKey;
         });
         if (buttons.length === 1) {
-            this.makeButtonSelected(buttons[0]);
+            this.makeButtonSelected(buttons[0], true, () => {
+                const xpath = this.data[dataKey] || null;
+                this.removeSelectionInnerByXPath(xpath);
+                delete this.data[dataKey];
+                
+                console.log(this.data);
+            });
         }
     }
 
@@ -473,6 +509,7 @@ class TwigVisual {
      * @param cancelFunc
      */
     makeButtonSelected(buttonEl, selected = true, cancelFunc = null) {
+        buttonEl.removeAttribute('disabled');
         if (buttonEl.parentNode.classList.contains('twv-block-active-status')) {
             if (selected) {
                 buttonEl.parentNode.classList.add('twv-block-active-status-active');
@@ -481,13 +518,13 @@ class TwigVisual {
             }
             return;
         }
-        
+        const title = buttonEl.textContent;
         const div = document.createElement('div');
         div.innerHTML = `
 <div class="twv-block-active-status twv-block-active-status-active">
     <div class="twv-block-active-status-active-content">
         <div class="twv-input-group">
-            <span class="twv-input-group-text twv-flex-fill">
+            <span class="twv-input-group-text twv-flex-fill" title="${title}">
                 <i class="twv-icon-done twv-mr-2 twv-text-success"></i>
                 Выбрано
             </span>

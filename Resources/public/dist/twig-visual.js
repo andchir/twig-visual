@@ -25,28 +25,44 @@ function () {
           components: []
         },
         menu: {
-          components: []
+          components: [{
+            name: "firstItem",
+            title: "Пункт меню первого уровня",
+            type: ""
+          }, {
+            name: "secondItem",
+            title: "Пункт меню второго уровня",
+            type: ""
+          }]
         },
         breadcrumbs: {
-          components: []
+          components: [{
+            name: "linkHomePage",
+            title: "Ссылка на главную страницу",
+            type: ""
+          }, {
+            name: "item",
+            title: "Ссылка",
+            type: ""
+          }]
         },
         "shopping-cart": {
           components: [{
             name: "totalPrice",
             title: "Общая цена",
-            xpath: ""
+            type: ""
           }, {
             name: "totalCount",
             title: "Общее количество",
-            xpath: ""
+            type: ""
           }, {
             name: "lickCheckout",
             title: "Ссылка на оформление",
-            xpath: ""
+            type: ""
           }, {
             name: "buttonClean",
             title: "Кнопка очистки",
-            xpath: ""
+            type: ""
           }]
         },
         "products-list": {
@@ -77,6 +93,7 @@ function () {
       var buttonStart = this.container.querySelector('.twv-button-start-select');
       buttonStart.addEventListener('click', function (e) {
         e.preventDefault();
+        e.target.setAttribute('disabled', 'disabled');
 
         _this.selectModeToggle(document.body, 'source');
       });
@@ -163,15 +180,7 @@ function () {
 
       if (this.data[this.dataKey]) {
         var _xpath = this.data[this.dataKey];
-        var element = this.getElementByXPath(_xpath);
-
-        if (element.dataset.twvTitle) {
-          element.setAttribute('title', element.dataset.twvTitle);
-        } else {
-          element.removeAttribute('title');
-        }
-
-        element.classList.remove('twv-selected-success');
+        this.removeSelectionInnerByXPath(_xpath);
       }
 
       var xpath = this.getXPathForElement(currentElement);
@@ -274,6 +283,24 @@ function () {
         element.classList.remove('twv-selected-success');
       });
     }
+    /**
+     * Remove selection by XPath
+     * @param xpath
+     */
+
+  }, {
+    key: "removeSelectionInnerByXPath",
+    value: function removeSelectionInnerByXPath(xpath) {
+      var element = this.getElementByXPath(xpath);
+
+      if (element.dataset.twvTitle) {
+        element.setAttribute('title', element.dataset.twvTitle);
+      } else {
+        element.removeAttribute('title');
+      }
+
+      element.classList.remove('twv-selected-success');
+    }
   }, {
     key: "updateXPathInfo",
     value: function updateXPathInfo(element) {
@@ -338,7 +365,7 @@ function () {
       var containerEl = document.createElement('div');
       containerEl.id = 'twig-visual-container';
       containerEl.className = 'twig-visual-container twv-panel-right';
-      containerEl.innerHTML = "\n<div class=\"twv-panel-header\">\n    <button class=\"twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E\">\n        <i class=\"twv-icon-arrow_back\"></i>\n    </button>\n    <button class=\"twv-btn twv-btn-sm twv-button-panel-right\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E\">\n        <i class=\"twv-icon-arrow_forward\"></i>\n    </button>\n</div>\n<div class=\"twv-mb-3\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-button-start-select\">\n        <i class=\"twv-icon-center_focus_strong\"></i>\n        \u0412\u044B\u0431\u0440\u0430\u0442\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442\n    </button>\n</div>\n<div class=\"twv-inner\"></div>\n";
+      containerEl.innerHTML = "\n<div class=\"twv-panel-header\">\n    <button class=\"twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E\">\n        <i class=\"twv-icon-arrow_back\"></i>\n    </button>\n    <button class=\"twv-btn twv-btn-sm twv-button-panel-right\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E\">\n        <i class=\"twv-icon-arrow_forward\"></i>\n    </button>\n</div>\n<div class=\"twv-mb-3\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-button-start-select\">\n        <i class=\"twv-icon-center_focus_strong\"></i>\n        \u0411\u043B\u043E\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430\n    </button>\n</div>\n<div class=\"twv-inner\"></div>\n";
       document.body.appendChild(containerEl);
       containerEl.querySelector('.twv-button-panel-left').addEventListener('click', function (e) {
         e.preventDefault();
@@ -411,9 +438,14 @@ function () {
 
         if (!_this4.options.uiOptions[e.target.value]) {
           return;
-        }
+        } // Clean components data
 
-        _this4.data = {};
+
+        Object.keys(_this4.data).forEach(function (key) {
+          if (key !== 'source') {
+            delete _this4.data[key];
+          }
+        });
         var opt = _this4.options.uiOptions[e.target.value];
         _this4.components = opt.components;
 
@@ -428,6 +460,8 @@ function () {
             if (_this4.state === 'active') {
               return;
             }
+
+            e.target.setAttribute('disabled', 'disabled');
 
             _this4.selectModeToggle(elementSelected, cmp.name, false);
           });
@@ -453,6 +487,8 @@ function () {
   }, {
     key: "componentButtonMakeSelected",
     value: function componentButtonMakeSelected(dataKey) {
+      var _this5 = this;
+
       var componentsContainer = this.container.querySelector('.twv-ui-components');
       var buttons = Array.from(componentsContainer.querySelectorAll('button'));
       buttons = buttons.filter(function (buttonEl) {
@@ -460,7 +496,14 @@ function () {
       });
 
       if (buttons.length === 1) {
-        this.makeButtonSelected(buttons[0]);
+        this.makeButtonSelected(buttons[0], true, function () {
+          var xpath = _this5.data[dataKey] || null;
+
+          _this5.removeSelectionInnerByXPath(xpath);
+
+          delete _this5.data[dataKey];
+          console.log(_this5.data);
+        });
       }
     }
     /**
@@ -473,10 +516,11 @@ function () {
   }, {
     key: "makeButtonSelected",
     value: function makeButtonSelected(buttonEl) {
-      var _this5 = this;
+      var _this6 = this;
 
       var selected = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       var cancelFunc = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+      buttonEl.removeAttribute('disabled');
 
       if (buttonEl.parentNode.classList.contains('twv-block-active-status')) {
         if (selected) {
@@ -488,15 +532,16 @@ function () {
         return;
       }
 
+      var title = buttonEl.textContent;
       var div = document.createElement('div');
-      div.innerHTML = "\n<div class=\"twv-block-active-status twv-block-active-status-active\">\n    <div class=\"twv-block-active-status-active-content\">\n        <div class=\"twv-input-group\">\n            <span class=\"twv-input-group-text twv-flex-fill\">\n                <i class=\"twv-icon-done twv-mr-2 twv-text-success\"></i>\n                \u0412\u044B\u0431\u0440\u0430\u043D\u043E\n            </span>\n            <div class=\"twv-input-group-append\">\n                <button class=\"twv-btn twv-block-active-status-button-cancel\" title=\"\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C\">\n                    <i class=\"twv-icon-clearclose\"></i>\n                </button>\n            </div>\n        </div>\n    </div>\n</div>\n        ";
+      div.innerHTML = "\n<div class=\"twv-block-active-status twv-block-active-status-active\">\n    <div class=\"twv-block-active-status-active-content\">\n        <div class=\"twv-input-group\">\n            <span class=\"twv-input-group-text twv-flex-fill\" title=\"".concat(title, "\">\n                <i class=\"twv-icon-done twv-mr-2 twv-text-success\"></i>\n                \u0412\u044B\u0431\u0440\u0430\u043D\u043E\n            </span>\n            <div class=\"twv-input-group-append\">\n                <button class=\"twv-btn twv-block-active-status-button-cancel\" title=\"\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C\">\n                    <i class=\"twv-icon-clearclose\"></i>\n                </button>\n            </div>\n        </div>\n    </div>\n</div>\n        ");
       buttonEl.classList.add('twv-block-active-status-inactive-content');
       this.insertAfter(div, buttonEl);
       div.querySelector('.twv-block-active-status').appendChild(buttonEl);
       buttonEl.parentNode.querySelector('.twv-block-active-status-button-cancel').addEventListener('click', function (e) {
         e.preventDefault();
 
-        _this5.makeButtonSelected(buttonEl, false);
+        _this6.makeButtonSelected(buttonEl, false);
 
         if (typeof cancelFunc === 'function') {
           cancelFunc();
