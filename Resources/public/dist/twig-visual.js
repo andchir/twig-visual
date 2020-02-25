@@ -235,8 +235,13 @@ function () {
         } // Remove selection of parent element
 
 
-        if (document.querySelector('.twv-selected-element')) {
-          document.querySelector('.twv-selected-element').classList.remove('twv-selected-element');
+        var elementSelected = document.querySelector('.twv-selected-element');
+
+        if (elementSelected) {
+          elementSelected.classList.remove('twv-selected-element');
+          this.setToParents(elementSelected, {
+            zIndex: ''
+          });
         }
 
         this.removeSelectionInner();
@@ -482,6 +487,9 @@ function () {
       backgroundOverlay.className = 'twv-back-overlay';
       document.body.appendChild(backgroundOverlay);
       elementSelected.classList.add('twv-selected-element');
+      this.setToParents(elementSelected, {
+        zIndex: 'auto'
+      });
       console.log(xpath, backgroundColor, elementSelected, position);
     }
   }, {
@@ -532,7 +540,7 @@ function () {
         return;
       }
 
-      var title = buttonEl.textContent;
+      var title = buttonEl.textContent.trim();
       var div = document.createElement('div');
       div.innerHTML = "\n<div class=\"twv-block-active-status twv-block-active-status-active\">\n    <div class=\"twv-block-active-status-active-content\">\n        <div class=\"twv-input-group\">\n            <span class=\"twv-input-group-text twv-flex-fill\" title=\"".concat(title, "\">\n                <i class=\"twv-icon-done twv-mr-2 twv-text-success\"></i>\n                \u0412\u044B\u0431\u0440\u0430\u043D\u043E\n            </span>\n            <div class=\"twv-input-group-append\">\n                <button class=\"twv-btn twv-block-active-status-button-cancel\" title=\"\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C\">\n                    <i class=\"twv-icon-clearclose\"></i>\n                </button>\n            </div>\n        </div>\n    </div>\n</div>\n        ");
       buttonEl.classList.add('twv-block-active-status-inactive-content');
@@ -547,6 +555,18 @@ function () {
           cancelFunc();
         }
       });
+    }
+  }, {
+    key: "setToParents",
+    value: function setToParents(element, styles) {
+      if (element.parentNode === document.body) {
+        return;
+      }
+
+      Object.keys(styles).forEach(function (key) {
+        element.parentNode.style[key] = styles[key];
+      });
+      this.setToParents(element.parentNode, styles);
     }
     /**
      * Remove HTML element
