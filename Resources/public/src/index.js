@@ -217,7 +217,6 @@ class TwigVisual {
             const elementSelected = document.querySelector('.twv-selected-element');
             if (elementSelected) {
                 elementSelected.classList.remove('twv-selected-element');
-                this.setToParents(elementSelected, {zIndex: ''});
             }
 
             this.removeSelectionInner();
@@ -479,10 +478,10 @@ class TwigVisual {
         }
         const backgroundOverlay = document.createElement('div');
         backgroundOverlay.className = 'twv-back-overlay';
-        document.body.appendChild(backgroundOverlay);
+        // document.body.appendChild(backgroundOverlay);
+        this.insertBefore(backgroundOverlay, elementSelected);
 
         elementSelected.classList.add('twv-selected-element');
-        this.setToParents(elementSelected, {zIndex: 'auto'});
 
         console.log(xpath, backgroundColor, elementSelected, position);
 
@@ -579,6 +578,15 @@ class TwigVisual {
      */
     insertAfter(newNode, referenceNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    }
+
+    /**
+     * Insert HTML element before other one
+     * @param newNode
+     * @param referenceNode
+     */
+    insertBefore(newNode, referenceNode) {
+        referenceNode.parentNode.insertBefore(newNode, referenceNode);
     }
 }
 

@@ -239,9 +239,6 @@ function () {
 
         if (elementSelected) {
           elementSelected.classList.remove('twv-selected-element');
-          this.setToParents(elementSelected, {
-            zIndex: ''
-          });
         }
 
         this.removeSelectionInner();
@@ -484,12 +481,10 @@ function () {
       }
 
       var backgroundOverlay = document.createElement('div');
-      backgroundOverlay.className = 'twv-back-overlay';
-      document.body.appendChild(backgroundOverlay);
+      backgroundOverlay.className = 'twv-back-overlay'; // document.body.appendChild(backgroundOverlay);
+
+      this.insertBefore(backgroundOverlay, elementSelected);
       elementSelected.classList.add('twv-selected-element');
-      this.setToParents(elementSelected, {
-        zIndex: 'auto'
-      });
       console.log(xpath, backgroundColor, elementSelected, position);
     }
   }, {
@@ -588,6 +583,17 @@ function () {
      */
     value: function insertAfter(newNode, referenceNode) {
       referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+    }
+    /**
+     * Insert HTML element before other one
+     * @param newNode
+     * @param referenceNode
+     */
+
+  }, {
+    key: "insertBefore",
+    value: function insertBefore(newNode, referenceNode) {
+      referenceNode.parentNode.insertBefore(newNode, referenceNode);
     }
   }], [{
     key: "onReady",

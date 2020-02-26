@@ -2,11 +2,11 @@
 .twv-small { font-size: 85%; }
 .twv-selected { box-shadow: 0 0 0 2px #007bff; cursor: pointer; }
 .twv-selected-success { box-shadow: 0 0 0 2px #28a745; }
-.twv-selected-element { z-index: 1701 !important; box-shadow: 0 0 15px rgba(255, 255, 255, 0.9); }
+.twv-selected-element { z-index: 1701 !important; box-shadow: 0 0 15px 5px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05); }
 .twv-info { position: fixed; left: 0; bottom: 0; max-width: 90%; z-index: 1888; padding: 7px 15px; color: #fff; background-color: rgba(0, 0, 0, .5); border-top-right-radius: 6px; border-top: 1px solid rgba(0,0,0,0.3); border-right: 1px solid rgba(0,0,0,0.3); box-shadow: 0 0 15px rgba(0,0,0,0.2); pointer-events: none; }
 .twv-bg-gray { background-color: rgba(0,0,0,0.2); }
 .twv-text-overflow { width: 100%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-.twv-back-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.3); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 1700; }
+.twv-back-overlay { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.6); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 1700; }
 .twv-flex-fill { -ms-flex: 1 1 auto; flex: 1 1 auto; }
 .twv-text-success { color: #28a745; }
 
