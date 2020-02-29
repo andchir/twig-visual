@@ -614,4 +614,4 @@ TwigVisual.onReady(function () {
   twigVisual = new TwigVisual();
 });
 
-//# sourceMappingURL=twig-visual.js.map
+//# sourceMappingURL=twigvisual.js.map
