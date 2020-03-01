@@ -96,6 +96,19 @@ function () {
         e.target.setAttribute('disabled', 'disabled');
 
         _this.selectModeToggle(document.body, 'source');
+      }); // Add new theme
+
+      var buttonAddTheme = this.container.querySelector('.twv-button-new-theme');
+      buttonAddTheme.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        if (_this.state === 'active') {
+          _this.selectModeToggle();
+        }
+
+        _this.selectionModeDestroy(true);
+
+        _this.addNewTheme();
       });
       document.body.addEventListener('keyup', function (e) {
         if (e.code !== 'Escape') {
@@ -367,7 +380,7 @@ function () {
       var containerEl = document.createElement('div');
       containerEl.id = 'twig-visual-container';
       containerEl.className = 'twig-visual-container twv-panel-right';
-      containerEl.innerHTML = "\n<div class=\"twv-panel-header\">\n    <button class=\"twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E\">\n        <i class=\"twv-icon-arrow_back\"></i>\n    </button>\n    <button class=\"twv-btn twv-btn-sm twv-button-panel-right\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E\">\n        <i class=\"twv-icon-arrow_forward\"></i>\n    </button>\n</div>\n<div class=\"twv-mb-3\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-button-start-select\">\n        <i class=\"twv-icon-center_focus_strong\"></i>\n        \u0411\u043B\u043E\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430\n    </button>\n</div>\n<div class=\"twv-inner\"></div>\n";
+      containerEl.innerHTML = "\n<div class=\"twv-panel-header\">\n    <button class=\"twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E\">\n        <i class=\"twv-icon-arrow_back\"></i>\n    </button>\n    <button class=\"twv-btn twv-btn-sm twv-button-panel-right\" type=\"button\" title=\"\u041F\u0435\u0440\u0435\u0434\u0432\u0438\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E\">\n        <i class=\"twv-icon-arrow_forward\"></i>\n    </button>\n</div>\n<div class=\"twv-mb-2\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-button-new-theme\">\n        <i class=\"twv-icon-add\"></i>\n        \u0421\u043E\u0437\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0442\u0435\u043C\u0443\n    </button>\n</div>\n<div class=\"twv-mb-3\">\n    <button type=\"button\" class=\"twv-btn twv-btn-primary twv-btn-block twv-button-start-select\">\n        <i class=\"twv-icon-center_focus_strong\"></i>\n        \u0411\u043B\u043E\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430\n    </button>\n</div>\n<div class=\"twv-inner\"></div>\n";
       document.body.appendChild(containerEl);
       containerEl.querySelector('.twv-button-panel-left').addEventListener('click', function (e) {
         e.preventDefault();
@@ -550,6 +563,83 @@ function () {
           cancelFunc();
         }
       });
+    }
+  }, {
+    key: "addNewTheme",
+    value: function addNewTheme() {
+      var _this7 = this;
+
+      var innerContainerEl = this.container.querySelector('.twv-inner');
+      innerContainerEl.innerHTML = '';
+      var div = document.createElement('div');
+      div.innerHTML = "\n        <div class=\"twv-mb-3\">\n            <label class=\"twv-display-block twv-mb-1\" for=\"tww-field-theme-name\">\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0442\u0435\u043C\u044B</label>\n            <input type=\"text\" id=\"tww-field-theme-name\" class=\"twv-form-control\">\n        </div>\n        <div class=\"twv-mb-3\">\n            <label class=\"twv-display-block twv-mb-1\" for=\"tww-field-theme-mainpage\">HTML-\u0444\u0430\u0439\u043B \u0433\u043B\u0430\u0432\u043D\u043E\u0439 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B</label>\n            <input type=\"text\" id=\"tww-field-theme-mainpage\" class=\"twv-form-control\" value=\"index.html\">\n        </div>\n        <div class=\"twv-mb-3\">\n            <button type=\"button\" class=\"twv-btn twv-btn-primary twv-mr-2 twv-button-submit\">\u0421\u043E\u0437\u0434\u0430\u0442\u044C</button>\n            <button type=\"button\" class=\"twv-btn twv-btn twv-button-cancel\">\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C</button>\n        </div>\n        ";
+      innerContainerEl.appendChild(div);
+      innerContainerEl.querySelector('button.twv-button-submit').addEventListener('click', function (e) {
+        e.preventDefault();
+        var fieldThemeEl = document.getElementById('tww-field-theme-name');
+        var fieldMainpageEl = document.getElementById('tww-field-theme-mainpage');
+        var buttonEl = e.target;
+
+        if (!fieldThemeEl.value) {
+          return;
+        }
+
+        console.log('SUBMIT', fieldThemeEl.value, fieldMainpageEl.value);
+        buttonEl.setAttribute('disabled', 'disabled');
+
+        _this7.request('/twig_visual/create', {
+          theme: fieldThemeEl.value,
+          mainpage: fieldMainpageEl.value
+        }, function (res) {
+          console.log(res);
+        }, function (err) {
+          console.log(err);
+          buttonEl.removeAttribute('disabled');
+        }, 'post');
+      });
+      innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', function (e) {
+        e.preventDefault();
+        innerContainerEl.innerHTML = '';
+      });
+    }
+  }, {
+    key: "request",
+    value: function request(url, data, successFn, failFn, method) {
+      method = method || 'GET';
+      var request = new XMLHttpRequest();
+      request.open(method, url, true);
+
+      request.onload = function () {
+        var result = ['{', '['].indexOf(request.responseText.substr(0, 1)) > -1 ? JSON.parse(request.responseText) : {};
+
+        if (request.status >= 200 && request.status < 400) {
+          if (typeof successFn === 'function') {
+            successFn(result);
+          }
+        } else {
+          if (typeof failFn === 'function') {
+            failFn(result);
+          }
+        }
+      };
+
+      request.onerror = function () {
+        if (typeof failFn === 'function') {
+          failFn(request);
+        }
+      };
+
+      request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+      if (!(data instanceof FormData)) {
+        request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+      }
+
+      if (method === 'POST') {
+        request.send(data);
+      } else {
+        request.send();
+      }
     }
   }, {
     key: "setToParents",

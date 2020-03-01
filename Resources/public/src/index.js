@@ -90,6 +90,17 @@ class TwigVisual {
             this.selectModeToggle(document.body, 'source');
         });
 
+        // Add new theme
+        const buttonAddTheme = this.container.querySelector('.twv-button-new-theme');
+        buttonAddTheme.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.state === 'active') {
+                this.selectModeToggle();
+            }
+            this.selectionModeDestroy(true);
+            this.addNewTheme();
+        });
+
         document.body.addEventListener('keyup', (e) => {
             if (e.code !== 'Escape') {
                 return;
@@ -341,6 +352,12 @@ class TwigVisual {
         <i class="twv-icon-arrow_forward"></i>
     </button>
 </div>
+<div class="twv-mb-2">
+    <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-theme">
+        <i class="twv-icon-add"></i>
+        Создать новую тему
+    </button>
+</div>
 <div class="twv-mb-3">
     <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
         <i class="twv-icon-center_focus_strong"></i>
@@ -551,6 +568,96 @@ class TwigVisual {
                 cancelFunc();
             }
         });
+    }
+
+    addNewTheme() {
+
+        const innerContainerEl = this.container.querySelector('.twv-inner');
+        innerContainerEl.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+        <div class="twv-mb-3">
+            <label class="twv-display-block twv-mb-1" for="tww-field-theme-name">Название темы</label>
+            <input type="text" id="tww-field-theme-name" class="twv-form-control">
+        </div>
+        <div class="twv-mb-3">
+            <label class="twv-display-block twv-mb-1" for="tww-field-theme-mainpage">HTML-файл главной страницы</label>
+            <input type="text" id="tww-field-theme-mainpage" class="twv-form-control" value="index.html">
+        </div>
+        <div class="twv-mb-3">
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Создать</button>
+            <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+        </div>
+        `;
+
+        innerContainerEl.appendChild(div);
+
+        innerContainerEl.querySelector('button.twv-button-submit').addEventListener('click', (e) => {
+            e.preventDefault();
+            const fieldThemeEl = document.getElementById('tww-field-theme-name');
+            const fieldMainpageEl = document.getElementById('tww-field-theme-mainpage');
+            const buttonEl = e.target;
+            if (!fieldThemeEl.value) {
+                return;
+            }
+
+            console.log('SUBMIT', fieldThemeEl.value, fieldMainpageEl.value);
+
+            buttonEl.setAttribute('disabled', 'disabled');
+
+            this.request('/twig_visual/create', {
+                theme: fieldThemeEl.value,
+                mainpage: fieldMainpageEl.value
+            }, (res) => {
+                console.log(res);
+            }, (err) => {
+                console.log(err);
+                buttonEl.removeAttribute('disabled');
+            }, 'post');
+        });
+
+        innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
+            e.preventDefault();
+            innerContainerEl.innerHTML = '';
+        });
+    }
+
+    request(url, data, successFn, failFn, method) {
+        method = method || 'GET';
+        const request = new XMLHttpRequest();
+        request.open(method, url, true);
+
+        request.onload = function() {
+            const result = ['{','['].indexOf(request.responseText.substr(0,1)) > -1
+                ? JSON.parse(request.responseText)
+                : {};
+            if (request.status >= 200 && request.status < 400) {
+                if (typeof successFn === 'function') {
+                    successFn(result);
+                }
+            } else {
+                if (typeof failFn === 'function') {
+                    failFn(result);
+                }
+            }
+        };
+
+        request.onerror = function() {
+            if (typeof failFn === 'function') {
+                failFn(request);
+            }
+        };
+
+        request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        if (!(data instanceof FormData)) {
+            request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+        }
+        if (method === 'POST') {
+            request.send(data);
+        } else {
+            request.send();
+        }
     }
 
     setToParents(element, styles) {
