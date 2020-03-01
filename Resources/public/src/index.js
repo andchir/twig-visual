@@ -572,6 +572,7 @@ class TwigVisual {
 
     addNewTheme() {
 
+        this.clearMessage();
         const innerContainerEl = this.container.querySelector('.twv-inner');
         innerContainerEl.innerHTML = '';
 
@@ -598,23 +599,22 @@ class TwigVisual {
             const fieldThemeEl = document.getElementById('tww-field-theme-name');
             const fieldMainpageEl = document.getElementById('tww-field-theme-mainpage');
             const buttonEl = e.target;
-            if (!fieldThemeEl.value) {
+            if (!fieldThemeEl.value || !fieldMainpageEl.value) {
                 return;
             }
 
-            console.log('SUBMIT', fieldThemeEl.value, fieldMainpageEl.value);
-
             buttonEl.setAttribute('disabled', 'disabled');
 
-            this.request('/twig_visual/create', {
+            this.request('/twigvisual/create', {
                 theme: fieldThemeEl.value,
                 mainpage: fieldMainpageEl.value
             }, (res) => {
                 console.log(res);
-            }, (err) => {
-                console.log(err);
                 buttonEl.removeAttribute('disabled');
-            }, 'post');
+            }, (err) => {
+                this.addErrorMessage(err.error || err);
+                buttonEl.removeAttribute('disabled');
+            }, 'POST');
         });
 
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
@@ -623,6 +623,39 @@ class TwigVisual {
         });
     }
 
+    /**
+     * Show message
+     * @param message
+     * @param type
+     */
+    addErrorMessage(message, type = 'danger') {
+        const innerContainerEl = this.container.querySelector('.twv-inner');
+        if (innerContainerEl.querySelector('.twv-alert')) {
+            this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+        }
+        const div = document.createElement('div');
+        div.innerHTML = `
+        <div class="twv-alert twv-alert-${type}">${message}</div>
+        `;
+        innerContainerEl.appendChild(div);
+        setTimeout(this.clearMessage.bind(this), 3000);
+    }
+    
+    clearMessage() {
+        const innerContainerEl = this.container.querySelector('.twv-inner');
+        if (innerContainerEl.querySelector('.twv-alert')) {
+            this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+        }
+    }
+
+    /**
+     * Ajax request
+     * @param url
+     * @param data
+     * @param successFn
+     * @param failFn
+     * @param method
+     */
     request(url, data, successFn, failFn, method) {
         method = method || 'GET';
         const request = new XMLHttpRequest();
@@ -651,6 +684,7 @@ class TwigVisual {
 
         request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         if (!(data instanceof FormData)) {
+            data = JSON.stringify(data);
             request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
         }
         if (method === 'POST') {
@@ -660,6 +694,11 @@ class TwigVisual {
         }
     }
 
+    /**
+     * Set styles to parents
+     * @param element
+     * @param styles
+     */
     setToParents(element, styles) {
         if (element.parentNode === document.body) {
             return;

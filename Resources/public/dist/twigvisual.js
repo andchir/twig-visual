@@ -569,6 +569,7 @@ function () {
     value: function addNewTheme() {
       var _this7 = this;
 
+      this.clearMessage();
       var innerContainerEl = this.container.querySelector('.twv-inner');
       innerContainerEl.innerHTML = '';
       var div = document.createElement('div');
@@ -580,28 +581,68 @@ function () {
         var fieldMainpageEl = document.getElementById('tww-field-theme-mainpage');
         var buttonEl = e.target;
 
-        if (!fieldThemeEl.value) {
+        if (!fieldThemeEl.value || !fieldMainpageEl.value) {
           return;
         }
 
-        console.log('SUBMIT', fieldThemeEl.value, fieldMainpageEl.value);
         buttonEl.setAttribute('disabled', 'disabled');
 
-        _this7.request('/twig_visual/create', {
+        _this7.request('/twigvisual/create', {
           theme: fieldThemeEl.value,
           mainpage: fieldMainpageEl.value
         }, function (res) {
           console.log(res);
-        }, function (err) {
-          console.log(err);
           buttonEl.removeAttribute('disabled');
-        }, 'post');
+        }, function (err) {
+          _this7.addErrorMessage(err.error || err);
+
+          buttonEl.removeAttribute('disabled');
+        }, 'POST');
       });
       innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', function (e) {
         e.preventDefault();
         innerContainerEl.innerHTML = '';
       });
     }
+    /**
+     * Show message
+     * @param message
+     * @param type
+     */
+
+  }, {
+    key: "addErrorMessage",
+    value: function addErrorMessage(message) {
+      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'danger';
+      var innerContainerEl = this.container.querySelector('.twv-inner');
+
+      if (innerContainerEl.querySelector('.twv-alert')) {
+        this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+      }
+
+      var div = document.createElement('div');
+      div.innerHTML = "\n        <div class=\"twv-alert twv-alert-".concat(type, "\">").concat(message, "</div>\n        ");
+      innerContainerEl.appendChild(div);
+      setTimeout(this.clearMessage.bind(this), 3000);
+    }
+  }, {
+    key: "clearMessage",
+    value: function clearMessage() {
+      var innerContainerEl = this.container.querySelector('.twv-inner');
+
+      if (innerContainerEl.querySelector('.twv-alert')) {
+        this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+      }
+    }
+    /**
+     * Ajax request
+     * @param url
+     * @param data
+     * @param successFn
+     * @param failFn
+     * @param method
+     */
+
   }, {
     key: "request",
     value: function request(url, data, successFn, failFn, method) {
@@ -632,6 +673,7 @@ function () {
       request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
       if (!(data instanceof FormData)) {
+        data = JSON.stringify(data);
         request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
       }
 
@@ -641,6 +683,12 @@ function () {
         request.send();
       }
     }
+    /**
+     * Set styles to parents
+     * @param element
+     * @param styles
+     */
+
   }, {
     key: "setToParents",
     value: function setToParents(element, styles) {

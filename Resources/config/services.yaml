@@ -12,7 +12,7 @@ services:
         resource: '../../Controller'
         tags: ['controller.service_arguments']
 
-    twig-visual:
+    twigvisual:
         class: Andchir\TwigVisualBundle\Service\TwigVisualService
         arguments: ['@service_container']
         tags: ['controller.service_arguments']
