@@ -2,6 +2,7 @@
 class TwigVisual {
 
     constructor(options) {
+        this.container = null;
         this.parentElement = null;
         this.dataKey = 'source';
         this.data = {};
@@ -21,6 +22,9 @@ class TwigVisual {
                         },
                         {
                             name: "secondItem", title: "Пункт меню второго уровня", type: ""
+                        },
+                        {
+                            name: "thirdItem", title: "Пункт меню третьего уровня", type: ""
                         }
                     ]
                 },
@@ -58,7 +62,6 @@ class TwigVisual {
                 }
             }
         }, options);
-        this.container = this.createContainer();
         this.state = 'inactive';
 
         this.listenerOnMouseOver = this.onMouseOver.bind(this);
@@ -67,8 +70,16 @@ class TwigVisual {
         this.listenerOnMouseClick = this.onSelectedElementClick.bind(this);
         this.currentElements = [];
 
-        this.init();
+        TwigVisual.onReady(this.init.bind(this));
     }
+
+    static onLoad(cb) {
+        if (document.readyState === 'complete') {
+            cb();
+        } else {
+            window.addEventListener('load', cb);
+        }
+    };
 
     static onReady(cb) {
         if (document.readyState !== 'loading') {
@@ -79,7 +90,10 @@ class TwigVisual {
     };
 
     init() {
+        
+        console.log('INIT');
 
+        this.container = this.createContainer();
         this.parentElement = document.body;
 
         // Start button
@@ -131,6 +145,17 @@ class TwigVisual {
             parentEl.removeEventListener('mouseout', this.listenerOnMouseOut);
             parentEl.removeEventListener('wheel', this.listenerOnMouseWheel);
             parentEl.removeEventListener('click', this.listenerOnMouseClick);
+
+            // Remove attribute disabled
+            if (this.container.querySelector('.twv-ui-components')) {
+                const buttons = this.container.querySelector('.twv-ui-components').querySelectorAll('button');
+                Array.from(buttons).forEach((buttonEl) => {
+                    buttonEl.removeAttribute('disabled');
+                });
+            }
+            const buttonStart = this.container.querySelector('.twv-button-start-select');
+            buttonStart.removeAttribute('disabled');
+            
             this.state = 'inactive';
         }
     }
@@ -156,10 +181,14 @@ class TwigVisual {
     }
 
     onSelectedElementClick(e) {
+        
+        console.log('CLICK');
+        
         if (this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
             return;
         }
         e.preventDefault();
+        e.stopPropagation();
 
         this.selectModeToggle();
 
@@ -199,6 +228,10 @@ class TwigVisual {
         }
     }
 
+    /**
+     * Destroy selection mode
+     * @param reset
+     */
     selectionModeDestroy(reset = false) {
         this.state = 'inactive';
         if (document.querySelector('.twv-info')) {
@@ -229,6 +262,7 @@ class TwigVisual {
             if (elementSelected) {
                 elementSelected.classList.remove('twv-selected-element');
             }
+            this.setToParents(elementSelected, {transform: ''});
 
             this.removeSelectionInner();
         }
@@ -393,48 +427,56 @@ class TwigVisual {
         this.container.classList.remove('twv-panel-' + (direction === 'left' ? 'right' : 'left'));
         this.container.classList.add(newClassName);
     }
+    
+    onBlockUiTypeChange(parentElement, typeValue) {
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        componentsContainer.innerHTML = '';
+        this.removeSelectionInner();
 
-    createSelectionOptions(xpath) {
-        const elementSelected = this.getElementByXPath(xpath);
-        if (!elementSelected) {
-            throw new Error('Element for XPath not found.');
+        if (!typeValue) {
+            return;
         }
-        const buttonStart = this.container.querySelector('.twv-button-start-select');
-        this.makeButtonSelected(buttonStart, true, () => {
-            this.selectionModeDestroy(true);
+        if (!this.options.uiOptions[typeValue]) {
+            return;
+        }
+
+        // Clean components data
+        Object.keys(this.data).forEach((key) => {
+            if (key !== 'source') {
+                delete this.data[key];
+            }
         });
 
-        this.container.querySelector('.twv-inner').innerHTML = '';
+        const opt = this.options.uiOptions[typeValue];
+        this.components = opt.components;
+        this.components.forEach((cmp) => {
+            const div = document.createElement('div');
+            div.className = 'twv-mb-2';
+            div.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
 
-        const xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
+            componentsContainer.appendChild(div);
+
+            div.querySelector('button').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.state === 'active') {
+                    return;
+                }
+                e.target.setAttribute('disabled', 'disabled');
+                this.selectModeToggle(parentElement, cmp.name, false);
+            });
+        });
+        
         const div = document.createElement('div');
+        div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
-<b>XPath:</b>
-<div class="twv-p-1 twv-mb-3 twv-small twv-bg-gray">
-    <div class="twv-text-overflow" title="${xpathEscaped}">${xpath}</div>
-</div>
-<div class="twv-mb-3 twv-ui-element-select">
-    <select class="twv-custom-select">
-        <option value="">- Тип блока интерфейса -</option>
-        <option value="field">Поле контента</option>
-        <option value="photogallery">Фото-галерея</option>
-        <option value="menu">Меню</option>
-        <option value="breadcrumbs">Хлебные кношки</option>
-        <option value="shopping-cart">Корзина товаров</option>
-        <option value="products-list">Избранные товары</option>
-        <option value="comments">Отзывы</option>
-    </select>
-</div>
-<div class="twv-mb-3 twv-ui-components"></div>
-<div class="twv-mb-3">
-    <button type="button" class="twv-btn twv-btn-primary twv-button-submit">Применить</button>
-</div>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Применить</button>
+            <button type="button" class="twv-btn twv-button-cancel">Отменить</button>
         `;
-        this.container.querySelector('.twv-inner').appendChild(div);
+        componentsContainer.appendChild(div);
 
-        const componentsContainer = this.container.querySelector('.twv-ui-components');
+
         const buttonSubmit = this.container.querySelector('.twv-button-submit');
-        buttonSubmit.style.display = 'none';
+        const buttonCancel = this.container.querySelector('.twv-button-cancel');
 
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
@@ -444,64 +486,25 @@ class TwigVisual {
 
         });
 
-        // Select UI element type
-        this.container.querySelector('.twv-ui-element-select').addEventListener('change', (e) => {
-            componentsContainer.innerHTML = '';
-            this.removeSelectionInner();
-            if (!e.target.value) {
-                buttonSubmit.style.display = 'none';
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const selectEl = this.container.querySelector('.twv-ui-element-select > select');
+            const elementSelected = document.querySelector('.twv-selected-element');
+
+            if (this.state === 'active') {
+                this.selectModeToggle();
                 return;
             }
-            buttonSubmit.style.display = 'inline-block';
-            if (!this.options.uiOptions[e.target.value]) {
-                return;
+            if (selectEl.value) {
+                selectEl.value = '';
+                this.selectionModeDestroy();
+                this.onBlockUiTypeChange(elementSelected);
+            } else {
+                this.selectionModeDestroy(true);
             }
-
-            // Clean components data
-            Object.keys(this.data).forEach((key) => {
-                if (key !== 'source') {
-                    delete this.data[key];
-                }
-            });
-
-            const opt = this.options.uiOptions[e.target.value];
-            this.components = opt.components;
-            this.components.forEach((cmp) => {
-                const div = document.createElement('div');
-                div.className = 'twv-mb-2';
-                div.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
-
-                componentsContainer.appendChild(div);
-
-                div.querySelector('button').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (this.state === 'active') {
-                        return;
-                    }
-                    e.target.setAttribute('disabled', 'disabled');
-                    this.selectModeToggle(elementSelected, cmp.name, false);
-                });
-            });
         });
-
-        const compStyles = window.getComputedStyle(elementSelected);
-        const position = compStyles.getPropertyValue('position');
-        const backgroundColor = compStyles.getPropertyValue('background-color');
-        if (position === 'static') {
-            elementSelected.style.position = 'relative';
-        }
-        if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {
-            // elementSelected.style.backgroundColor = '#fff';
-        }
-        const backgroundOverlay = document.createElement('div');
-        backgroundOverlay.className = 'twv-back-overlay';
-        // document.body.appendChild(backgroundOverlay);
-        this.insertBefore(backgroundOverlay, elementSelected);
-
-        elementSelected.classList.add('twv-selected-element');
-
-        console.log(xpath, backgroundColor, elementSelected, position);
-
     }
 
     componentButtonMakeSelected(dataKey) {
@@ -568,6 +571,122 @@ class TwigVisual {
                 cancelFunc();
             }
         });
+    }
+
+    createSelectionOptions(xpath) {
+        const elementSelected = this.getElementByXPath(xpath);
+        if (!elementSelected) {
+            throw new Error('Element for XPath not found.');
+        }
+        const buttonStart = this.container.querySelector('.twv-button-start-select');
+        this.makeButtonSelected(buttonStart, true, () => {
+            this.selectionModeDestroy(true);
+        });
+
+        this.container.querySelector('.twv-inner').innerHTML = '';
+
+        const xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
+        const div = document.createElement('div');
+        div.innerHTML = `
+<b>XPath:</b>
+<div class="twv-p-1 twv-mb-3 twv-small twv-bg-gray">
+    <div class="twv-text-overflow" title="${xpathEscaped}">${xpath}</div>
+</div>
+<div class="twv-mb-3">
+    <button type="button" class="twv-btn twv-mr-1 twv-button-edit-text" title="Edit text content">
+        <i class="twv-icon-createmode_editedit"></i>
+    </button>
+    <button type="button" class="twv-btn twv-mr-1 twv-button-edit-link" title="Edit link">
+        <i class="twv-icon-linkinsert_link"></i>
+    </button>
+    <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="Delete element">
+        <i class="twv-icon-clearclose"></i>
+    </button>
+</div>
+<div class="twv-mb-3 twv-ui-element-select">
+    <select class="twv-custom-select">
+        <option value="">- Тип блока интерфейса -</option>
+        <option value="field">Поле контента</option>
+        <option value="photogallery">Фото-галерея</option>
+        <option value="menu">Меню</option>
+        <option value="breadcrumbs">Хлебные кношки</option>
+        <option value="shopping-cart">Корзина товаров</option>
+        <option value="products-list">Избранные товары</option>
+        <option value="comments">Отзывы</option>
+    </select>
+</div>
+<div class="twv-mb-3 twv-ui-components"></div>
+        `;
+        this.container.querySelector('.twv-inner').appendChild(div);
+        
+        const selectEl = this.container.querySelector('.twv-ui-element-select > select');
+
+        // Select UI element type
+        selectEl.addEventListener('change', (e) => {
+            this.onBlockUiTypeChange(elementSelected, e.target.value);
+        });
+        
+        // Button edit text
+        this.container.querySelector('.twv-button-edit-text').addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            console.log('EDIT_TEXT');
+            
+        });
+
+        // Button edit link
+        this.container.querySelector('.twv-button-edit-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (elementSelected.tagName.toLowerCase() !== 'a') {
+                alert('The selected item must have tag A.');
+                return;
+            }
+            console.log('EDIT_LINK');
+
+            this.clearMessage();
+            const componentsContainer = this.container.querySelector('.twv-ui-components');
+            const href = elementSelected.getAttribute('href');
+            componentsContainer.innerHTML = '';
+
+            const div = document.createElement('div');
+            div.innerHTML = `
+            <div class="twv-mb-3">
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">Ссылка</label>
+                <input type="text" id="tww-field-element-link" class="twv-form-control" value="${href}">
+            </div>
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            </div>
+            `;
+            componentsContainer.appendChild(div);
+        });
+
+        // Button delete element
+        this.container.querySelector('.twv-button-delete-element').addEventListener('click', (e) => {
+            e.preventDefault();
+
+            console.log('DELETE_ELEMENT');
+
+        });
+
+        const compStyles = window.getComputedStyle(elementSelected);
+        const position = compStyles.getPropertyValue('position');
+        const backgroundColor = compStyles.getPropertyValue('background-color');
+        if (position === 'static') {
+            elementSelected.style.position = 'relative';
+        }
+        if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {
+            // elementSelected.style.backgroundColor = '#fff';
+        }
+        const backgroundOverlay = document.createElement('div');
+        backgroundOverlay.className = 'twv-back-overlay';
+        // document.body.appendChild(backgroundOverlay);
+        this.insertBefore(backgroundOverlay, elementSelected);
+
+        this.setToParents(elementSelected, {transform: 'none'});
+
+        elementSelected.classList.add('twv-selected-element');
     }
 
     addNewTheme() {
@@ -700,6 +819,9 @@ class TwigVisual {
      * @param styles
      */
     setToParents(element, styles) {
+        if (!element) {
+            return;
+        }
         if (element.parentNode === document.body) {
             return;
         }
@@ -736,8 +858,4 @@ class TwigVisual {
     }
 }
 
-let twigVisual;
-
-TwigVisual.onReady(() => {
-    twigVisual = new TwigVisual();
-});
+const twigVisual = new TwigVisual();

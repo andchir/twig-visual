@@ -1,9 +1,9 @@
 @font-face {
   font-family: 'twv-icomoon';
   src:
-    url('fonts/twv-icomoon.ttf?mo5vzf') format('truetype'),
-    url('fonts/twv-icomoon.woff?mo5vzf') format('woff'),
-    url('fonts/twv-icomoon.svg?mo5vzf#twv-icomoon') format('svg');
+    url('fonts/twv-icomoon.ttf?gw6rdu') format('truetype'),
+    url('fonts/twv-icomoon.woff?gw6rdu') format('woff'),
+    url('fonts/twv-icomoon.svg?gw6rdu#twv-icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -24,6 +24,75 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.twv-icon-error:before {
+  content: "\e911";
+}
+.twv-icon-warningreport_problem:before {
+  content: "\e912";
+}
+.twv-icon-add:before {
+  content: "\e913";
+}
+.twv-icon-createmode_editedit:before {
+  content: "\e914";
+}
+.twv-icon-linkinsert_link:before {
+  content: "\e927";
+}
+.twv-icon-redo:before {
+  content: "\e915";
+}
+.twv-icon-remove:before {
+  content: "\e916";
+}
+.twv-icon-undo:before {
+  content: "\e917";
+}
+.twv-icon-gps_fixedmy_location:before {
+  content: "\e918";
+}
+.twv-icon-border_color:before {
+  content: "\e919";
+}
+.twv-icon-format_list_bulleted:before {
+  content: "\e91a";
+}
+.twv-icon-insert_drive_file:before {
+  content: "\e91b";
+}
+.twv-icon-insert_photoimagephoto:before {
+  content: "\e91c";
+}
+.twv-icon-folder:before {
+  content: "\e91d";
+}
+.twv-icon-computerlaptop:before {
+  content: "\e91e";
+}
+.twv-icon-desktop_windows:before {
+  content: "\e91f";
+}
+.twv-icon-tablet_mac:before {
+  content: "\e920";
+}
+.twv-icon-colorize:before {
+  content: "\e921";
+}
+.twv-icon-filter_none:before {
+  content: "\e922";
+}
+.twv-icon-photo_size_select_actual:before {
+  content: "\e923";
+}
+.twv-icon-help:before {
+  content: "\e924";
+}
+.twv-icon-help_outline:before {
+  content: "\e925";
+}
+.twv-icon-delete_outline:before {
+  content: "\e926";
+}
 .twv-icon-clearclose:before {
   content: "\e900";
 }

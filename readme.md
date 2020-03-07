@@ -15,6 +15,11 @@ Development:
 npx babel --presets=@babel/env --source-maps --watch src/index.js --out-file dist/twigvisual.js
 ~~~
 
+~~~
+npx babel --presets=@babel/env --source-maps --watch "index.js" \
+--out-file "../../../../../public/bundles/twigvisual/dist/twigvisual.js"
+~~~
+
 Production:
 ~~~
 npx babel --presets=@babel/env src/index.js --out-file dist/twig-visual.js
