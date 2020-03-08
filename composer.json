@@ -1,0 +1,15 @@
+{
+    "name": "andchir/twig-visual",
+    "description": "",
+    "type": "library",
+    "license": "",
+    "authors": [
+        {
+            "name": "andchir",
+            "email": "andchir@gmail.com"
+        }
+    ],
+    "require": {
+        "ivopetkov/html5-dom-document-php": "^2.2"
+    }
+}

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:dev": "npx babel --presets=@babel/env --source-maps --watch \"index.js\" --out-file \"../../../../../public/bundles/twigvisual/dist/twigvisual.js\"",
-    "build": "npx babel --presets=@babel/env \"index.js\" --out-file \"../public/dist/twig-visual.js\""
+    "build": "npx babel --presets=@babel/env \"index.js\" --out-file \"../public/dist/twigvisual.js\""
   },
   "author": "Andchir",
   "license": "",

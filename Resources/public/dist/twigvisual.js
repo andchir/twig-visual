@@ -18,6 +18,7 @@ function () {
     this.data = {};
     this.components = [];
     this.options = Object.assign({
+      templateName: '',
       uiOptions: {
         field: {
           components: []
@@ -275,6 +276,12 @@ function () {
         var elementSelected = document.querySelector('.twv-selected-element');
 
         if (elementSelected) {
+          elementSelected.contentEditable = false;
+
+          if (elementSelected.dataset.twvContent) {
+            elementSelected.textContent = elementSelected.dataset.twvContent;
+          }
+
           elementSelected.classList.remove('twv-selected-element');
         }
 
@@ -667,19 +674,41 @@ function () {
       var textContent = elementSelected.textContent.trim();
       componentsContainer.innerHTML = '';
       var div = document.createElement('div');
-      div.innerHTML = "\n            <div class=\"twv-mb-3\">\n                <label class=\"twv-display-block twv-mb-1\" for=\"tww-field-element-text\">\u0422\u0435\u043A\u0441\u0442</label>\n                ".concat(textContent.length <= 30 ? "<input type=\"text\" id=\"tww-field-element-text\" class=\"twv-form-control\" value=\"".concat(textContent, "\">") : "<textarea id=\"tww-field-element-text\" class=\"twv-form-control\" rows=\"5\">".concat(textContent, "</textarea>"), "\n            </div>\n            <div class=\"twv-mb-3\">\n                <button type=\"button\" class=\"twv-btn twv-btn-primary twv-mr-2 twv-button-submit\">\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C</button>\n                <button type=\"button\" class=\"twv-btn twv-btn twv-button-cancel\">\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C</button>\n            </div>\n            ");
+      div.innerHTML = "\n            <div class=\"twv-mb-3\">\n                <button type=\"button\" class=\"twv-btn twv-btn-primary twv-mr-2 twv-button-submit\">\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C</button>\n                <button type=\"button\" class=\"twv-btn twv-btn twv-button-cancel\">\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C</button>\n            </div>\n            ";
       componentsContainer.appendChild(div);
+      elementSelected.dataset.twvContent = textContent;
+      elementSelected.contentEditable = true;
+      elementSelected.focus();
       var buttonSubmit = this.container.querySelector('.twv-button-submit');
       var buttonCancel = this.container.querySelector('.twv-button-cancel'); // Submit data
 
       buttonSubmit.addEventListener('click', function (e) {
         e.preventDefault();
-        console.log('SUBMIT', _this8.data);
+        elementSelected.contentEditable = false;
+        buttonSubmit.setAttribute('disabled', 'disabled');
+        buttonCancel.setAttribute('disabled', 'disabled');
+
+        _this8.request('/twigvisual/edit_content', {
+          templateName: _this8.options.templateName,
+          xpath: _this8.data.source,
+          textContent: elementSelected.textContent.trim()
+        }, function (res) {
+          if (res.success) {
+            window.location.reload();
+          }
+        }, function (err) {
+          _this8.addErrorMessage(err.error || err);
+
+          buttonSubmit.removeAttribute('disabled');
+          buttonCancel.removeAttribute('disabled');
+        }, 'POST');
       }); // Cancel
 
       buttonCancel.addEventListener('click', function (e) {
         e.preventDefault();
+        elementSelected.contentEditable = false;
         componentsContainer.innerHTML = '';
+        elementSelected.textContent = textContent;
       });
     }
     /**
@@ -944,5 +973,3 @@ function () {
 
   return TwigVisual;
 }();
-
-var twigVisual = new TwigVisual();

@@ -8,6 +8,7 @@ class TwigVisual {
         this.data = {};
         this.components = [];
         this.options = Object.assign({
+            templateName: '',
             uiOptions: {
                 field: {
                     components: []
@@ -260,6 +261,10 @@ class TwigVisual {
             // Remove selection of parent element
             const elementSelected = document.querySelector('.twv-selected-element');
             if (elementSelected) {
+                elementSelected.contentEditable = false;
+                if (elementSelected.dataset.twvContent) {
+                    elementSelected.textContent = elementSelected.dataset.twvContent;
+                }
                 elementSelected.classList.remove('twv-selected-element');
             }
             this.setToParents(elementSelected, {transform: ''});
@@ -683,18 +688,15 @@ class TwigVisual {
         const div = document.createElement('div');
         div.innerHTML = `
             <div class="twv-mb-3">
-                <label class="twv-display-block twv-mb-1" for="tww-field-element-text">Текст</label>
-                ${textContent.length <= 30
-                ? `<input type="text" id="tww-field-element-text" class="twv-form-control" value="${textContent}">`
-                : `<textarea id="tww-field-element-text" class="twv-form-control" rows="5">${textContent}</textarea>`
-                }
-            </div>
-            <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
                 <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
             </div>
             `;
         componentsContainer.appendChild(div);
+
+        elementSelected.dataset.twvContent = textContent;
+        elementSelected.contentEditable = true;
+        elementSelected.focus();
 
         const buttonSubmit = this.container.querySelector('.twv-button-submit');
         const buttonCancel = this.container.querySelector('.twv-button-cancel');
@@ -702,15 +704,32 @@ class TwigVisual {
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
             e.preventDefault();
-
-            console.log('SUBMIT', this.data);
+            elementSelected.contentEditable = false;
+            buttonSubmit.setAttribute('disabled', 'disabled');
+            buttonCancel.setAttribute('disabled', 'disabled');
+            
+            this.request('/twigvisual/edit_content', {
+                templateName: this.options.templateName,
+                xpath: this.data.source,
+                textContent: elementSelected.textContent.trim()
+            }, (res) => {
+                if (res.success) {
+                    window.location.reload();
+                }
+            }, (err) => {
+                this.addErrorMessage(err.error || err);
+                buttonSubmit.removeAttribute('disabled');
+                buttonCancel.removeAttribute('disabled');
+            }, 'POST');
 
         });
 
         // Cancel
         buttonCancel.addEventListener('click', (e) => {
             e.preventDefault();
+            elementSelected.contentEditable = false;
             componentsContainer.innerHTML = '';
+            elementSelected.textContent = textContent;
         });
     }
 
@@ -970,5 +989,3 @@ class TwigVisual {
         referenceNode.parentNode.insertBefore(newNode, referenceNode);
     }
 }
-
-const twigVisual = new TwigVisual();

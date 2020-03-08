@@ -71,6 +71,32 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/edit_content", methods={"POST"})
+     * @return JsonResponse
+     */
+    public function editTextContentAction(Request $request, TranslatorInterface $translator)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+        $textContent = $data['textContent'] ?? '';
+        
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+        if (!$xpath) {
+            return $this->setError('XPath can not be empty.');
+        }
+        
+        $result = $this->service->editTextContent($templateName, $xpath, $textContent);
+
+        return $this->json([
+            'success' => $result,
+            'message' => $this->service->getErrorMessage()
+        ]);
+    }
+
+    /**
      * @param $message
      * @param int $status
      * @return JsonResponse

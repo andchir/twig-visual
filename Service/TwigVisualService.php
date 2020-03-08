@@ -16,6 +16,8 @@ class TwigVisualService {
     protected $params;
     /** @var array */
     protected $config;
+    private $errorMessage = '';
+    private $isError = false;
 
     public function __construct(ContainerInterface $container, ParameterBagInterface $params, TwigEnvironment $twig, array $config = [])
     {
@@ -27,6 +29,23 @@ class TwigVisualService {
         } else {
             $this->config = $config;
         }
+    }
+
+    /**
+     * @param string $errorMessage
+     */
+    public function setErrorMessage($errorMessage)
+    {
+        $this->isError = true;
+        $this->errorMessage = $errorMessage;
+    }
+
+    /**
+     * @return string
+     */
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
     }
 
     /**
@@ -81,15 +100,73 @@ class TwigVisualService {
         
         // TvigVisual assets
         $twvContent = '
-        {% if app.environment == \'dev\' %}
+        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
             <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
             <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
             <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
+            <script>
+				const twigVisual = new TwigVisual({
+					templateName: \'{{ _self }}\'
+				});
+			</script>
         {% endif %}
         ';
         $templateContent = str_replace('</head>', $twvContent . PHP_EOL . '</head>', $templateContent);
         
         return $templateContent;
+    }
+
+    /**
+     * @param string $templateName
+     * @param string $xpathQuery
+     * @param string $textContent
+     * @return bool
+     */
+    public function editTextContent($templateName, $xpathQuery, $textContent)
+    {
+        try {
+            $templateData = $this->getTemplateSource($templateName);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+
+        $doc = new \IvoPetkov\HTML5DOMDocument();
+
+        $doc->loadHTML($templateData['source_code']);
+        $xpath = new \DOMXPath($doc);
+
+        /** @var \DOMNodeList $entries */
+        $entries = $xpath->evaluate($xpathQuery, $doc);
+        if ($entries->count() === 0) {
+            $this->setErrorMessage('Element not found.');
+            return false;
+        }
+
+        $entries->item(0)->textContent = trim($textContent);
+        $htmlContent = $doc->saveHTML();
+        $htmlContent = str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D'], ['{{ ', '{{', ' }}', '}}'], $htmlContent);
+
+        file_put_contents($templateData['file_path'], $htmlContent);
+        
+        return true;
+    }
+
+    /**
+     * @param string $templateName
+     * @return array
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\SyntaxError
+     */
+    public function getTemplateSource($templateName)
+    {
+        $template = $this->twig->resolveTemplate($templateName);
+        $templateSource = $template->getSourceContext();
+        return [
+            'file_path' => $templateSource->getPath(),
+            'starting_line' => 1,
+            'source_code' => $templateSource->getCode(),
+        ];
     }
 
     /**
