@@ -3,9 +3,11 @@ class TwigVisual {
 
     constructor(options) {
         this.container = null;
+        this.loading = false;
         this.parentElement = null;
         this.dataKey = 'source';
         this.data = {};
+        this.timer = null;
         this.components = [];
         this.options = Object.assign({
             templateName: '',
@@ -707,12 +709,15 @@ class TwigVisual {
             elementSelected.contentEditable = false;
             buttonSubmit.setAttribute('disabled', 'disabled');
             buttonCancel.setAttribute('disabled', 'disabled');
+
+            this.showLoading(true);
             
             this.request('/twigvisual/edit_content', {
                 templateName: this.options.templateName,
                 xpath: this.data.source,
                 textContent: elementSelected.textContent.trim()
             }, (res) => {
+                this.showLoading(false);
                 if (res.success) {
                     window.location.reload();
                 }
@@ -720,8 +725,8 @@ class TwigVisual {
                 this.addErrorMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
                 buttonCancel.removeAttribute('disabled');
+                this.showLoading(false);
             }, 'POST');
-
         });
 
         // Cancel
@@ -810,8 +815,22 @@ class TwigVisual {
         buttonSubmit.addEventListener('click', (e) => {
             e.preventDefault();
 
-            console.log('SUBMIT', this.data);
+            this.showLoading(true);
 
+            this.request('/twigvisual/delete_element', {
+                templateName: this.options.templateName,
+                xpath: this.data.source
+            }, (res) => {
+                this.showLoading(false);
+                if (res.success) {
+                    window.location.reload();
+                }
+            }, (err) => {
+                this.addErrorMessage(err.error || err);
+                buttonSubmit.removeAttribute('disabled');
+                buttonCancel.removeAttribute('disabled');
+                this.showLoading(false);
+            }, 'POST');
         });
 
         // Cancel
@@ -854,6 +873,7 @@ class TwigVisual {
                 return;
             }
 
+            this.showLoading(true);
             buttonEl.setAttribute('disabled', 'disabled');
 
             this.request('/twigvisual/create', {
@@ -865,6 +885,7 @@ class TwigVisual {
             }, (err) => {
                 this.addErrorMessage(err.error || err);
                 buttonEl.removeAttribute('disabled');
+                this.showLoading(false);
             }, 'POST');
         });
 
@@ -873,6 +894,15 @@ class TwigVisual {
             innerContainerEl.innerHTML = '';
         });
     }
+    
+    showLoading(enabled = true) {
+        this.loading = enabled;
+        if (enabled) {
+            this.container.classList.add('twv-loading');
+        } else {
+            this.container.classList.remove('twv-loading');
+        }
+    }
 
     /**
      * Show message
@@ -880,6 +910,7 @@ class TwigVisual {
      * @param type
      */
     addErrorMessage(message, type = 'danger') {
+        clearTimeout(this.timer);
         const innerContainerEl = this.container.querySelector('.twv-inner');
         if (innerContainerEl.querySelector('.twv-alert')) {
             this.removeEl(innerContainerEl.querySelector('.twv-alert'));
@@ -889,7 +920,14 @@ class TwigVisual {
         <div class="twv-alert twv-alert-${type}">${message}</div>
         `;
         innerContainerEl.appendChild(div);
-        setTimeout(this.clearMessage.bind(this), 3000);
+
+        div.addEventListener('mouseenter', () => {
+            clearTimeout(this.timer);
+        });
+        div.addEventListener('mouseleave', () => {
+            this.timer = setTimeout(this.clearMessage.bind(this), 3000);
+        });
+        this.timer = setTimeout(this.clearMessage.bind(this), 3000);
     }
     
     clearMessage() {

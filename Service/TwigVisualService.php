@@ -2,8 +2,12 @@
 
 namespace Andchir\TwigVisualBundle\Service;
 
+use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Twig\Environment as TwigEnvironment;
@@ -14,18 +18,26 @@ class TwigVisualService {
     protected $twig;
     /** @var ParameterBagInterface */
     protected $params;
+    /** @var KernelInterface */
+    protected $kernel;
     /** @var array */
     protected $config;
     private $errorMessage = '';
     private $isError = false;
 
-    public function __construct(ContainerInterface $container, ParameterBagInterface $params, TwigEnvironment $twig, array $config = [])
+    public function __construct(
+        ParameterBagInterface $params,
+        TwigEnvironment $twig,
+        KernelInterface $kernel,
+        array $config = []
+    )
     {
+        $this->kernel = $kernel;
         $this->params = $params;
         $this->twig = $twig;
         
-        if (empty($config) && $container->hasParameter('twigvisual_config')) {
-            $this->config = $container->getParameter('twigvisual_config');
+        if (empty($config) && $params->has('twigvisual_config')) {
+            $this->config = $params->get('twigvisual_config');
         } else {
             $this->config = $config;
         }
@@ -124,6 +136,71 @@ class TwigVisualService {
      */
     public function editTextContent($templateName, $xpathQuery, $textContent)
     {
+        if (!($result = $this->getDocumentNode($templateName, $xpathQuery))) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+
+        list($templateFilePath, $doc, $node) = $result;
+        $node->textContent = trim($textContent);
+
+        return $this->saveTemplateContent($doc, $templateFilePath);
+    }
+
+    /**
+     * Delete element
+     * @param string $templateName
+     * @param string $xpathQuery
+     */
+    public function deleteElement($templateName, $xpathQuery)
+    {
+        if (!($result = $this->getDocumentNode($templateName, $xpathQuery))) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        
+        list($templateFilePath, $doc, $node) = $result;
+
+        try {
+            $node->parentNode->removeChild($node);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        
+        return $this->saveTemplateContent($doc, $templateFilePath);
+    }
+
+    /**
+     * @param \IvoPetkov\HTML5DOMDocument $doc
+     * @param string $templateFilePath
+     * @param bool $clearCache
+     * @return bool
+     */
+    public function saveTemplateContent(\IvoPetkov\HTML5DOMDocument $doc, $templateFilePath, $clearCache = true)
+    {
+        if (!is_writable($templateFilePath)) {
+            $this->setErrorMessage('Template is not writable.');
+            return false;
+        }
+        $htmlContent = $doc->saveHTML();
+        $htmlContent = str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D'], ['{{ ', '{{', ' }}', '}}'], $htmlContent);
+
+        file_put_contents($templateFilePath, $htmlContent);
+
+        if ($clearCache) {
+            $this->systemCacheClear();
+        }
+        return true;
+    }
+
+    /**
+     * @param string $templateName
+     * @param string $xpathQuery
+     * @return array|bool
+     */
+    public function getDocumentNode($templateName, $xpathQuery)
+    {
         try {
             $templateData = $this->getTemplateSource($templateName);
         } catch (\Exception $e) {
@@ -143,13 +220,7 @@ class TwigVisualService {
             return false;
         }
 
-        $entries->item(0)->textContent = trim($textContent);
-        $htmlContent = $doc->saveHTML();
-        $htmlContent = str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D'], ['{{ ', '{{', ' }}', '}}'], $htmlContent);
-
-        file_put_contents($templateData['file_path'], $htmlContent);
-        
-        return true;
+        return [$templateData['file_path'], $doc, $entries->item(0)];
     }
 
     /**
@@ -167,6 +238,32 @@ class TwigVisualService {
             'starting_line' => 1,
             'source_code' => $templateSource->getCode(),
         ];
+    }
+
+    /**
+     * @param string|null $environment
+     * @return bool
+     */
+    public function systemCacheClear($environment = null)
+    {
+        if (!$environment) {
+            $environment = $this->kernel->getEnvironment();
+        }
+        $application = new Application($this->kernel);
+        $application->setAutoExit(false);
+
+        $input = new ArrayInput([
+            'command' => 'cache:clear',
+            '--env' => $environment,
+            '--quiet' => '1'
+            // '--no-warmup' => '1'
+        ]);
+
+        $output = new BufferedOutput();
+        $application->run($input, $output);
+        $output->fetch();
+
+        return $output->fetch() ?: true;
     }
 
     /**

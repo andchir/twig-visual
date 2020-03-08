@@ -72,6 +72,8 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/edit_content", methods={"POST"})
+     * @param Request $request
+     * @param TranslatorInterface $translator
      * @return JsonResponse
      */
     public function editTextContentAction(Request $request, TranslatorInterface $translator)
@@ -87,15 +89,39 @@ class DefaultController extends AbstractController
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
         }
-        
-        $result = $this->service->editTextContent($templateName, $xpath, $textContent);
-
+        if (!$this->service->editTextContent($templateName, $xpath, $textContent)) {
+            return $this->setError($this->service->getErrorMessage());
+        }
         return $this->json([
-            'success' => $result,
-            'message' => $this->service->getErrorMessage()
+            'success' => true
         ]);
     }
 
+    /**
+     * @Route("/delete_element", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function deleteElementAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+        if (!$xpath) {
+            return $this->setError('XPath can not be empty.');
+        }
+        if (!$this->service->deleteElement($templateName, $xpath)) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+        return $this->json([
+            'success' => true
+        ]);
+    }
+    
     /**
      * @param $message
      * @param int $status
