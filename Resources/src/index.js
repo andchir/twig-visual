@@ -447,16 +447,18 @@ class TwigVisual {
             }
         });
 
+        let div = document.createElement('div');
+        div.className = 'twv-pt-1 twv-mb-3';
         const opt = this.options.uiOptions[typeValue];
         this.components = opt.components;
         this.components.forEach((cmp) => {
-            const div = document.createElement('div');
-            div.className = 'twv-mb-2';
-            div.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
+            const d = document.createElement('div');
+            d.className = 'twv-mb-2';
+            d.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
 
-            componentsContainer.appendChild(div);
+            div.appendChild(d);
 
-            div.querySelector('button').addEventListener('click', (e) => {
+            d.querySelector('button').addEventListener('click', (e) => {
                 e.preventDefault();
                 if (this.state === 'active') {
                     return;
@@ -465,15 +467,15 @@ class TwigVisual {
                 this.selectModeToggle(parentElement, cmp.name, false);
             });
         });
+        componentsContainer.appendChild(div);
         
-        const div = document.createElement('div');
+        div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
             <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Применить</button>
             <button type="button" class="twv-btn twv-button-cancel">Отменить</button>
         `;
         componentsContainer.appendChild(div);
-
 
         const buttonSubmit = this.container.querySelector('.twv-button-submit');
         const buttonCancel = this.container.querySelector('.twv-button-cancel');
@@ -629,45 +631,19 @@ class TwigVisual {
         // Button edit text
         this.container.querySelector('.twv-button-edit-text').addEventListener('click', (e) => {
             e.preventDefault();
-            
-            console.log('EDIT_TEXT');
-            
+            this.editTextContentInit(elementSelected);
         });
 
         // Button edit link
         this.container.querySelector('.twv-button-edit-link').addEventListener('click', (e) => {
             e.preventDefault();
-            if (elementSelected.tagName.toLowerCase() !== 'a') {
-                alert('The selected item must have tag A.');
-                return;
-            }
-            console.log('EDIT_LINK');
-
-            this.clearMessage();
-            const componentsContainer = this.container.querySelector('.twv-ui-components');
-            const href = elementSelected.getAttribute('href');
-            componentsContainer.innerHTML = '';
-
-            const div = document.createElement('div');
-            div.innerHTML = `
-            <div class="twv-mb-3">
-                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">Ссылка</label>
-                <input type="text" id="tww-field-element-link" class="twv-form-control" value="${href}">
-            </div>
-            <div class="twv-mb-3">
-                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
-            </div>
-            `;
-            componentsContainer.appendChild(div);
+            this.editLinkInit(elementSelected);
         });
 
         // Button delete element
         this.container.querySelector('.twv-button-delete-element').addEventListener('click', (e) => {
             e.preventDefault();
-
-            console.log('DELETE_ELEMENT');
-
+            this.deleteElementInit(elementSelected);
         });
 
         const compStyles = window.getComputedStyle(elementSelected);
@@ -687,6 +663,143 @@ class TwigVisual {
         this.setToParents(elementSelected, {transform: 'none'});
 
         elementSelected.classList.add('twv-selected-element');
+    }
+
+    /**
+     * Edit text content
+     * @param {HTMLElement} elementSelected
+     */
+    editTextContentInit(elementSelected) {
+        const children = elementSelected.children;
+        if (children.length > 0) {
+            alert('The selected item must not have children.');
+            return;
+        }
+        this.clearMessage();
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        const textContent = elementSelected.textContent.trim();
+        componentsContainer.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div class="twv-mb-3">
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-text">Текст</label>
+                ${textContent.length <= 30
+                ? `<input type="text" id="tww-field-element-text" class="twv-form-control" value="${textContent}">`
+                : `<textarea id="tww-field-element-text" class="twv-form-control" rows="5">${textContent}</textarea>`
+                }
+            </div>
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            </div>
+            `;
+        componentsContainer.appendChild(div);
+
+        const buttonSubmit = this.container.querySelector('.twv-button-submit');
+        const buttonCancel = this.container.querySelector('.twv-button-cancel');
+
+        // Submit data
+        buttonSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            console.log('SUBMIT', this.data);
+
+        });
+
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            componentsContainer.innerHTML = '';
+        });
+    }
+
+    /**
+     * Edit link
+     * @param {HTMLElement} elementSelected
+     */
+    editLinkInit(elementSelected) {
+        if (elementSelected.tagName.toLowerCase() !== 'a') {
+            alert('The selected item must have tag A.');
+            return;
+        }
+        console.log('EDIT_LINK');
+
+        this.clearMessage();
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        const href = elementSelected.getAttribute('href');
+        componentsContainer.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div class="twv-mb-3">
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">Ссылка</label>
+                <input type="text" id="tww-field-element-link" class="twv-form-control" value="${href}">
+            </div>
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            </div>
+            `;
+        componentsContainer.appendChild(div);
+
+        const buttonSubmit = this.container.querySelector('.twv-button-submit');
+        const buttonCancel = this.container.querySelector('.twv-button-cancel');
+
+        // Submit data
+        buttonSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            console.log('SUBMIT', this.data);
+
+        });
+
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            componentsContainer.innerHTML = '';
+        });
+    }
+
+    /**
+     * Delete selected element
+     * @param {HTMLElement} elementSelected
+     */
+    deleteElementInit(elementSelected) {
+        
+        console.log('DELETE');
+
+        this.clearMessage();
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        const textContent = elementSelected.textContent.trim();
+        componentsContainer.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div class="twv-mb-3">Вы уверены, что хотите удалить выбранный элемент?</div>
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Подтвердить</button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            </div>
+            `;
+        componentsContainer.appendChild(div);
+
+        const buttonSubmit = this.container.querySelector('.twv-button-submit');
+        const buttonCancel = this.container.querySelector('.twv-button-cancel');
+
+        // Submit data
+        buttonSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            console.log('SUBMIT', this.data);
+
+        });
+
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            componentsContainer.innerHTML = '';
+        });
     }
 
     addNewTheme() {

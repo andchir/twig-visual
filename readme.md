@@ -12,15 +12,10 @@ Add to base template before </head> tag:
 
 Development:
 ~~~
-npx babel --presets=@babel/env --source-maps --watch src/index.js --out-file dist/twigvisual.js
-~~~
-
-~~~
-npx babel --presets=@babel/env --source-maps --watch "index.js" \
---out-file "../../../../../public/bundles/twigvisual/dist/twigvisual.js"
+npm run build:dev
 ~~~
 
 Production:
 ~~~
-npx babel --presets=@babel/env src/index.js --out-file dist/twig-visual.js
+npm run build
 ~~~
