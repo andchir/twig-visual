@@ -84,7 +84,6 @@ class TwigVisualService {
         
         // Scripts
         preg_match_all('/(?:"|\')(?:[^"\']+)\.js(?:"|\')/', $templateContent, $matches);
-        var_dump($matches);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $input) {
                 $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr($input, 1);
@@ -134,7 +133,7 @@ class TwigVisualService {
      * @param string $textContent
      * @return bool
      */
-    public function editTextContent($templateName, $xpathQuery, $textContent)
+    public function editTextContent($templateName, $xpathQuery, $innerHTML)
     {
         if (!($result = $this->getDocumentNode($templateName, $xpathQuery))) {
             $this->setErrorMessage($e->getMessage());
@@ -142,7 +141,7 @@ class TwigVisualService {
         }
 
         list($templateFilePath, $doc, $node) = $result;
-        $node->textContent = trim($textContent);
+        $node->innerHTML = $innerHTML;
 
         return $this->saveTemplateContent($doc, $templateFilePath);
     }
@@ -267,6 +266,32 @@ class TwigVisualService {
     }
 
     /**
+     * Delete system cache files
+     * @return bool
+     */
+    public function systemCacheFilesDelete($needReboot = true)
+    {
+        $cacheDirPath = $this->kernel->getCacheDir();
+        $warmupDir = $cacheDirPath . '_';
+        if (!is_dir($cacheDirPath)) {
+            return true;
+        }
+        if (is_dir($warmupDir)) {
+            self::delDir($warmupDir);
+        }
+        try {
+            rename($cacheDirPath, $warmupDir);
+            $result = true;
+        } catch (\Exception $e) {
+            $result = false;
+        }
+        if ($result && $needReboot) {
+            $this->kernel->reboot($cacheDirPath);
+        }
+        return $result;
+    }
+
+    /**
      * @param $themeName
      * @return string|null
      */
@@ -316,5 +341,20 @@ class TwigVisualService {
         $temp_arr = $filePath ? explode('.', $filePath) : [];
         $ext = !empty($temp_arr) ? end($temp_arr) : '';
         return strtolower($ext);
+    }
+
+    /**
+     * Recursively delete directory
+     * @param $dir
+     * @return bool
+     */
+    public static function delDir($dir) {
+        $files = array_diff(scandir($dir), ['.','..']);
+        foreach ($files as $file) {
+            is_dir("$dir/$file")
+                ? self::delDir("$dir/$file")
+                : unlink("$dir/$file");
+        }
+        return rmdir($dir);
     }
 }

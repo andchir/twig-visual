@@ -677,11 +677,6 @@ class TwigVisual {
      * @param {HTMLElement} elementSelected
      */
     editTextContentInit(elementSelected) {
-        const children = elementSelected.children;
-        if (children.length > 0) {
-            alert('The selected item must not have children.');
-            return;
-        }
         this.clearMessage();
         const componentsContainer = this.container.querySelector('.twv-ui-components');
         const textContent = elementSelected.textContent.trim();
@@ -715,9 +710,8 @@ class TwigVisual {
             this.request('/twigvisual/edit_content', {
                 templateName: this.options.templateName,
                 xpath: this.data.source,
-                textContent: elementSelected.textContent.trim()
+                textContent: elementSelected.innerHTML
             }, (res) => {
-                this.showLoading(false);
                 if (res.success) {
                     window.location.reload();
                 }
@@ -781,7 +775,9 @@ class TwigVisual {
         // Cancel
         buttonCancel.addEventListener('click', (e) => {
             e.preventDefault();
+            elementSelected.contentEditable = false;
             componentsContainer.innerHTML = '';
+            elementSelected.textContent = textContent;
         });
     }
 
@@ -821,7 +817,6 @@ class TwigVisual {
                 templateName: this.options.templateName,
                 xpath: this.data.source
             }, (res) => {
-                this.showLoading(false);
                 if (res.success) {
                     window.location.reload();
                 }
@@ -880,7 +875,6 @@ class TwigVisual {
                 theme: fieldThemeEl.value,
                 mainpage: fieldMainpageEl.value
             }, (res) => {
-                console.log(res);
                 buttonEl.removeAttribute('disabled');
             }, (err) => {
                 this.addErrorMessage(err.error || err);

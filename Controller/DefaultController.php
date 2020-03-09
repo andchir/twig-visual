@@ -92,6 +92,7 @@ class DefaultController extends AbstractController
         if (!$this->service->editTextContent($templateName, $xpath, $textContent)) {
             return $this->setError($this->service->getErrorMessage());
         }
+
         return $this->json([
             'success' => true
         ]);
