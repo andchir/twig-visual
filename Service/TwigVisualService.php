@@ -135,13 +135,36 @@ class TwigVisualService {
      */
     public function editTextContent($templateName, $xpathQuery, $innerHTML)
     {
-        if (!($result = $this->getDocumentNode($templateName, $xpathQuery))) {
+        try {
+            $result = $this->getDocumentNode($templateName, $xpathQuery);
+        } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
-
         list($templateFilePath, $doc, $node) = $result;
         $node->innerHTML = $innerHTML;
+
+        return $this->saveTemplateContent($doc, $templateFilePath);
+    }
+
+    /**
+     * @param string $templateName
+     * @param string $xpathQuery
+     * @param array $attributes
+     * @return bool
+     */
+    public function editAttributes($templateName, $xpathQuery, $attributes)
+    {
+        try {
+            $result = $this->getDocumentNode($templateName, $xpathQuery);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        list($templateFilePath, $doc, $node) = $result;
+        foreach ($attributes as $key => $value) {
+            $node->setAttribute($key, $value);
+        }
 
         return $this->saveTemplateContent($doc, $templateFilePath);
     }
@@ -153,11 +176,12 @@ class TwigVisualService {
      */
     public function deleteElement($templateName, $xpathQuery)
     {
-        if (!($result = $this->getDocumentNode($templateName, $xpathQuery))) {
+        try {
+            $result = $this->getDocumentNode($templateName, $xpathQuery);
+        } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
-        
         list($templateFilePath, $doc, $node) = $result;
 
         try {
@@ -200,13 +224,7 @@ class TwigVisualService {
      */
     public function getDocumentNode($templateName, $xpathQuery)
     {
-        try {
-            $templateData = $this->getTemplateSource($templateName);
-        } catch (\Exception $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
-        }
-
+        $templateData = $this->getTemplateSource($templateName);
         $doc = new \IvoPetkov\HTML5DOMDocument();
 
         $doc->loadHTML($templateData['source_code']);
@@ -215,8 +233,7 @@ class TwigVisualService {
         /** @var \DOMNodeList $entries */
         $entries = $xpath->evaluate($xpathQuery, $doc);
         if ($entries->count() === 0) {
-            $this->setErrorMessage('Element not found.');
-            return false;
+            throw new \Exception('Element not found.');
         }
 
         return [$templateData['file_path'], $doc, $entries->item(0)];

@@ -99,6 +99,38 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/edit_link", methods={"POST"})
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     */
+    public function editLinkAction(Request $request, TranslatorInterface $translator)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+        $href = $data['href'] ?? '';
+        $target = $data['target'] ?? '_self';
+
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+        if (!$xpath) {
+            return $this->setError('XPath can not be empty.');
+        }
+        if (!$this->service->editAttributes($templateName, $xpath, [
+            'href' => $href,
+            'target' => $target
+        ])) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
      * @Route("/delete_element", methods={"POST"})
      * @param Request $request
      * @return JsonResponse
@@ -118,6 +150,23 @@ class DefaultController extends AbstractController
         if (!$this->service->deleteElement($templateName, $xpath)) {
             return $this->setError($this->service->getErrorMessage());
         }
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
+     * @Route("/insert/{type}", methods={"POST"})
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     */
+    public function insertAction(Request $request, TranslatorInterface $translator, $type)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        var_dump($type, $data);
+
         return $this->json([
             'success' => true
         ]);
