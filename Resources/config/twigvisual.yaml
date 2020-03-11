@@ -1,0 +1,33 @@
+twig_visual:
+    ui:
+        menu:
+            -
+                name: source
+                title: Корневой элемент
+                type: elementSelect
+                template: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
+                templatePath: nav
+            -
+                name: containerFirst
+                title: Контейнер первого уровня
+                type: elementSelect
+            -
+                name: itemFirst
+                title: Пункт меню первого уровня
+                type: elementSelect
+            -
+                name: containerSecond
+                title: Контейнер второго уровня
+                type: elementSelect
+            -
+                name: itemSecond
+                title: Пункт меню второго уровня
+                type: elementSelect
+            -
+                name: containerThird
+                title: Пункт меню третьего уровня
+                type: elementSelect
+            -
+                name: itemThird
+                title: Пункт меню третьего уровня
+                type: elementSelect

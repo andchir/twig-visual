@@ -21,10 +21,19 @@ class TwigVisual {
                 menu: {
                     components: [
                         {
-                            name: "firstItem", title: "Пункт меню первого уровня", type: ""
+                            name: "containerFirst", title: "Контейнер первого уровня", type: ""
                         },
                         {
-                            name: "secondItem", title: "Пункт меню второго уровня", type: ""
+                            name: "itemFirst", title: "Пункт меню первого уровня", type: ""
+                        },
+                        {
+                            name: "containerSecond", title: "Контейнер второго уровня", type: ""
+                        },
+                        {
+                            name: "itemSecond", title: "Пункт меню второго уровня", type: ""
+                        },
+                        {
+                            name: "containerThird", title: "Контейнер третьего уровня", type: ""
                         },
                         {
                             name: "thirdItem", title: "Пункт меню третьего уровня", type: ""
@@ -112,7 +121,7 @@ class TwigVisual {
                 this.selectModeToggle();
             }
             this.selectionModeDestroy(true);
-            this.addNewTheme();
+            this.addNewThemeInit();
         });
 
         document.body.addEventListener('keyup', (e) => {
@@ -499,13 +508,20 @@ class TwigVisual {
             buttonCancel.setAttribute('disabled', 'disabled');
 
             this.showLoading(true);
-
-            this.request(`/twigvisual/insert/${typeValue}`, this.data, (res) => {
+            const data = {
+                templateName: this.options.templateName,
+                data: this.data
+            };
+            this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {
                 if (res.success) {
                     window.location.reload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
                 }
             }, (err) => {
-                this.addErrorMessage(err.error || err);
+                this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
@@ -731,9 +747,13 @@ class TwigVisual {
             }, (res) => {
                 if (res.success) {
                     window.location.reload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
                 }
             }, (err) => {
-                this.addErrorMessage(err.error || err);
+                this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
@@ -801,9 +821,13 @@ class TwigVisual {
             }, (res) => {
                 if (res.success) {
                     window.location.reload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
                 }
             }, (err) => {
-                this.addErrorMessage(err.error || err);
+                this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
@@ -854,9 +878,13 @@ class TwigVisual {
             }, (res) => {
                 if (res.success) {
                     window.location.reload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
                 }
             }, (err) => {
-                this.addErrorMessage(err.error || err);
+                this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
@@ -870,7 +898,7 @@ class TwigVisual {
         });
     }
 
-    addNewTheme() {
+    addNewThemeInit() {
 
         this.clearMessage();
         const innerContainerEl = this.container.querySelector('.twv-inner');
@@ -911,8 +939,13 @@ class TwigVisual {
                 mainpage: fieldMainpageEl.value
             }, (res) => {
                 buttonEl.removeAttribute('disabled');
+                this.showLoading(false);
+                innerContainerEl.innerHTML = '';
+                if (res.message) {
+                    this.addAlertMessage(res.message, 'success');
+                }
             }, (err) => {
-                this.addErrorMessage(err.error || err);
+                this.addAlertMessage(err.error || err);
                 buttonEl.removeAttribute('disabled');
                 this.showLoading(false);
             }, 'POST');
@@ -938,7 +971,7 @@ class TwigVisual {
      * @param message
      * @param type
      */
-    addErrorMessage(message, type = 'danger') {
+    addAlertMessage(message, type = 'danger') {
         clearTimeout(this.timer);
         const innerContainerEl = this.container.querySelector('.twv-inner');
         if (innerContainerEl.querySelector('.twv-alert')) {
@@ -954,9 +987,9 @@ class TwigVisual {
             clearTimeout(this.timer);
         });
         div.addEventListener('mouseleave', () => {
-            this.timer = setTimeout(this.clearMessage.bind(this), 3000);
+            this.timer = setTimeout(this.clearMessage.bind(this), 4000);
         });
-        this.timer = setTimeout(this.clearMessage.bind(this), 3000);
+        this.timer = setTimeout(this.clearMessage.bind(this), 4000);
     }
     
     clearMessage() {

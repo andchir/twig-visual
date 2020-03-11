@@ -59,10 +59,9 @@ class DefaultController extends AbstractController
         if (!is_dir($templateDirPath)) {
             mkdir($templateDirPath);
         }
-        //if (!file_exists($mainPageTemplateFilePath)) {
-            $templateContent = $this->service->prepareTemplateContent($mainPagePublicFilePath, $themeName);
-            file_put_contents($mainPageTemplateFilePath, $templateContent);
-        //}
+
+        $templateContent = $this->service->prepareTemplateContent($mainPagePublicFilePath, $themeName);
+        file_put_contents($mainPageTemplateFilePath, $templateContent);
         
         return $this->json([
             'success' => true,
@@ -164,8 +163,24 @@ class DefaultController extends AbstractController
     public function insertAction(Request $request, TranslatorInterface $translator, $type)
     {
         $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $uiBlockConfig = $this->service->getConfigValue('ui', $type,  []);
 
-        var_dump($type, $data);
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+        if (!isset($data['data']) || !isset($data['data']['source'])) {
+            return $this->setError('Please select a root item.');
+        }
+        try {
+            $result = $this->service->getDocumentNode($templateName, $data['data']['source']);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+            return false;
+        }
+        list($templateFilePath, $doc, $node) = $result;
+
+        var_dump($type, $data, $uiBlockConfig);
 
         return $this->json([
             'success' => true

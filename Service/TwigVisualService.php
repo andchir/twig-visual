@@ -61,6 +61,27 @@ class TwigVisualService {
     }
 
     /**
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * @param string $key
+     * @param string $default
+     * @return mixed|string
+     */
+    public function getConfigValue($key, $secondKey = null, $default = '')
+    {
+        if ($key && $secondKey) {
+            return isset($this->config[$key]) ? ($this->config[$key][$secondKey] ?? $default) : $default;
+        }
+        return $this->config[$key] ?? $default;
+    }
+
+    /**
      * @param $templatePublicFilePath
      * @return false|string
      */
@@ -337,7 +358,7 @@ class TwigVisualService {
      */
     public function getTemplatesDirPath()
     {
-        return dirname(dirname($this->twig->getLoader()->getSourceContext('base.html.twig')->getPath()));
+        return dirname(dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath()));
     }
 
     /**

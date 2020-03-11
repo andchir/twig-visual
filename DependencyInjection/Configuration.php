@@ -19,11 +19,15 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('twigvisual');
 
-//        $treeBuilder->getRootNode()
-//            ->children()
-//                ->scalarNode('comment_class')->end()
-//                ->scalarNode('status_default')->end()
-//            ->end();
+        $treeBuilder->getRootNode()
+            ->children()
+                ->arrayNode('ui')
+                    ->useAttributeAsKey('name')
+                    ->arrayPrototype()
+                        ->prototype('variable')
+                    ->end()
+                ->end()
+            ->end();
 
         return $treeBuilder;
     }
