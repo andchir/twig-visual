@@ -180,7 +180,7 @@ class DefaultController extends AbstractController
         }
         list($templateFilePath, $doc, $node) = $result;
 
-        var_dump($type, $data, $uiBlockConfig);
+        var_dump($uiBlockConfig['root']);
 
         return $this->json([
             'success' => true

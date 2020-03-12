@@ -1,33 +1,75 @@
 twig_visual:
     ui:
         menu:
-            -
-                name: source
+            root:
                 title: Корневой элемент
                 type: elementSelect
-                template: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
-                templatePath: nav
-            -
-                name: containerFirst
+                src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
+                template:
+                    <root>
+                        <containerFirst></containerFirst>
+                    </root>
+                templatePath: nav/menu_dropdown
+
+            containerFirst:
                 title: Контейнер первого уровня
                 type: elementSelect
-            -
-                name: itemFirst
+                template:
+                    <containerFirst>
+                        {% for category in children %}
+                            <itemFirst></itemFirst>
+                        {%  endfor %}
+                    </containerFirst>
+
+            itemFirst:
                 title: Пункт меню первого уровня
                 type: elementSelect
-            -
-                name: containerSecond
+                template:
+                    <itemFirst>
+                        <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
+                        {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
+                    </itemFirst>
+
+            containerSecond:
                 title: Контейнер второго уровня
                 type: elementSelect
-            -
-                name: itemSecond
+                template:
+                    <containerSecond>
+                        {% for category in children %}
+                            <itemSecond></itemSecond>
+                        {%  endfor %}
+                    </containerSecond>
+                templatePath: nav/menu_dropdown_child
+
+            itemSecond:
                 title: Пункт меню второго уровня
                 type: elementSelect
-            -
-                name: containerThird
+                template:
+                    <itemSecond>
+                        <a href="{{ catalogPath(category.uri, '', category) }}">
+                            {{ category.title }}
+                        </a>
+                        {{ categoriesTree(category.id, 'menu_dropdown_child_child', category) }}
+                    </itemSecond>
+
+            containerThird:
                 title: Пункт меню третьего уровня
                 type: elementSelect
-            -
-                name: itemThird
+                template:
+                    <containerThird>
+                        {% for category in children %}
+                            <itemThird></itemThird>
+                        {%  endfor %}
+                    </containerThird>
+                templatePath: nav/menu_dropdown_child_child
+
+            itemThird:
                 title: Пункт меню третьего уровня
                 type: elementSelect
+                template:
+                    <itemThird>
+                        <a href="{{ catalogPath(category.uri, '', category) }}">
+                            {{ category.title }}
+                        </a>
+                        {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
+                    </itemThird>
