@@ -221,6 +221,9 @@ class TwigVisual {
             this.createSelectionOptions(xpath);
         } else {
 
+            this.data[this.dataKey] = this.data[this.dataKey].substr(this.data['source'].length);
+            this.data[this.dataKey] = this.data['source'] + this.data[this.dataKey];
+
             currentElement.classList.add('twv-selected-success');
 
             const index = this.components.findIndex((item) => {

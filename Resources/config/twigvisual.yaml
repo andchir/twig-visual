@@ -5,7 +5,7 @@ twig_visual:
                 title: Корневой элемент
                 type: elementSelect
                 src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
-                template:
+                template: |
                     <root>
                         <containerFirst></containerFirst>
                     </root>
@@ -14,7 +14,7 @@ twig_visual:
             containerFirst:
                 title: Контейнер первого уровня
                 type: elementSelect
-                template:
+                template: |
                     <containerFirst>
                         {% for category in children %}
                             <itemFirst></itemFirst>
@@ -24,7 +24,7 @@ twig_visual:
             itemFirst:
                 title: Пункт меню первого уровня
                 type: elementSelect
-                template:
+                template: |
                     <itemFirst>
                         <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
@@ -33,7 +33,7 @@ twig_visual:
             containerSecond:
                 title: Контейнер второго уровня
                 type: elementSelect
-                template:
+                template: |
                     <containerSecond>
                         {% for category in children %}
                             <itemSecond></itemSecond>
@@ -44,7 +44,7 @@ twig_visual:
             itemSecond:
                 title: Пункт меню второго уровня
                 type: elementSelect
-                template:
+                template: |
                     <itemSecond>
                         <a href="{{ catalogPath(category.uri, '', category) }}">
                             {{ category.title }}
@@ -55,7 +55,7 @@ twig_visual:
             containerThird:
                 title: Пункт меню третьего уровня
                 type: elementSelect
-                template:
+                template: |
                     <containerThird>
                         {% for category in children %}
                             <itemThird></itemThird>
@@ -66,7 +66,7 @@ twig_visual:
             itemThird:
                 title: Пункт меню третьего уровня
                 type: elementSelect
-                template:
+                template: |
                     <itemThird>
                         <a href="{{ catalogPath(category.uri, '', category) }}">
                             {{ category.title }}

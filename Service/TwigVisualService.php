@@ -228,7 +228,7 @@ class TwigVisualService {
             return false;
         }
         $htmlContent = $doc->saveHTML();
-        $htmlContent = str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D'], ['{{ ', '{{', ' }}', '}}'], $htmlContent);
+        $htmlContent = $self::unescapeUrls($htmlContent);
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -394,5 +394,14 @@ class TwigVisualService {
                 : unlink("$dir/$file");
         }
         return rmdir($dir);
+    }
+
+    /**
+     * @param string $content
+     * @return string
+     */
+    public static function unescapeUrls($content)
+    {
+        return str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D', '%20'], ['{{ ', '{{', ' }}', '}}', ' '], $content);
     }
 }

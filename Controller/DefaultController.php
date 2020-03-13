@@ -173,14 +173,37 @@ class DefaultController extends AbstractController
             return $this->setError('Please select a root item.');
         }
         try {
-            $result = $this->service->getDocumentNode($templateName, $data['data']['source']);
+            $result = $this->service->getDocumentNode($templateName, '/html[1]/body[1]/header[1]/div[1]/div[2]/div[1]');
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
             return false;
         }
         list($templateFilePath, $doc, $node) = $result;
 
-        var_dump($uiBlockConfig['root']);
+        $elements = ['root' => $node];
+        foreach ($data['data'] as $key => $xpathQuery) {
+            if (in_array($key, ['root', 'source'])) {
+                continue;
+            }
+            $xpath = new \DOMXPath($doc);
+            /** @var \DOMNodeList $entries */
+            $entries = $xpath->evaluate($xpathQuery, $doc);
+            if ($entries->count() === 0) {
+                return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
+            }
+            $elements[$key] = $entries->item(0);
+        }
+
+        foreach ($uiBlockConfig as $key => $opts) {
+            if (!isset($elements[$key])) {
+                continue;
+            }
+            $elements[$key]->textContent= '';
+            $elements[$key]->innerHTML = trim(str_replace(["<{$key}>", "</{$key}>"], '', $opts['template']));
+            $elements[$key] = TwigVisualService::unescapeUrls($elements[$key]->outerHTML);
+        }
+
+        var_dump($elements);
 
         return $this->json([
             'success' => true
