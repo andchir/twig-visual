@@ -7,7 +7,7 @@ twig_visual:
                 src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
                 template: |
                     <root>
-                        <containerFirst></containerFirst>
+                        <containerFirst/>
                     </root>
                 templatePath: nav/menu_dropdown
 
@@ -17,7 +17,7 @@ twig_visual:
                 template: |
                     <containerFirst>
                         {% for category in children %}
-                            <itemFirst></itemFirst>
+                            <itemFirst/>
                         {%  endfor %}
                     </containerFirst>
 
@@ -27,8 +27,11 @@ twig_visual:
                 template: |
                     <itemFirst>
                         <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
-                        {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
+                        <itemSubmenu/>
                     </itemFirst>
+            
+            itemSubmenu:
+                outerHTML: "{{ categoriesTree(category.id, 'menu_dropdown_child', category) }}"
 
             containerSecond:
                 title: Контейнер второго уровня
@@ -36,7 +39,7 @@ twig_visual:
                 template: |
                     <containerSecond>
                         {% for category in children %}
-                            <itemSecond></itemSecond>
+                            <itemSecond/>
                         {%  endfor %}
                     </containerSecond>
                 templatePath: nav/menu_dropdown_child
@@ -58,7 +61,7 @@ twig_visual:
                 template: |
                     <containerThird>
                         {% for category in children %}
-                            <itemThird></itemThird>
+                            <itemThird/>
                         {%  endfor %}
                     </containerThird>
                 templatePath: nav/menu_dropdown_child_child

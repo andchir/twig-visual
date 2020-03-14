@@ -173,16 +173,19 @@ class DefaultController extends AbstractController
             return $this->setError('Please select a root item.');
         }
         try {
-            $result = $this->service->getDocumentNode($templateName, '/html[1]/body[1]/header[1]/div[1]/div[2]/div[1]');
+            $result = $this->service->getDocumentNode($templateName, $data['data']['source']);
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
             return false;
         }
         list($templateFilePath, $doc, $node) = $result;
+        $templateDirPath = dirname($templateFilePath);
 
         $elements = ['root' => $node];
+        $uiBlockConfig['root']['outerHTML'] = $node->outerHTML;
         foreach ($data['data'] as $key => $xpathQuery) {
             if (in_array($key, ['root', 'source'])) {
+                
                 continue;
             }
             $xpath = new \DOMXPath($doc);
@@ -192,19 +195,94 @@ class DefaultController extends AbstractController
                 return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
             }
             $elements[$key] = $entries->item(0);
+            $uiBlockConfig[$key]['outerHTML'] = $elements[$key]->outerHTML;
         }
+        
+        $configKeys = array_keys($uiBlockConfig);
 
-        foreach ($uiBlockConfig as $key => $opts) {
+        foreach ($uiBlockConfig as $key => &$opts) {
             if (!isset($elements[$key])) {
                 continue;
             }
-            $elements[$key]->textContent= '';
-            $elements[$key]->innerHTML = trim(str_replace(["<{$key}>", "</{$key}>"], '', $opts['template']));
-            $elements[$key] = TwigVisualService::unescapeUrls($elements[$key]->outerHTML);
+            $parentNode = null;
+            $innerHTML = '';
+            $template = new \IvoPetkov\HTML5DOMDocument();
+            $template->loadXML($opts['template']);
+            if ($template->hasChildNodes() && $template->childNodes->item(0)->hasChildNodes()) {
+                foreach($template->childNodes->item(0)->childNodes as $index => $tChildNode) {
+                    if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
+                        if (isset($elements[$tChildNode->tagName])) {
+                            if (!$parentNode) {
+                                $parentNode = isset($elements[$tChildNode->tagName])
+                                    ? $elements[$tChildNode->tagName]->parentNode
+                                    : $elements[$key];
+                            }
+                            $innerHTML .= PHP_EOL . "<{$tChildNode->tagName}/>";
+                        } else {
+                            if (isset($uiBlockConfig[$tChildNode->tagName])) {
+                                if (empty($uiBlockConfig[$tChildNode->tagName]['used'])) {
+                                    
+                                }
+                            } else {
+                                $childNode = $elements[$key]->querySelector($tChildNode->tagName);
+                                if ($childNode) {
+                                    $attributes = $tChildNode->getAttributes();
+                                    foreach ($attributes as $k => $attribute) {
+                                        $childNode->setAttribute($k, $attribute);
+                                    }
+                                    $childNode->textContent =  $tChildNode->textContent;
+                                    if (TwigVisualService::getNextSiblingByType($tChildNode) && TwigVisualService::getNextSiblingByType($childNode)) {
+                                        $tNextSibling = TwigVisualService::getNextSiblingByType($tChildNode);
+                                        if (isset($uiBlockConfig[$tNextSibling->tagName])) {
+                                            TwigVisualService::getNextSiblingByType($childNode)->outerHTML ="<{$tNextSibling->tagName}/>";
+                                            $uiBlockConfig[$tNextSibling->tagName]['used'] = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if ($tChildNode->nodeType === XML_TEXT_NODE) {
+                        if ($nodeValue = trim($tChildNode->nodeValue)) {
+                            $innerHTML .= PHP_EOL . $nodeValue;
+                        }
+                    }
+                }
+            }
+            if ($parentNode) {
+                $parentNode->innerHTML = $innerHTML . PHP_EOL;
+            }
+            $opts['outerHTML'] = TwigVisualService::unescapeUrls($elements[$key]->outerHTML);
         }
 
-        var_dump($elements);
+        foreach ($uiBlockConfig as $key => $opts) {
+            if (!isset($opts['outerHTML'])) {
+                continue;
+            }
+            $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig, 'outerHTML');
+            // var_dump($key, $outerHTML);
+            // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
+            
+            if (!empty($opts['templatePath'])) {
+                $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
+                
+                if (!is_dir(dirname($tplFilePath))) {
+                    mkdir(dirname($tplFilePath));
+                }
+                if (file_exists($tplFilePath)) {
+                    unlink($tplFilePath);
+                }
+                file_put_contents($tplFilePath, $outerHTML);
+            }
+            if (!empty($opts['src'])) {
+                $elements[$key]->outerHTML = $opts['src'];
+            }
+        }
 
+        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+        
         return $this->json([
             'success' => true
         ]);

@@ -477,7 +477,7 @@ class TwigVisual {
         this.components.forEach((cmp) => {
             const d = document.createElement('div');
             d.className = 'twv-mb-2';
-            d.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block">${cmp.title}</button>`;
+            d.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block twv-text-overflow">${cmp.title}</button>`;
 
             div.appendChild(d);
 

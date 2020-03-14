@@ -20,6 +20,8 @@ class TwigVisualService {
     protected $params;
     /** @var KernelInterface */
     protected $kernel;
+    /** @var Beautify_Html */
+    public $beautifyHtml;
     /** @var array */
     protected $config;
     private $errorMessage = '';
@@ -29,12 +31,14 @@ class TwigVisualService {
         ParameterBagInterface $params,
         TwigEnvironment $twig,
         KernelInterface $kernel,
+        Beautify_Html $beautifyHtml,
         array $config = []
     )
     {
         $this->kernel = $kernel;
         $this->params = $params;
         $this->twig = $twig;
+        $this->beautifyHtml = $beautifyHtml;
         
         if (empty($config) && $params->has('twigvisual_config')) {
             $this->config = $params->get('twigvisual_config');
@@ -228,7 +232,7 @@ class TwigVisualService {
             return false;
         }
         $htmlContent = $doc->saveHTML();
-        $htmlContent = $self::unescapeUrls($htmlContent);
+        $htmlContent = self::unescapeUrls($htmlContent);
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -397,11 +401,47 @@ class TwigVisualService {
     }
 
     /**
+     * @param string $inputXML
+     * @param array $sourceArr
+     * @param string $key
+     * @return string
+     */
+    public static function replaceXMLTags($inputXML, $sourceArr, $key)
+    {
+        foreach ($sourceArr as $k => $opts) {
+            if (!isset($opts[$key])) {
+                continue;
+            }
+            $kLower = strtolower($k);
+            $inputXML = str_replace(["<{$k}></{$k}>", "<{$kLower}></{$kLower}>"], $opts[$key], $inputXML);
+        }
+        return $inputXML;
+    }
+
+    /**
      * @param string $content
      * @return string
      */
     public static function unescapeUrls($content)
     {
         return str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D', '%20'], ['{{ ', '{{', ' }}', '}}', ' '], $content);
+    }
+
+    /**
+     * @param mixed $domElement
+     * @param int $type
+     * @return \DOMElement|\DOMNode|null
+     */
+    public static function getNextSiblingByType($domElement, $type = XML_ELEMENT_NODE)
+    {
+        if (!($domElement instanceof \DOMElement)
+            && !($domElement instanceof HTML5DOMElement)
+            && !($domElement instanceof \DOMText)) {
+                return null;
+        }
+        if ($domElement->nextSibling && $domElement->nextSibling->nodeType !== $type) {
+            return self::getNextSiblingByType($domElement->nextSibling, $type);
+        }
+        return $domElement->nextSibling;
     }
 }
