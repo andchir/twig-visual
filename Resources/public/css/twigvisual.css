@@ -14,7 +14,7 @@
 /* panel */
 .twig-visual-container { position: fixed; width: 300px; height: 100%; background-color: #fff; border-left: 1px solid #ddd; z-index: 1777; padding: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.2); transition: right 400ms, left 400ms; box-sizing: border-box; }
 .twig-visual-container * { box-sizing: border-box; }
-.twv-inner-wrapper { position: absolute; left: 0; top: 180px; width: 100%; padding: 0 15px 180px 15px; height: 100%; }
+.twv-inner-wrapper { position: absolute; left: 0; top: 220px; width: 100%; padding: 0 15px 220px 15px; height: 100%; }
 .twv-inner { height: 100%; overflow-x: hidden; overflow-y: auto; }
 .twv-panel-header { padding-bottom: 15px; margin-bottom: 15px; border-bottom: 1px solid rgba(0, 0, 0, .125); }
 .twv-panel-right { right: 0; top: 0; }

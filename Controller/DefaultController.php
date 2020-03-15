@@ -182,7 +182,7 @@ class DefaultController extends AbstractController
         $templateDirPath = dirname($templateFilePath);
 
         $elements = ['root' => $node];
-        $uiBlockConfig['root']['outerHTML'] = $node->outerHTML;
+        $uiBlockConfig['components']['root']['outerHTML'] = $node->outerHTML;
         foreach ($data['data'] as $key => $xpathQuery) {
             if (in_array($key, ['root', 'source'])) {
                 
@@ -195,12 +195,12 @@ class DefaultController extends AbstractController
                 return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
             }
             $elements[$key] = $entries->item(0);
-            $uiBlockConfig[$key]['outerHTML'] = $elements[$key]->outerHTML;
+            $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
         }
         
-        $configKeys = array_keys($uiBlockConfig);
+        $configKeys = array_keys($uiBlockConfig['components']);
 
-        foreach ($uiBlockConfig as $key => &$opts) {
+        foreach ($uiBlockConfig['components'] as $key => &$opts) {
             if (!isset($elements[$key])) {
                 continue;
             }
@@ -219,8 +219,8 @@ class DefaultController extends AbstractController
                             }
                             $innerHTML .= PHP_EOL . "<{$tChildNode->tagName}/>";
                         } else {
-                            if (isset($uiBlockConfig[$tChildNode->tagName])) {
-                                if (empty($uiBlockConfig[$tChildNode->tagName]['used'])) {
+                            if (isset($uiBlockConfig['components'][$tChildNode->tagName])) {
+                                if (empty($uiBlockConfig['components'][$tChildNode->tagName]['used'])) {
                                     
                                 }
                             } else {
@@ -233,9 +233,9 @@ class DefaultController extends AbstractController
                                     $childNode->textContent =  $tChildNode->textContent;
                                     if (TwigVisualService::getNextSiblingByType($tChildNode) && TwigVisualService::getNextSiblingByType($childNode)) {
                                         $tNextSibling = TwigVisualService::getNextSiblingByType($tChildNode);
-                                        if (isset($uiBlockConfig[$tNextSibling->tagName])) {
+                                        if (isset($uiBlockConfig['components'][$tNextSibling->tagName])) {
                                             TwigVisualService::getNextSiblingByType($childNode)->outerHTML ="<{$tNextSibling->tagName}/>";
-                                            $uiBlockConfig[$tNextSibling->tagName]['used'] = true;
+                                            $uiBlockConfig['components'][$tNextSibling->tagName]['used'] = true;
                                         }
                                     }
                                 }
@@ -255,11 +255,11 @@ class DefaultController extends AbstractController
             $opts['outerHTML'] = TwigVisualService::unescapeUrls($elements[$key]->outerHTML);
         }
 
-        foreach ($uiBlockConfig as $key => $opts) {
+        foreach ($uiBlockConfig['components'] as $key => $opts) {
             if (!isset($opts['outerHTML'])) {
                 continue;
             }
-            $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig, 'outerHTML');
+            $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig['components'], 'outerHTML');
             // var_dump($key, $outerHTML);
             // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
             

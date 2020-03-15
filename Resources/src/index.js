@@ -11,68 +11,7 @@ class TwigVisual {
         this.components = [];
         this.options = Object.assign({
             templateName: '',
-            uiOptions: {
-                field: {
-                    components: []
-                },
-                photogallery: {
-                    components: []
-                },
-                menu: {
-                    components: [
-                        {
-                            name: "containerFirst", title: "Контейнер первого уровня", type: ""
-                        },
-                        {
-                            name: "itemFirst", title: "Пункт меню первого уровня", type: ""
-                        },
-                        {
-                            name: "containerSecond", title: "Контейнер второго уровня", type: ""
-                        },
-                        {
-                            name: "itemSecond", title: "Пункт меню второго уровня", type: ""
-                        },
-                        {
-                            name: "containerThird", title: "Контейнер третьего уровня", type: ""
-                        },
-                        {
-                            name: "thirdItem", title: "Пункт меню третьего уровня", type: ""
-                        }
-                    ]
-                },
-                breadcrumbs: {
-                    components: [
-                        {
-                            name: "linkHomePage", title: "Ссылка на главную страницу", type: ""
-                        },
-                        {
-                            name: "item", title: "Ссылка", type: ""
-                        }
-                    ]
-                },
-                "shopping-cart": {
-                    components: [
-                        {
-                            name: "totalPrice", title: "Общая цена", type: ""
-                        },
-                        {
-                            name: "totalCount", title: "Общее количество", type: ""
-                        },
-                        {
-                            name: "lickCheckout", title: "Ссылка на оформление", type: ""
-                        },
-                        {
-                            name: "buttonClean", title: "Кнопка очистки", type: ""
-                        }
-                    ]
-                },
-                "products-list": {
-                    components: []
-                },
-                comments: {
-                    components: []
-                }
-            }
+            uiOptions: {}
         }, options);
         this.state = 'inactive';
 
@@ -408,6 +347,12 @@ class TwigVisual {
         Создать новую тему
     </button>
 </div>
+<div class="twv-mb-2">
+    <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-template">
+        <i class="twv-icon-add"></i>
+        Создать шаблон
+    </button>
+</div>
 <div class="twv-mb-3">
     <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
         <i class="twv-icon-center_focus_strong"></i>
@@ -631,6 +576,11 @@ class TwigVisual {
 
         this.container.querySelector('.twv-inner').innerHTML = '';
 
+        let optionsHTML = '';
+        Object.keys(this.options.uiOptions).forEach((key) => {
+            optionsHTML += `<option value="${key}">${this.options.uiOptions[key].title}</option>`;
+        });
+
         const xpathEscaped = xpath.replace(/[\"]/g, '&quot;');
         const div = document.createElement('div');
         div.innerHTML = `
@@ -652,13 +602,7 @@ class TwigVisual {
         <div class="twv-mb-3 twv-ui-element-select">
             <select class="twv-custom-select">
                 <option value="">- Тип блока интерфейса -</option>
-                <option value="field">Поле контента</option>
-                <option value="photogallery">Фото-галерея</option>
-                <option value="menu">Меню</option>
-                <option value="breadcrumbs">Хлебные кношки</option>
-                <option value="shopping-cart">Корзина товаров</option>
-                <option value="products-list">Избранные товары</option>
-                <option value="comments">Отзывы</option>
+                ${optionsHTML}
             </select>
         </div>
         <div class="twv-mb-3 twv-ui-components"></div>
