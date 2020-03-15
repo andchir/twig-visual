@@ -27,7 +27,7 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/create", methods={"GET", "POST"})
+     * @Route("/create", methods={"POST"})
      * @return JsonResponse
      */
     public function createThemeAction(Request $request, TranslatorInterface $translator)
@@ -66,6 +66,52 @@ class DefaultController extends AbstractController
         return $this->json([
             'success' => true,
             'message' => $translator->trans('Templates theme created successfully.')
+        ]);
+    }
+
+    /**
+     * @Route("/create_template", methods={"POST"})
+     * @return JsonResponse
+     */
+    public function createTemplateAction(Request $request, TranslatorInterface $translator)
+    {
+        $data = json_decode($request->getContent(), true);
+        $fileName = $data['fileName'] ?? '';
+        $templateName = $data['templateName'] ?? '';
+
+        if (!$fileName || !$templateName) {
+            return $this->setError($translator->trans('File name and template name should not be empty.'));
+        }
+
+        $themeName = $this->service->getCurrentThemeName();
+        $templatesDirPath = $this->service->getTemplatesDirPath();
+        $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($themeName);
+
+        if (!is_dir($publicTemplateDirPath)) {
+            return $this->setError($translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
+                '%themePath%' => str_replace($this->service->getRootDirPath(), '', $publicTemplateDirPath)
+            ]));
+        }
+
+        $templateFilePath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName . DIRECTORY_SEPARATOR  . $templateName . '.html.twig';
+        $pagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $fileName;
+        if (TwigVisualService::getExtension($fileName) !== 'html') {
+            return $this->setError($translator->trans('The main page file must be of type HTML.'));
+        }
+        if (!$fileName || !file_exists($pagePublicFilePath)) {
+            return $this->setError($translator->trans('Page HTML file not found.'));
+        }
+
+        if (!is_dir(dirname($templateFilePath))) {
+            mkdir(dirname($templateFilePath));
+        }
+
+        $templateContent = $this->service->prepareTemplateContent($pagePublicFilePath, $themeName);
+        file_put_contents($templateFilePath, $templateContent);
+        
+        return $this->json([
+            'success' => true,
+            'message' => $translator->trans('Template created successfully.')
         ]);
     }
 

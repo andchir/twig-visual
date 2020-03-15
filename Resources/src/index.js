@@ -11,6 +11,7 @@ class TwigVisual {
         this.components = [];
         this.options = Object.assign({
             templateName: '',
+            templates: [],
             uiOptions: {}
         }, options);
         this.state = 'inactive';
@@ -61,6 +62,15 @@ class TwigVisual {
             }
             this.selectionModeDestroy(true);
             this.addNewThemeInit();
+        });
+        
+        this.container.querySelector('.twv-button-new-template').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.state === 'active') {
+                this.selectModeToggle();
+            }
+            this.selectionModeDestroy(true);
+            this.addNewTemplateInit();
         });
 
         document.body.addEventListener('keyup', (e) => {
@@ -333,36 +343,36 @@ class TwigVisual {
         containerEl.id = 'twig-visual-container';
         containerEl.className = 'twig-visual-container twv-panel-right';
         containerEl.innerHTML = `
-<div class="twv-panel-header">
-    <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left" type="button" title="Передвинуть влево">
-        <i class="twv-icon-arrow_back"></i>
-    </button>
-    <button class="twv-btn twv-btn-sm twv-button-panel-right" type="button" title="Передвинуть вправо">
-        <i class="twv-icon-arrow_forward"></i>
-    </button>
-</div>
-<div class="twv-mb-2">
-    <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-theme">
-        <i class="twv-icon-add"></i>
-        Создать новую тему
-    </button>
-</div>
-<div class="twv-mb-2">
-    <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-template">
-        <i class="twv-icon-add"></i>
-        Создать шаблон
-    </button>
-</div>
-<div class="twv-mb-3">
-    <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
-        <i class="twv-icon-center_focus_strong"></i>
-        Блок интерфейса
-    </button>
-</div>
-<div class="twv-inner-wrapper">
-    <div class="twv-inner"></div>
-</div>
-`;
+        <div class="twv-panel-header">
+            <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left" type="button" title="Передвинуть влево">
+                <i class="twv-icon-arrow_back"></i>
+            </button>
+            <button class="twv-btn twv-btn-sm twv-button-panel-right" type="button" title="Передвинуть вправо">
+                <i class="twv-icon-arrow_forward"></i>
+            </button>
+        </div>
+        <div class="twv-mb-2">
+            <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-theme">
+                <i class="twv-icon-add"></i>
+                Создать новую тему
+            </button>
+        </div>
+        <div class="twv-mb-2">
+            <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-template">
+                <i class="twv-icon-add"></i>
+                Создать шаблон
+            </button>
+        </div>
+        <div class="twv-mb-3">
+            <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
+                <i class="twv-icon-center_focus_strong"></i>
+                Блок интерфейса
+            </button>
+        </div>
+        <div class="twv-inner-wrapper">
+            <div class="twv-inner"></div>
+        </div>
+        `;
         document.body.appendChild(containerEl);
 
         containerEl.querySelector('.twv-button-panel-left').addEventListener('click', (e) => {
@@ -884,6 +894,71 @@ class TwigVisual {
             this.request('/twigvisual/create', {
                 theme: fieldThemeEl.value,
                 mainpage: fieldMainpageEl.value
+            }, (res) => {
+                buttonEl.removeAttribute('disabled');
+                this.showLoading(false);
+                innerContainerEl.innerHTML = '';
+                if (res.message) {
+                    this.addAlertMessage(res.message, 'success');
+                }
+            }, (err) => {
+                this.addAlertMessage(err.error || err);
+                buttonEl.removeAttribute('disabled');
+                this.showLoading(false);
+            }, 'POST');
+        });
+
+        innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
+            e.preventDefault();
+            innerContainerEl.innerHTML = '';
+        });
+    }
+
+    addNewTemplateInit() {
+        this.clearMessage();
+        const innerContainerEl = this.container.querySelector('.twv-inner');
+        innerContainerEl.innerHTML = '';
+
+        let optionsHTML = '';
+        this.options.templates.forEach((templatePath) => {
+            optionsHTML += `<option value="${templatePath}">${templatePath}</option>`;
+        });
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+        <div class="twv-mb-3">
+            <label class="twv-display-block twv-mb-1" for="tww-field-source-file">HTML-файл</label>
+            <input type="text" id="tww-field-source-file" class="twv-form-control" value="">
+        </div>
+        <div class="twv-mb-3">
+            <label class="twv-display-block twv-mb-1" for="tww-field-template-name">Название шаблона</label>
+            <select id="tww-field-template-name" class="twv-custom-select">
+                ${optionsHTML}
+            </select>
+        </div>
+        <div class="twv-mb-3">
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Создать</button>
+            <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+        </div>
+        `;
+
+        innerContainerEl.appendChild(div);
+
+        innerContainerEl.querySelector('button.twv-button-submit').addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const fieldFileNameEl = document.getElementById('tww-field-source-file');
+            const fieldTemplateNameEl = document.getElementById('tww-field-template-name');
+            const buttonEl = e.target;
+            if (!fieldFileNameEl.value || !fieldTemplateNameEl.value) {
+                return;
+            }
+            this.showLoading(true);
+            buttonEl.setAttribute('disabled', 'disabled');
+
+            this.request('/twigvisual/create_template', {
+                fileName: fieldFileNameEl.value,
+                templateName: fieldTemplateNameEl.value
             }, (res) => {
                 buttonEl.removeAttribute('disabled');
                 this.showLoading(false);

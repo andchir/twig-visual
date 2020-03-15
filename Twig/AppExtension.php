@@ -55,32 +55,34 @@ class AppExtension extends AbstractExtension
     }
 
     /**
+     * @param string $type
      * @return string
      */
-    public function twigVisualOptionsFunction()
+    public function twigVisualOptionsFunction($type = 'ui')
     {
-        $config = $this->service->getConfigValue('ui');
-        $output = [];
-        foreach ($config as $key => $opts) {
-            
-            $components = [];
-            foreach ($opts['components'] as $k => $v) {
-                if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
-                    continue;
+        $config = $this->service->getConfigValue($type);
+        
+        if ($type === 'ui') {
+            $output = [];
+            foreach ($config as $key => $opts) {
+                $components = [];
+                foreach ($opts['components'] as $k => $v) {
+                    if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
+                        continue;
+                    }
+                    $components[] = [
+                        'name' => $k,
+                        'title' => $v['title'],
+                        'type' => $v['type']
+                    ];
                 }
-                $components[] = [
-                    'name' => $k,
-                    'title' => $v['title'],
-                    'type' => $v['type']
+                $output[$key] = [
+                    'title' => $opts['title'],
+                    'components' => $components
                 ];
             }
-            
-            $output[$key] = [
-                'title' => $opts['title'],
-                'components' => $components
-            ];
+            return json_encode($output);
         }
-        
-        return json_encode($output);
+        return json_encode($config);
     }
 }

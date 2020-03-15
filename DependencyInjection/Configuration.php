@@ -21,6 +21,12 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
+                ->arrayNode('default_copy')
+                    ->scalarPrototype()->end()
+                ->end()
+                ->arrayNode('templates')
+                    ->scalarPrototype()->end()
+                ->end()
                 ->arrayNode('ui')
                     ->useAttributeAsKey('name')
                     ->arrayPrototype()

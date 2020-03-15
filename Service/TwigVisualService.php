@@ -135,14 +135,17 @@ class TwigVisualService {
         }
         
         // TvigVisual assets
+        // and is_granted('ROLE_ADMIN')
         $twvContent = '
-        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
+        {% if app.environment == \'dev\' %}
             <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
             <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
             <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
             <script>
 				const twigVisual = new TwigVisual({
-					templateName: \'{{ _self }}\'
+					templateName: \'{{ _self }}\',
+                    templates: {{ twigVisualOptions(\'templates\') }},
+                    uiOptions: {{ twigVisualOptions() }}
 				});
 			</script>
         {% endif %}
@@ -363,6 +366,16 @@ class TwigVisualService {
     public function getTemplatesDirPath()
     {
         return dirname(dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath()));
+    }
+
+    /**
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     */
+    public function getCurrentThemeName()
+    {
+        $templatePath = dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
+        return basename($templatePath);
     }
 
     /**
