@@ -1,78 +1,142 @@
 twig_visual:
+    default_copy:
+        - admin/base
+        - admin/order_print
+        - admin/settings.js.twig
+        - security/login
+        - security/password_reset
+        - security/register
+    templates:
+        - homepage
+        - text-content_content-page
+        - category
+        - content-page
+        - page_shop_cart
+        - page_checkout
+        - page_checkout_success
+        - page_search_result
+        - profile/profile
+        - profile/history_orders
+        - profile/contacts
+        - profile/change_password
     ui:
+        field:
+            title: Поле контента
+            components:
+                fieldName:
+                    title: Имя поля
+                    type: text
+        
         menu:
-            root:
-                title: Корневой элемент
-                type: elementSelect
-                src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
-                template: |
-                    <root>
-                        <containerFirst/>
-                    </root>
-                templatePath: nav/menu_dropdown
+            title: Меню
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
+                    template: |
+                        <root>
+                            <containerFirst/>
+                        </root>
+                    templatePath: nav/menu_dropdown
+    
+                containerFirst:
+                    title: Контейнер первого уровня
+                    type: elementSelect
+                    template: |
+                        <containerFirst>
+                            {% for category in children %}
+                                <itemFirst/>
+                            {%  endfor %}
+                        </containerFirst>
+    
+                itemFirst:
+                    title: Пункт меню первого уровня
+                    type: elementSelect
+                    template: |
+                        <itemFirst>
+                            <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
+                            <itemSubmenu/>
+                        </itemFirst>
+                
+                itemSubmenu:
+                    outerHTML: "{{ categoriesTree(category.id, 'menu_dropdown_child', category) }}"
+    
+                containerSecond:
+                    title: Контейнер второго уровня
+                    type: elementSelect
+                    template: |
+                        <containerSecond>
+                            {% for category in children %}
+                                <itemSecond/>
+                            {%  endfor %}
+                        </containerSecond>
+                    templatePath: nav/menu_dropdown_child
+    
+                itemSecond:
+                    title: Пункт меню второго уровня
+                    type: elementSelect
+                    template: |
+                        <itemSecond>
+                            <a href="{{ catalogPath(category.uri, '', category) }}">
+                                {{ category.title }}
+                            </a>
+                            {{ categoriesTree(category.id, 'menu_dropdown_child_child', category) }}
+                        </itemSecond>
+    
+                containerThird:
+                    title: Пункт меню третьего уровня
+                    type: elementSelect
+                    template: |
+                        <containerThird>
+                            {% for category in children %}
+                                <itemThird/>
+                            {%  endfor %}
+                        </containerThird>
+                    templatePath: nav/menu_dropdown_child_child
+    
+                itemThird:
+                    title: Пункт меню третьего уровня
+                    type: elementSelect
+                    template: |
+                        <itemThird>
+                            <a href="{{ catalogPath(category.uri, '', category) }}">
+                                {{ category.title }}
+                            </a>
+                            {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
+                        </itemThird>
 
-            containerFirst:
-                title: Контейнер первого уровня
-                type: elementSelect
-                template: |
-                    <containerFirst>
-                        {% for category in children %}
-                            <itemFirst/>
-                        {%  endfor %}
-                    </containerFirst>
+        photogallery:
+            title: Фотогалерея
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    
+        breadcrumbs:
+            title: Хлебные крошки
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    
+        shoppingCart:
+            title: Корзина покупок
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
 
-            itemFirst:
-                title: Пункт меню первого уровня
-                type: elementSelect
-                template: |
-                    <itemFirst>
-                        <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
-                        <itemSubmenu/>
-                    </itemFirst>
-            
-            itemSubmenu:
-                outerHTML: "{{ categoriesTree(category.id, 'menu_dropdown_child', category) }}"
+        productsList:
+            title: Список товаров
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
 
-            containerSecond:
-                title: Контейнер второго уровня
-                type: elementSelect
-                template: |
-                    <containerSecond>
-                        {% for category in children %}
-                            <itemSecond/>
-                        {%  endfor %}
-                    </containerSecond>
-                templatePath: nav/menu_dropdown_child
-
-            itemSecond:
-                title: Пункт меню второго уровня
-                type: elementSelect
-                template: |
-                    <itemSecond>
-                        <a href="{{ catalogPath(category.uri, '', category) }}">
-                            {{ category.title }}
-                        </a>
-                        {{ categoriesTree(category.id, 'menu_dropdown_child_child', category) }}
-                    </itemSecond>
-
-            containerThird:
-                title: Пункт меню третьего уровня
-                type: elementSelect
-                template: |
-                    <containerThird>
-                        {% for category in children %}
-                            <itemThird/>
-                        {%  endfor %}
-                    </containerThird>
-                templatePath: nav/menu_dropdown_child_child
-
-            itemThird:
-                title: Пункт меню третьего уровня
-                type: elementSelect
-                template: |
-                    <itemThird>
-                        <a href="{{ catalogPath(category.uri, '', category) }}">
-                            {{ category.title }}
-                        </a>
-                        {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
-                    </itemThird>
+        comments:
+            title: Отзывы
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
