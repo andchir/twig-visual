@@ -324,10 +324,12 @@ class DefaultController extends AbstractController
                 $elements[$key]->outerHTML = $opts['src'];
             }
         }
+        
+        
 
-        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
-            return $this->setError($this->service->getErrorMessage());
-        }
+//        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
+//            return $this->setError($this->service->getErrorMessage());
+//        }
         
         return $this->json([
             'success' => true

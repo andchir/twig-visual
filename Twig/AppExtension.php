@@ -56,33 +56,44 @@ class AppExtension extends AbstractExtension
 
     /**
      * @param string $type
+     * @param array $options
      * @return string
      */
-    public function twigVisualOptionsFunction($type = 'ui')
+    public function twigVisualOptionsFunction($type = 'ui', $options = [])
     {
-        $config = $this->service->getConfigValue($type);
-        
-        if ($type === 'ui') {
-            $output = [];
-            foreach ($config as $key => $opts) {
-                $components = [];
-                foreach ($opts['components'] as $k => $v) {
-                    if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
-                        continue;
+        $output = [];
+        switch ($type) {
+            case 'fields':
+                
+                $output = TwigVisualService::getDataKeys($options);
+                
+                break;
+            case 'ui':
+
+                $config = $this->service->getConfigValue($type);
+                $output = [];
+                foreach ($config as $key => $opts) {
+                    $components = [];
+                    foreach ($opts['components'] as $k => $v) {
+                        if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
+                            continue;
+                        }
+                        $components[] = [
+                            'name' => $k,
+                            'title' => $v['title'],
+                            'type' => $v['type']
+                        ];
                     }
-                    $components[] = [
-                        'name' => $k,
-                        'title' => $v['title'],
-                        'type' => $v['type']
+                    $output[$key] = [
+                        'title' => $opts['title'],
+                        'components' => $components
                     ];
                 }
-                $output[$key] = [
-                    'title' => $opts['title'],
-                    'components' => $components
-                ];
-            }
-            return json_encode($output);
+                
+                break;
+            default:
+                $output = $this->service->getConfigValue($type);
         }
-        return json_encode($config);
+        return json_encode($output);
     }
 }

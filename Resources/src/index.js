@@ -12,6 +12,7 @@ class TwigVisual {
         this.options = Object.assign({
             templateName: '',
             templates: [],
+            pageFields: [],
             uiOptions: {}
         }, options);
         this.state = 'inactive';
@@ -430,20 +431,76 @@ class TwigVisual {
         const opt = this.options.uiOptions[typeValue];
         this.components = opt.components;
         this.components.forEach((cmp) => {
+            
             const d = document.createElement('div');
-            d.className = 'twv-mb-2';
-            d.innerHTML = `<button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block twv-text-overflow">${cmp.title}</button>`;
+            d.className = '';
+            
+            switch (cmp.type) {
+                case 'elementSelect':
+                    
+                    d.innerHTML = `<div class="twv-mb-2">
+                        <button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block twv-text-overflow">${cmp.title}</button>
+                    </div>
+                    `;
 
-            div.appendChild(d);
+                    d.querySelector('button').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (this.state === 'active') {
+                            return;
+                        }
+                        e.target.setAttribute('disabled', 'disabled');
+                        this.selectModeToggle(parentElement, cmp.name, false);
+                    });
+                    div.appendChild(d);
+                    
+                    break;
+                case 'text':
+                    
+                    d.innerHTML = `
+                    <div class="twv-mb-2">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">Значение</label>
+                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" value="">
+                    </div>
+                    `;
+                    div.appendChild(d);
+                    
+                    break;
+                case 'pageField':
 
-            d.querySelector('button').addEventListener('click', (e) => {
-                e.preventDefault();
-                if (this.state === 'active') {
-                    return;
-                }
-                e.target.setAttribute('disabled', 'disabled');
-                this.selectModeToggle(parentElement, cmp.name, false);
-            });
+                    let optionsHTML = '';
+                    this.options.pageFields.forEach((pageField) => {
+                        optionsHTML += `<option value="${pageField.name}" data-type="${pageField.type}">${pageField.name} - ${pageField.type}</option>`;
+                    });
+                    
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="fieldName">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    <div class="twv-mb-3" style="display: none;">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-key-${cmp.name}">Ключ значения</label>
+                        <input type="text" id="tww-field-option-key-${cmp.name}" class="twv-form-control" name="key" value="">
+                    </div>
+                    `;
+                    div.appendChild(d);
+                    
+                    const onFieldSelectChange = (value, type) => {
+                        const textFieldBlockEl = d.querySelector('input[type="text"]').parentNode;
+                        textFieldBlockEl.style.display = ['object', 'array'].indexOf(type) > -1 ? 'block' : 'none';
+                    };
+
+                    d.querySelector('select').addEventListener('change', (e) => {
+                        const selectEl = e.target;
+                        const selectedOption = selectEl.options[selectEl.selectedIndex];
+                        onFieldSelectChange(selectEl.value, selectedOption.dataset.type);
+                    });
+
+                    onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
+                    
+                    break;
+            }
         });
         componentsContainer.appendChild(div);
         
@@ -470,6 +527,14 @@ class TwigVisual {
                 templateName: this.options.templateName,
                 data: this.data
             };
+
+            Array.from(componentsContainer.querySelectorAll('input[type="text"]')).forEach((el) => {
+                data.data[el.name] = el.value;
+            });
+            Array.from(componentsContainer.querySelectorAll('select')).forEach((el) => {
+                data.data[el.name] = el.value;
+            });
+            
             this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {
                 if (res.success) {
                     window.location.reload();
@@ -544,21 +609,21 @@ class TwigVisual {
         const title = buttonEl.textContent.trim();
         const div = document.createElement('div');
         div.innerHTML = `
-<div class="twv-block-active-status twv-block-active-status-active">
-    <div class="twv-block-active-status-active-content">
-        <div class="twv-input-group">
-            <span class="twv-input-group-text twv-flex-fill" title="${title}">
-                <i class="twv-icon-done twv-mr-2 twv-text-success"></i>
-                Выбрано
-            </span>
-            <div class="twv-input-group-append">
-                <button class="twv-btn twv-block-active-status-button-cancel" title="Отменить">
-                    <i class="twv-icon-clearclose"></i>
-                </button>
+        <div class="twv-block-active-status twv-block-active-status-active">
+            <div class="twv-block-active-status-active-content">
+                <div class="twv-input-group">
+                    <span class="twv-input-group-text twv-flex-fill" title="${title}">
+                        <i class="twv-icon-done twv-mr-2 twv-text-success"></i>
+                        Выбрано
+                    </span>
+                    <div class="twv-input-group-append">
+                        <button class="twv-btn twv-block-active-status-button-cancel" title="Отменить">
+                            <i class="twv-icon-clearclose"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
         `;
 
         buttonEl.classList.add('twv-block-active-status-inactive-content');

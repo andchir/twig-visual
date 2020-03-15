@@ -24,8 +24,8 @@ twig_visual:
             title: Поле контента
             components:
                 fieldName:
-                    title: Имя поля
-                    type: text
+                    title: Поле контента
+                    type: pageField
         
         menu:
             title: Меню

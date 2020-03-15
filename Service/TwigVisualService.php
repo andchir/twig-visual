@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Bridge\Twig\AppVariable;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Twig\Environment as TwigEnvironment;
@@ -134,7 +135,7 @@ class TwigVisualService {
             }
         }
         
-        // TvigVisual assets
+        // TwigVisual assets
         // and is_granted('ROLE_ADMIN')
         $twvContent = '
         {% if app.environment == \'dev\' %}
@@ -145,7 +146,8 @@ class TwigVisualService {
 				const twigVisual = new TwigVisual({
 					templateName: \'{{ _self }}\',
                     templates: {{ twigVisualOptions(\'templates\') }},
-                    uiOptions: {{ twigVisualOptions() }}
+                    uiOptions: {{ twigVisualOptions() }},
+                    pageFields: {{ twigVisualOptions(\'fields\', _context) }}
 				});
 			</script>
         {% endif %}
@@ -456,5 +458,73 @@ class TwigVisualService {
             return self::getNextSiblingByType($domElement->nextSibling, $type);
         }
         return $domElement->nextSibling;
+    }
+
+    /**
+     * @param array $data
+     * @return array
+     */
+    public static function getDataKeys($data)
+    {
+        $output = [];
+
+        foreach ($data as $key => $val) {
+            if (gettype($val) === 'array' && TwigVisualService::isAssoc($val)) {
+                foreach ($val as $k => $v) {
+                    $output[] = [
+                        'name' => $key . '.' . $k,
+                        'type' => gettype($v)
+                    ];
+                }
+            }
+            else if (gettype($val) === 'object' && method_exists($val, 'toArray')) {
+                foreach ($val->toArray() as $k => $v) {
+                    $output[] = [
+                        'name' => $key . '.' . $k,
+                        'type' => gettype($v)
+                    ];
+                }
+            }
+            else if ($key === 'app' && $val instanceof AppVariable) {
+                $output[] = [
+                    'name' => $key . '.user',
+                    'type' => method_exists($val, 'getUser') ? gettype($val->getUser()) : 'null'
+                ];
+                $output[] = [
+                    'name' => $key . '.request',
+                    'type' => method_exists($val, 'getRequest') ? gettype($val->getRequest()) : 'null'
+                ];
+                $output[] = [
+                    'name' => $key . '.session',
+                    'type' => method_exists($val, 'getSession') ? gettype($val->getSession()) : 'null'
+                ];
+                $output[] = [
+                    'name' => $key . '.flashes',
+                    'type' => method_exists($val, 'getFlashes') ? gettype($val->getFlashes()) : 'null'
+                ];
+                $output[] = [
+                    'name' => $key . '.environment',
+                    'type' => method_exists($val, 'getEnvironment') ? gettype($val->getEnvironment()) : 'null'
+                ];
+            }
+            else {
+                $output[] = [
+                    'name' => $key,
+                    'type' => gettype($val)
+                ];
+            }
+        }
+        
+        return $output;
+    }
+
+    /**
+     * @param array $arr
+     * @return bool
+     */
+    public static function isAssoc(array $arr)
+    {
+        if (array() === $arr) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
