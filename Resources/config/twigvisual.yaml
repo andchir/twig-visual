@@ -6,6 +6,8 @@ twig_visual:
         - security/login
         - security/password_reset
         - security/register
+        - flash_messages
+        - catalog/languages_list
     templates:
         - homepage
         - text-content_content-page

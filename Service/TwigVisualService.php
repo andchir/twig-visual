@@ -136,9 +136,8 @@ class TwigVisualService {
         }
         
         // TwigVisual assets
-        // and is_granted('ROLE_ADMIN')
         $twvContent = '
-        {% if app.environment == \'dev\' %}
+        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
             <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
             <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
             <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
@@ -155,6 +154,40 @@ class TwigVisualService {
         $templateContent = str_replace('</head>', $twvContent . PHP_EOL . '</head>', $templateContent);
         
         return $templateContent;
+    }
+
+    /**
+     * Copy template files from default theme
+     * @param string $themeName
+     * @return bool
+     * @throws \Twig\Error\LoaderError
+     */
+    public function copyDefaultFiles($themeName)
+    {
+        $defaultFiles = $this->getConfigValue('default_copy');
+        $currentThemeDirPath = $this->getCurrentThemeDirPath();
+        $newThemeDirPath = dirname($currentThemeDirPath) . DIRECTORY_SEPARATOR . $themeName;
+        if (!is_dir($newThemeDirPath)) {
+            mkdir($newThemeDirPath);
+        }
+        foreach ($defaultFiles as $defaultFile) {
+            $sourceFilePath = $currentThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
+            $targetFilePath = $newThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
+            if (!file_exists($sourceFilePath)) {
+                $sourceFilePath .= '.html.twig';
+                $targetFilePath .= '.html.twig';
+            }
+            if (!is_dir(dirname($targetFilePath))) {
+                mkdir(dirname($targetFilePath));
+            }
+            if (file_exists($targetFilePath)) {
+                unlink($targetFilePath);
+            }
+            if (!copy($sourceFilePath, $targetFilePath)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -378,6 +411,15 @@ class TwigVisualService {
     {
         $templatePath = dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
         return basename($templatePath);
+    }
+
+    /**
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     */
+    public function getCurrentThemeDirPath()
+    {
+        return dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
     }
 
     /**

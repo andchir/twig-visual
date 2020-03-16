@@ -55,7 +55,10 @@ class DefaultController extends AbstractController
 
         $templateDirPath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName;
         $mainPageTemplateFilePath = $templateDirPath . DIRECTORY_SEPARATOR . 'homepage.html.twig';
-        
+
+        if (!$this->service->copyDefaultFiles($themeName)) {
+            return $this->setError($translator->trans('Error copying files by default.'));
+        }
         if (!is_dir($templateDirPath)) {
             mkdir($templateDirPath);
         }
@@ -230,24 +233,33 @@ class DefaultController extends AbstractController
         $elements = ['root' => $node];
         $uiBlockConfig['components']['root']['outerHTML'] = $node->outerHTML;
         foreach ($data['data'] as $key => $xpathQuery) {
-            if (in_array($key, ['root', 'source'])) {
-                
+            if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
                 continue;
             }
-            $xpath = new \DOMXPath($doc);
-            /** @var \DOMNodeList $entries */
-            $entries = $xpath->evaluate($xpathQuery, $doc);
-            if ($entries->count() === 0) {
-                return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
+            switch ($uiBlockConfig['components'][$key]['type']) {
+                case 'elementSelect':
+                    $xpath = new \DOMXPath($doc);
+                    /** @var \DOMNodeList $entries */
+                    $entries = $xpath->evaluate($xpathQuery, $doc);
+                    if ($entries->count() === 0) {
+                        return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
+                    }
+                    $elements[$key] = $entries->item(0);
+                    $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
+                    break;
+                case 'pageField':
+
+
+
+                    break;
             }
-            $elements[$key] = $entries->item(0);
-            $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
         }
         
         $configKeys = array_keys($uiBlockConfig['components']);
 
+        // Prepare UI blocks templates
         foreach ($uiBlockConfig['components'] as $key => &$opts) {
-            if (!isset($elements[$key])) {
+            if (!isset($elements[$key]) || !isset($opts['template'])) {
                 continue;
             }
             $parentNode = null;
@@ -302,34 +314,52 @@ class DefaultController extends AbstractController
         }
 
         foreach ($uiBlockConfig['components'] as $key => $opts) {
-            if (!isset($opts['outerHTML'])) {
+            if (!isset($opts['type'])) {
                 continue;
             }
-            $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig['components'], 'outerHTML');
-            // var_dump($key, $outerHTML);
-            // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
-            
-            if (!empty($opts['templatePath'])) {
-                $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
-                
-                if (!is_dir(dirname($tplFilePath))) {
-                    mkdir(dirname($tplFilePath));
-                }
-                if (file_exists($tplFilePath)) {
-                    unlink($tplFilePath);
-                }
-                file_put_contents($tplFilePath, $outerHTML);
-            }
-            if (!empty($opts['src'])) {
-                $elements[$key]->outerHTML = $opts['src'];
+            switch ($opts['type']) {
+                case 'elementSelect':
+
+                    if (!isset($opts['outerHTML'])) {
+                        continue;
+                    }
+                    $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig['components'], 'outerHTML');
+                    // var_dump($key, $outerHTML);
+                    // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
+
+                    if (!empty($opts['templatePath'])) {
+                        $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
+
+                        if (!is_dir(dirname($tplFilePath))) {
+                            mkdir(dirname($tplFilePath));
+                        }
+                        if (file_exists($tplFilePath)) {
+                            unlink($tplFilePath);
+                        }
+                        file_put_contents($tplFilePath, $outerHTML);
+                    }
+                    if (!empty($opts['src'])) {
+                        $elements[$key]->outerHTML = $opts['src'];
+                    }
+
+                    break;
+                case 'pageField':
+
+                    if ($elements['root'] && isset($data['data'][$key])) {
+                        $textContent = $data['data'][$key];
+                        if (!empty($data['data']['key'])) {
+                            $textContent .= '.' . $data['data']['key'];
+                        }
+                        $elements['root']->textContent = "{{ {$textContent} }}";
+                    }
+
+                    break;
             }
         }
-        
-        
 
-//        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
-//            return $this->setError($this->service->getErrorMessage());
-//        }
+        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
+            return $this->setError($this->service->getErrorMessage());
+        }
         
         return $this->json([
             'success' => true

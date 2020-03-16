@@ -953,6 +953,7 @@ class TwigVisual {
                 return;
             }
 
+            this.clearMessage();
             this.showLoading(true);
             buttonEl.setAttribute('disabled', 'disabled');
 
@@ -962,7 +963,9 @@ class TwigVisual {
             }, (res) => {
                 buttonEl.removeAttribute('disabled');
                 this.showLoading(false);
-                innerContainerEl.innerHTML = '';
+                if (res && res.success) {
+                    innerContainerEl.innerHTML = '';
+                }
                 if (res.message) {
                     this.addAlertMessage(res.message, 'success');
                 }
