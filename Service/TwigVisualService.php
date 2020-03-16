@@ -275,7 +275,7 @@ class TwigVisualService {
         file_put_contents($templateFilePath, $htmlContent);
 
         if ($clearCache) {
-            $this->systemCacheClear();
+            $this->twigCacheClear();
         }
         return true;
     }
@@ -369,6 +369,22 @@ class TwigVisualService {
             $this->kernel->reboot($cacheDirPath);
         }
         return $result;
+    }
+
+    /**
+     * @return bool
+     */
+    public function twigCacheClear()
+    {
+        $rootPath = $this->getRootDirPath();
+        $environment = $this->kernel->getEnvironment();
+
+        $cacheDirPath = $rootPath . '/var/cache/' . $environment . '/twig';
+        if (is_dir($cacheDirPath)) {
+            self::delDir($cacheDirPath);
+        }
+
+        return true;
     }
 
     /**
