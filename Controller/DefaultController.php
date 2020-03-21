@@ -140,7 +140,6 @@ class DefaultController extends AbstractController
         if (!$this->service->editTextContent($templateName, $xpath, $textContent)) {
             return $this->setError($this->service->getErrorMessage());
         }
-
         return $this->json([
             'success' => true
         ]);
@@ -172,7 +171,6 @@ class DefaultController extends AbstractController
         ])) {
             return $this->setError($this->service->getErrorMessage());
         }
-
         return $this->json([
             'success' => true
         ]);
@@ -195,6 +193,7 @@ class DefaultController extends AbstractController
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
         }
+        $this->service->setRefererUrl($request->server->get('HTTP_REFERER'));
         if (!$this->service->deleteElement($templateName, $xpath)) {
             return $this->setError($this->service->getErrorMessage());
         }
@@ -339,7 +338,8 @@ class DefaultController extends AbstractController
                         file_put_contents($tplFilePath, $outerHTML);
                     }
                     if (!empty($opts['src'])) {
-                        $elements[$key]->outerHTML = $opts['src'];
+                        $cacheKey = $this->service->cacheAdd($elements[$key]->outerHTML, $type . '-' . $key, $this->service->getCurrentThemeName());
+                        $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 
                     break;

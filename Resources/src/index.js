@@ -898,13 +898,13 @@ class TwigVisual {
                 templateName: this.options.templateName,
                 xpath: this.data.source
             }, (res) => {
-                if (res.success) {
-                    window.location.reload();
-                } else {
+                // if (res.success) {
+                //     window.location.reload();
+                // } else {
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
                     this.showLoading(false);
-                }
+                // }
             }, (err) => {
                 this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');

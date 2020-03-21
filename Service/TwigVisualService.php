@@ -8,7 +8,9 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bridge\Twig\AppVariable;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Twig\Environment as TwigEnvironment;
@@ -25,6 +27,8 @@ class TwigVisualService {
     public $beautifyHtml;
     /** @var array */
     protected $config;
+    protected $cache;
+    private $refererUrl = '';
     private $errorMessage = '';
     private $isError = false;
 
@@ -40,6 +44,8 @@ class TwigVisualService {
         $this->params = $params;
         $this->twig = $twig;
         $this->beautifyHtml = $beautifyHtml;
+
+        $this->cache = new FilesystemAdapter('twigvisualcache', 0, $this->getRootDirPath() . '/var/cache');
         
         if (empty($config) && $params->has('twigvisual_config')) {
             $this->config = $params->get('twigvisual_config');
@@ -66,6 +72,15 @@ class TwigVisualService {
     }
 
     /**
+     * @param $refererUrl
+     */
+    public function setRefererUrl($refererUrl)
+    {
+        $this->refererUrl = $refererUrl;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function getConfig()
@@ -84,6 +99,30 @@ class TwigVisualService {
             return isset($this->config[$key]) ? ($this->config[$key][$secondKey] ?? $default) : $default;
         }
         return $this->config[$key] ?? $default;
+    }
+
+    /**
+     * @return string
+     */
+    public function getScriptContent($commentKey = '')
+    {
+        $o = $commentKey ? PHP_EOL . "        <!-- {$commentKey} -->" : '';
+        $c = $commentKey ? "<!-- /{$commentKey} -->" . PHP_EOL : '';
+        return $o . '
+        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
+            <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
+            <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
+            <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
+            <script>
+				const twigVisual = new TwigVisual({
+					templateName: \'{{ _self }}\',
+                    templates: {{ twigVisualOptions(\'templates\') }},
+                    uiOptions: {{ twigVisualOptions() }},
+                    pageFields: {{ twigVisualOptions(\'fields\', _context) }}
+				});
+			</script>
+        {% endif %}
+        ' . $c;
     }
 
     /**
@@ -136,22 +175,7 @@ class TwigVisualService {
         }
         
         // TwigVisual assets
-        $twvContent = '
-        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
-            <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
-            <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
-            <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
-            <script>
-				const twigVisual = new TwigVisual({
-					templateName: \'{{ _self }}\',
-                    templates: {{ twigVisualOptions(\'templates\') }},
-                    uiOptions: {{ twigVisualOptions() }},
-                    pageFields: {{ twigVisualOptions(\'fields\', _context) }}
-				});
-			</script>
-        {% endif %}
-        ';
-        $templateContent = str_replace('</head>', $twvContent . PHP_EOL . '</head>', $templateContent);
+        $templateContent = str_replace('</head>', $this->getScriptContent('twv-script') . PHP_EOL . '</head>', $templateContent);
         
         return $templateContent;
     }
@@ -271,6 +295,7 @@ class TwigVisualService {
         }
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
+        $htmlContent = self::replaceCommentContent('twv-script', $this->getScriptContent(), $htmlContent);
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -288,18 +313,20 @@ class TwigVisualService {
     public function getDocumentNode($templateName, $xpathQuery)
     {
         $templateData = $this->getTemplateSource($templateName);
-        $doc = new \IvoPetkov\HTML5DOMDocument();
+        $templateCode = $templateData['source_code'];
+        
+        $docTemplate = new \IvoPetkov\HTML5DOMDocument();
 
-        $doc->loadHTML($templateData['source_code']);
-        $xpath = new \DOMXPath($doc);
+        $docTemplate->loadHTML($templateCode);
+        $xpath = new \DOMXPath($docTemplate);
 
         /** @var \DOMNodeList $entries */
-        $entries = $xpath->evaluate($xpathQuery, $doc);
+        $entries = $xpath->evaluate($xpathQuery, $docTemplate);
         if ($entries->count() === 0) {
             throw new \Exception('Element not found.');
         }
 
-        return [$templateData['file_path'], $doc, $entries->item(0)];
+        return [$templateData['file_path'], $docTemplate, $entries->item(0)];
     }
 
     /**
@@ -312,10 +339,12 @@ class TwigVisualService {
     {
         $template = $this->twig->resolveTemplate($templateName);
         $templateSource = $template->getSourceContext();
+        
+        $templateCode = self::cutCommentContent('twv-script', $templateSource->getCode());
         return [
             'file_path' => $templateSource->getPath(),
             'starting_line' => 1,
-            'source_code' => $templateSource->getCode(),
+            'source_code' => $templateCode,
         ];
     }
 
@@ -388,6 +417,38 @@ class TwigVisualService {
     }
 
     /**
+     * @param strin $outerHTML
+     * @param strin $key
+     * @param string $itemKey
+     * @param string $keyPrefix
+     * @return string
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    public function cacheAdd($outerHTML, $key, $itemKey = 'templateData', $keyPrefix = 'twv-')
+    {
+        $uniqid = uniqid($keyPrefix . $key . '-', true);
+        $cacheItem = $this->cache->getItem($itemKey);
+        if ($cacheItem) {
+            $cacheContentArray = $cacheItem->isHit() ? $cacheItem->get() : [];
+            $cacheContentArray[$uniqid] = $outerHTML;
+            
+            $cacheItem->set($cacheContentArray);
+            $this->cache->save($cacheItem);
+        }
+        return $uniqid;
+    }
+
+    /**
+     * @param Request $request
+     */
+    public function loadReferer(Request $request)
+    {
+        if ($request->server->get('HTTP_REFERER')) {
+            file_get_contents($request->server->get('HTTP_REFERER'));
+        }
+    }
+
+    /**
      * @param $themeName
      * @return string|null
      */
@@ -444,6 +505,78 @@ class TwigVisualService {
     public function getRootDirPath()
     {
         return realpath($this->params->get('kernel.root_dir') . '/../..');
+    }
+
+    /**
+     * @param string $commentKey
+     * @param string $content
+     * @return string
+     */
+    public static function getCommentContent($commentKey, $content)
+    {
+        $o = "<!-- {$commentKey} -->";
+        $c = "<!-- /{$commentKey} -->";
+        if (($oPos = strpos($content, $o)) === false) {
+            $o = "<!--{$commentKey}-->";
+            $oPos = strpos($content, $o);
+        }
+        if (($cPos = strpos($content, $c)) === false) {
+            $c = "<!--/{$commentKey}-->";
+            $cPos = strpos($content, $c);
+        }
+        if ($oPos !== false && $cPos !== false) {
+            return str_replace($o, '', substr($content, $oPos, $cPos - $oPos));
+        }
+        return '';
+    }
+
+    /**
+     * @param string $commentKey
+     * @param string $content
+     * @return string
+     */
+    public static function cutCommentContent($commentKey, $content)
+    {
+        $commentContent = self::getCommentContent($commentKey, $content);
+        if ($commentContent) {
+            return str_replace($commentContent, '', $content);
+        }
+        return $content;
+    }
+
+    /**
+     * @param string $commentKey
+     * @param string $commentContent
+     * @param string $content
+     * @return string
+     */
+    public static function replaceCommentContent($commentKey, $commentContent, $content)
+    {
+        $o = "<!-- {$commentKey} -->";
+        $c = "<!-- /{$commentKey} -->";
+        if (($oPos = strpos($content, $o)) === false) {
+            $o = "<!--{$commentKey}-->";
+            $oPos = strpos($content, $o);
+        }
+        if (($cPos = strpos($content, $c)) === false) {
+            $c = "<!--/{$commentKey}-->";
+            $cPos = strpos($content, $c);
+        }
+        if ($oPos !== false && $cPos !== false) {
+            return substr($content, 0, $oPos) . $o . $commentContent . substr($content, $cPos);
+        }
+        return $content;
+    }
+
+    /**
+     * @param string $commentKey
+     * @param string $commentContent
+     * @return string
+     */
+    public static function createCommentContent($commentKey, $commentContent)
+    {
+        return PHP_EOL . "<!-- {$commentKey} -->" . PHP_EOL . $commentContent
+            . PHP_EOL . "<!-- /{$commentKey} -->" . PHP_EOL;
     }
 
     /**
