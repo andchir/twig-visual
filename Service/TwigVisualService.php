@@ -331,21 +331,67 @@ class TwigVisualService {
 
     /**
      * @param string $templateName
+     * @param bool $replaceFromCache
      * @return array
+     * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\SyntaxError
      */
-    public function getTemplateSource($templateName)
+    public function getTemplateSource($templateName, $replaceFromCache = true)
     {
         $template = $this->twig->resolveTemplate($templateName);
         $templateSource = $template->getSourceContext();
         
         $templateCode = self::cutCommentContent('twv-script', $templateSource->getCode());
+
+        if ($replaceFromCache) {
+            $cacheItem = $this->cache->getItem($this->getCurrentThemeName());
+            $cacheContentArray = $cacheItem->isHit() ? $cacheItem->get() : [];
+            foreach ($cacheContentArray as $key => $val) {
+                $templateCode = TwigVisualService::replaceCommentContent($key, $val, $templateCode);
+            }
+        }
+        
         return [
             'file_path' => $templateSource->getPath(),
             'starting_line' => 1,
-            'source_code' => $templateCode,
+            'source_code' => $templateCode
         ];
+    }
+
+    /**
+     * @param \IvoPetkov\HTML5DOMDocument $doc
+     * @param array $data
+     * @param array $uiBlockConfig
+     * @return array
+     */
+    public function getUiElements($doc, $data, &$uiBlockConfig)
+    {
+        $elements = [];
+        foreach ($data['data'] as $key => $xpathQuery) {
+            if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
+                continue;
+            }
+            switch ($uiBlockConfig['components'][$key]['type']) {
+                case 'elementSelect':
+                    $xpath = new \DOMXPath($doc);
+                    /** @var \DOMNodeList $entries */
+                    $entries = $xpath->evaluate($xpathQuery, $doc);
+                    if ($entries->count() === 0) {
+                        return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
+                    }
+                    $elements[$key] = $entries->item(0);
+                    $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
+                    $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
+                    break;
+                case 'pageField':
+
+
+
+                    break;
+            }
+        }
+        return $elements;
     }
 
     /**
@@ -407,10 +453,15 @@ class TwigVisualService {
     {
         $rootPath = $this->getRootDirPath();
         $environment = $this->kernel->getEnvironment();
-
-        $cacheDirPath = $rootPath . '/var/cache/' . $environment . '/twig';
-        if (is_dir($cacheDirPath)) {
-            self::delDir($cacheDirPath);
+        $cacheLocation = $this->getConfigValue('cache_location');
+        
+        foreach ($cacheLocation as $cacheLoc) {
+            $cachePath = $rootPath . '/' . $cacheLoc;
+            if (is_dir($cachePath)) {
+                self::delDir($cachePath);
+            } else if (is_file($cachePath) && is_writable($cachePath)) {
+                unlink($cachePath);
+            }
         }
 
         return true;
@@ -514,16 +565,14 @@ class TwigVisualService {
      */
     public static function getCommentContent($commentKey, $content)
     {
-        $o = "<!-- {$commentKey} -->";
-        $c = "<!-- /{$commentKey} -->";
-        if (($oPos = strpos($content, $o)) === false) {
-            $o = "<!--{$commentKey}-->";
-            $oPos = strpos($content, $o);
-        }
-        if (($cPos = strpos($content, $c)) === false) {
-            $c = "<!--/{$commentKey}-->";
-            $cPos = strpos($content, $c);
-        }
+        $o = strpos($content, "<!-- {$commentKey} -->") !== false
+            ? "<!-- {$commentKey} -->"
+            : "<!--{$commentKey}-->";
+        $c = strpos($content, "<!-- /{$commentKey} -->") !== false
+            ? "<!-- /{$commentKey} -->"
+            : "<!--/{$commentKey}-->";
+        $oPos = strpos($content, $o);
+        $cPos = strpos($content, $c);
         if ($oPos !== false && $cPos !== false) {
             return str_replace($o, '', substr($content, $oPos, $cPos - $oPos));
         }
@@ -552,16 +601,14 @@ class TwigVisualService {
      */
     public static function replaceCommentContent($commentKey, $commentContent, $content)
     {
-        $o = "<!-- {$commentKey} -->";
-        $c = "<!-- /{$commentKey} -->";
-        if (($oPos = strpos($content, $o)) === false) {
-            $o = "<!--{$commentKey}-->";
-            $oPos = strpos($content, $o);
-        }
-        if (($cPos = strpos($content, $c)) === false) {
-            $c = "<!--/{$commentKey}-->";
-            $cPos = strpos($content, $c);
-        }
+        $o = strpos($content, "<!-- {$commentKey} -->") !== false
+            ? "<!-- {$commentKey} -->"
+            : "<!--{$commentKey}-->";
+        $c = strpos($content, "<!-- /{$commentKey} -->") !== false
+            ? "<!-- /{$commentKey} -->"
+            : "<!--/{$commentKey}-->";
+        $oPos = strpos($content, $o);
+        $cPos = strpos($content, $c);
         if ($oPos !== false && $cPos !== false) {
             return substr($content, 0, $oPos) . $o . $commentContent . substr($content, $cPos);
         }

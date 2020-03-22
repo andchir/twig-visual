@@ -229,31 +229,10 @@ class DefaultController extends AbstractController
         list($templateFilePath, $doc, $node) = $result;
         $templateDirPath = dirname($templateFilePath);
 
-        $elements = ['root' => $node];
+        $elements = $this->service->getUiElements($doc, $data, $uiBlockConfig);
+        $elements['root'] = $node;
         $uiBlockConfig['components']['root']['outerHTML'] = $node->outerHTML;
-        foreach ($data['data'] as $key => $xpathQuery) {
-            if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
-                continue;
-            }
-            switch ($uiBlockConfig['components'][$key]['type']) {
-                case 'elementSelect':
-                    $xpath = new \DOMXPath($doc);
-                    /** @var \DOMNodeList $entries */
-                    $entries = $xpath->evaluate($xpathQuery, $doc);
-                    if ($entries->count() === 0) {
-                        return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
-                    }
-                    $elements[$key] = $entries->item(0);
-                    $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
-                    break;
-                case 'pageField':
-
-
-
-                    break;
-            }
-        }
-        
+        $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
 
         // Prepare UI blocks templates
@@ -322,8 +301,11 @@ class DefaultController extends AbstractController
                     if (!isset($opts['outerHTML'])) {
                         continue;
                     }
-                    $outerHTML = TwigVisualService::replaceXMLTags($opts['outerHTML'], $uiBlockConfig['components'], 'outerHTML');
-                    // var_dump($key, $outerHTML);
+                    $outerHTML = TwigVisualService::replaceXMLTags(
+                        $opts['outerHTML'],
+                        $uiBlockConfig['components'],
+                        'outerHTML'
+                    );
                     // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
 
                     if (!empty($opts['templatePath'])) {
@@ -338,7 +320,11 @@ class DefaultController extends AbstractController
                         file_put_contents($tplFilePath, $outerHTML);
                     }
                     if (!empty($opts['src'])) {
-                        $cacheKey = $this->service->cacheAdd($elements[$key]->outerHTML, $type . '-' . $key, $this->service->getCurrentThemeName());
+                        $cacheKey = $this->service->cacheAdd(
+                            $opts['sourceHTML'],
+                            $templateName . '-' . $type . '-' . $key,
+                            $this->service->getCurrentThemeName()
+                        );
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 
