@@ -1113,10 +1113,10 @@ class TwigVisual {
             boxShadow += `, inset 0 -${compStyles['padding-bottom']} 0 0 rgba(50,168,82,0.1)`;
         }
         if (compStyles['padding-left'] !== '0px') {
-            boxShadow += `, inset ${compStyles['padding-top']} 0 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset ${compStyles['padding-left']} 0 0 0 rgba(50,168,82,0.1)`;
         }
         if (compStyles['padding-right'] !== '0px') {
-            boxShadow += `, inset -${compStyles['padding-top']} 0 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset -${compStyles['padding-right']} 0 0 0 rgba(50,168,82,0.1)`;
         }
         if (boxShadow) {
             element.style.boxShadow = boxShadow;
