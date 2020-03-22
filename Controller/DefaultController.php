@@ -306,7 +306,7 @@ class DefaultController extends AbstractController
                         $uiBlockConfig['components'],
                         'outerHTML'
                     );
-                    // $outerHTML = $this->service->beautifyHtml->beautify($outerHTML);
+                    $outerHTML = $this->service->beautify($outerHTML);
 
                     if (!empty($opts['templatePath'])) {
                         $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
@@ -320,11 +320,13 @@ class DefaultController extends AbstractController
                         file_put_contents($tplFilePath, $outerHTML);
                     }
                     if (!empty($opts['src'])) {
-                        $cacheKey = $this->service->cacheAdd(
-                            $opts['sourceHTML'],
-                            $templateName . '-' . $type . '-' . $key,
-                            $this->service->getCurrentThemeName()
-                        );
+                        if (!empty($opts['isFunction'])) {
+                            $cacheKey = $this->service->cacheAdd(
+                                $opts['sourceHTML'],
+                                $templateName . '-' . $type . '-' . $key,
+                                $this->service->getCurrentThemeName()
+                            );
+                        }
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 

@@ -126,6 +126,7 @@ class TwigVisual {
         this.currentElements = [];
         this.updateXPathInfo(e.target);
         e.target.classList.add('twv-selected');
+        this.displayPadding(e.target);
     }
 
     onMouseOut(e) {
@@ -136,25 +137,29 @@ class TwigVisual {
         const elements = Array.from(document.querySelectorAll('.twv-selected'));
         elements.forEach((element) => {
             element.classList.remove('twv-selected');
+            element.style.boxShadow = '';
         });
     }
 
     onSelectedElementClick(e) {
-        
-        console.log('CLICK');
-        
         if (this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
             return;
         }
         e.preventDefault();
         e.stopPropagation();
 
-        this.selectModeToggle();
-
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
+
+        this.selectModeToggle();
         this.selectionModeDestroy();
+        
+        const siblingComment = this.getNodePreviousSiblingByType(currentElement, Node.COMMENT_NODE, 2);
+        if (siblingComment && siblingComment.nodeValue.indexOf('twv-') >= 0) {
+            this.addAlertMessage('Выбранный элемент не является статичным.');
+            return;
+        }
 
         // Clear selection
         if (this.data[this.dataKey]) {
@@ -202,6 +207,7 @@ class TwigVisual {
         const elements = Array.from(document.querySelectorAll('.twv-selected'));
         elements.forEach((element) => {
             element.classList.remove('twv-selected');
+            element.style.boxShadow = '';
         });
 
         if (reset) {
@@ -244,12 +250,15 @@ class TwigVisual {
             : e.target;
         if (e.deltaY < 0) {
             currentElement.classList.remove('twv-selected');
+            currentElement.style.boxShadow = '';
             this.currentElements.push(currentElement.parentNode);
 
             this.updateXPathInfo(currentElement.parentNode);
             currentElement.parentNode.classList.add('twv-selected');
+            this.displayPadding(currentElement.parentNode);
         } else {
             currentElement.classList.remove('twv-selected');
+            currentElement.style.boxShadow = '';
             this.currentElements.splice(this.currentElements.length - 1, 1);
             currentElement = this.currentElements.length > 0
                 ? this.currentElements[this.currentElements.length - 1]
@@ -257,6 +266,7 @@ class TwigVisual {
 
             this.updateXPathInfo(currentElement);
             currentElement.classList.add('twv-selected');
+            this.displayPadding(currentElement);
         }
     }
 
@@ -321,7 +331,7 @@ class TwigVisual {
                     + element.tagName.toLowerCase() + '[' + (ix + 1) + ']'
                     + (getAttributes ? this.getXpathElementAttributes(element) : '');
             }
-            if (sibling.nodeType === 1 && sibling.tagName === element.tagName)
+            if (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === element.tagName)
                 ix++;
         }
     }
@@ -537,7 +547,7 @@ class TwigVisual {
             
             this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {
                 if (res.success) {
-                    window.location.reload();
+                    this.windowReload();
                 } else {
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
@@ -768,7 +778,7 @@ class TwigVisual {
                 textContent: elementSelected.innerHTML
             }, (res) => {
                 if (res.success) {
-                    window.location.reload();
+                    this.windowReload();
                 } else {
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
@@ -842,7 +852,7 @@ class TwigVisual {
                 target: div.querySelector('select').value
             }, (res) => {
                 if (res.success) {
-                    window.location.reload();
+                    this.windowReload();
                 } else {
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
@@ -898,13 +908,13 @@ class TwigVisual {
                 templateName: this.options.templateName,
                 xpath: this.data.source
             }, (res) => {
-                // if (res.success) {
-                //     window.location.reload();
-                // } else {
+                if (res.success) {
+                    this.windowReload();
+                } else {
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
                     this.showLoading(false);
-                // }
+                }
             }, (err) => {
                 this.addAlertMessage(err.error || err);
                 buttonSubmit.removeAttribute('disabled');
@@ -1090,6 +1100,30 @@ class TwigVisual {
     }
 
     /**
+     * Display padding of the HTML element
+     * @param element
+     */
+    displayPadding(element) {
+        const compStyles = window.getComputedStyle(element);
+        let boxShadow = '0 0 0 2px #007bff';
+        if (compStyles['padding-top'] !== '0px') {
+            boxShadow += `, inset 0 ${compStyles['padding-top']} 0 0 rgba(50,168,82,0.1)`;
+        }
+        if (compStyles['padding-bottom'] !== '0px') {
+            boxShadow += `, inset 0 -${compStyles['padding-bottom']} 0 0 rgba(50,168,82,0.1)`;
+        }
+        if (compStyles['padding-left'] !== '0px') {
+            boxShadow += `, inset ${compStyles['padding-top']} 0 0 0 rgba(50,168,82,0.1)`;
+        }
+        if (compStyles['padding-right'] !== '0px') {
+            boxShadow += `, inset -${compStyles['padding-top']} 0 0 0 rgba(50,168,82,0.1)`;
+        }
+        if (boxShadow) {
+            element.style.boxShadow = boxShadow;
+        }
+    }
+
+    /**
      * Ajax request
      * @param url
      * @param data
@@ -1134,7 +1168,13 @@ class TwigVisual {
             request.send();
         }
     }
-
+    
+    windowReload() {
+        let locationHref = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
+        locationHref += '?reload=' + this.generateRandomString();
+        window.location.href = locationHref;
+    }
+    
     /**
      * Set styles to parents
      * @param element
@@ -1177,5 +1217,29 @@ class TwigVisual {
      */
     insertBefore(newNode, referenceNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode);
+    }
+
+    /**
+     * 
+     * @param element
+     * @param nodeType
+     * @param count
+     * @returns {AST.HtmlParser2.Node|(() => (Node | null))|ActiveX.IXMLDOMNode|*}
+     */
+    getNodePreviousSiblingByType(element, nodeType, count) {
+        if (element.previousSibling && element.previousSibling.nodeType !== nodeType && count > 0) {
+            return this.getNodePreviousSiblingByType(element.previousSibling, nodeType, --count);
+        }
+        return element.previousSibling;
+    }
+
+    generateRandomString(length = 8) {
+        var result = '';
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
     }
 }

@@ -9,12 +9,7 @@ Add to base template before </head> tag:
     <link href="{{ asset('bundles/twigvisual/css/twigvisual.css') }}" rel="stylesheet">
     <script src="{{ asset('bundles/twigvisual/dist/twigvisual.js') }}"></script>
     <script>
-        const twigVisual = new TwigVisual({
-            templateName: '{{ _self }}',
-            templates: {{ twigVisualOptions('templates') }},
-            uiOptions: {{ twigVisualOptions() }},
-            pageFields: {{ twigVisualOptions('fields', _context) }}
-        });
+        const twigVisual = new TwigVisual({{ twigVisualOptions(_self, _context) }});
     </script>
 {% endif %}
 <!-- /twv-script -->

@@ -21,6 +21,10 @@ twig_visual:
         - profile/history_orders
         - profile/contacts
         - profile/change_password
+    cache_location:
+        - var/cache/filecache
+        - var/cache/dev/twig
+        - var/cache/prod/twig
     ui:
         field:
             title: Поле контента
@@ -35,6 +39,7 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    isFunction: true
                     src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, true) }}"
                     template: |
                         <root>

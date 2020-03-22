@@ -27,7 +27,9 @@ class TwigVisualService {
     public $beautifyHtml;
     /** @var array */
     protected $config;
+    /** @var FilesystemAdapter */
     protected $cache;
+    private $cacheArray = [];
     private $refererUrl = '';
     private $errorMessage = '';
     private $isError = false;
@@ -89,6 +91,39 @@ class TwigVisualService {
     }
 
     /**
+     * @return string
+     */
+    public function getScriptOptions($templateName, $templatContext)
+    {
+        $uiConfig = $this->getConfigValue('ui');
+        $uiOutput = [];
+        foreach ($uiConfig as $key => $opts) {
+            $components = [];
+            foreach ($opts['components'] as $k => $v) {
+                if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
+                    continue;
+                }
+                $components[] = [
+                    'name' => $k,
+                    'title' => $v['title'],
+                    'type' => $v['type']
+                ];
+            }
+            $uiOutput[$key] = [
+                'title' => $opts['title'],
+                'components' => $components
+            ];
+        }
+        $options = [
+            'templateName' => $templateName,
+            'templates' => $this->getConfigValue('templates'),
+            'uiOptions' => $uiOutput,
+            'pageFields' => self::getDataKeys($templatContext)
+        ];
+        return $options;
+    }
+
+    /**
      * @param string $key
      * @param string $default
      * @return mixed|string
@@ -114,12 +149,7 @@ class TwigVisualService {
             <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
             <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
             <script>
-				const twigVisual = new TwigVisual({
-					templateName: \'{{ _self }}\',
-                    templates: {{ twigVisualOptions(\'templates\') }},
-                    uiOptions: {{ twigVisualOptions() }},
-                    pageFields: {{ twigVisualOptions(\'fields\', _context) }}
-				});
+				const twigVisual = new TwigVisual({{ twigVisualOptions(_self, _context) }});
 			</script>
         {% endif %}
         ' . $c;
@@ -285,9 +315,10 @@ class TwigVisualService {
      * @param \IvoPetkov\HTML5DOMDocument $doc
      * @param string $templateFilePath
      * @param bool $clearCache
+     * @param bool $replaceFromLocalCache
      * @return bool
      */
-    public function saveTemplateContent(\IvoPetkov\HTML5DOMDocument $doc, $templateFilePath, $clearCache = true)
+    public function saveTemplateContent(\IvoPetkov\HTML5DOMDocument $doc, $templateFilePath, $clearCache = true, $replaceFromLocalCache = true)
     {
         if (!is_writable($templateFilePath)) {
             $this->setErrorMessage('Template is not writable.');
@@ -296,6 +327,11 @@ class TwigVisualService {
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
         $htmlContent = self::replaceCommentContent('twv-script', $this->getScriptContent(), $htmlContent);
+        if ($replaceFromLocalCache) {
+            foreach ($this->cacheArray as $key => $val) {
+                $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
+            }
+        }
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -348,7 +384,8 @@ class TwigVisualService {
             $cacheItem = $this->cache->getItem($this->getCurrentThemeName());
             $cacheContentArray = $cacheItem->isHit() ? $cacheItem->get() : [];
             foreach ($cacheContentArray as $key => $val) {
-                $templateCode = TwigVisualService::replaceCommentContent($key, $val, $templateCode);
+                $this->cacheArray[$key] = self::getCommentContent($key, $templateCode);
+                $templateCode = self::replaceCommentContent($key, $val, $templateCode);
             }
         }
         
@@ -491,12 +528,23 @@ class TwigVisualService {
 
     /**
      * @param Request $request
+     * @return false|string
      */
     public function loadReferer(Request $request)
     {
         if ($request->server->get('HTTP_REFERER')) {
-            file_get_contents($request->server->get('HTTP_REFERER'));
+            return file_get_contents($request->server->get('HTTP_REFERER'));
         }
+        return '';
+    }
+
+    /**
+     * @param string $html
+     * @return string
+     */
+    public function beautify($html) {
+        //return $this->service->beautifyHtml->beautify($html);
+        return $html;
     }
 
     /**

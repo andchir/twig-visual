@@ -55,45 +55,13 @@ class AppExtension extends AbstractExtension
     }
 
     /**
-     * @param string $type
-     * @param array $options
+     * @param string $templateName
+     * @param array $templatContext
      * @return string
      */
-    public function twigVisualOptionsFunction($type = 'ui', $options = [])
+    public function twigVisualOptionsFunction($templateName, $templatContext = [])
     {
-        $output = [];
-        switch ($type) {
-            case 'fields':
-                
-                $output = TwigVisualService::getDataKeys($options);
-                
-                break;
-            case 'ui':
-
-                $config = $this->service->getConfigValue($type);
-                $output = [];
-                foreach ($config as $key => $opts) {
-                    $components = [];
-                    foreach ($opts['components'] as $k => $v) {
-                        if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
-                            continue;
-                        }
-                        $components[] = [
-                            'name' => $k,
-                            'title' => $v['title'],
-                            'type' => $v['type']
-                        ];
-                    }
-                    $output[$key] = [
-                        'title' => $opts['title'],
-                        'components' => $components
-                    ];
-                }
-                
-                break;
-            default:
-                $output = $this->service->getConfigValue($type);
-        }
-        return json_encode($output);
+        $output = $this->service->getScriptOptions($templateName, $templatContext);
+        return json_encode($output, JSON_UNESCAPED_UNICODE);
     }
 }
