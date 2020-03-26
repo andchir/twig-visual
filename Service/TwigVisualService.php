@@ -500,6 +500,8 @@ class TwigVisualService {
                 unlink($cachePath);
             }
         }
+        
+        $this->systemCacheClear();
 
         return true;
     }
