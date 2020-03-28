@@ -83,6 +83,12 @@ class TwigVisual {
             }
             this.selectionModeDestroy();
         });
+        
+        // Panel position recovery
+        const panelClassName = this.getCookie('twv-panel-class-name');
+        if (panelClassName) {
+            this.container.className = panelClassName;
+        }
     }
 
     selectModeToggle(parentEl, dataKey = 'source', hidePanel = true) {
@@ -230,11 +236,12 @@ class TwigVisual {
             if (elementSelected) {
                 elementSelected.contentEditable = false;
                 if (elementSelected.dataset.twvContent) {
-                    elementSelected.textContent = elementSelected.dataset.twvContent;
+                    elementSelected.innerHTML = elementSelected.dataset.twvContent;
+                    elementSelected.dataset.twvContent = '';
                 }
                 elementSelected.classList.remove('twv-selected-element');
             }
-            this.setToParents(elementSelected, {transform: ''});
+            this.setToParents(elementSelected, {transform: '', transition: ''});
 
             this.removeSelectionInner();
         }
@@ -403,13 +410,16 @@ class TwigVisual {
         const newClassName = `twv-panel-${direction}`;
         if (this.container.classList.contains(newClassName)) {
             this.container.classList.add('twv-panel-hidden');
+            this.setCookie('twv-panel-class-name', this.container.className);
             return;
         } else if (this.container.classList.contains('twv-panel-hidden')) {
             this.container.classList.remove('twv-panel-hidden');
+            this.setCookie('twv-panel-class-name', this.container.className);
             return;
         }
         this.container.classList.remove('twv-panel-' + (direction === 'left' ? 'right' : 'left'));
         this.container.classList.add(newClassName);
+        this.setCookie('twv-panel-class-name', this.container.className);
     }
 
     /**
@@ -732,7 +742,7 @@ class TwigVisual {
         backgroundOverlay.className = 'twv-back-overlay';
         this.insertBefore(backgroundOverlay, elementSelected);
 
-        this.setToParents(elementSelected, {transform: 'none'});
+        this.setToParents(elementSelected, {transform: 'none', transition: 'none'});
 
         elementSelected.classList.add('twv-selected-element');
     }
@@ -744,7 +754,7 @@ class TwigVisual {
     editTextContentInit(elementSelected) {
         this.clearMessage();
         const componentsContainer = this.container.querySelector('.twv-ui-components');
-        const textContent = elementSelected.textContent.trim();
+        const innerHTML = elementSelected.innerHTML;
         componentsContainer.innerHTML = '';
 
         const div = document.createElement('div');
@@ -756,7 +766,7 @@ class TwigVisual {
             `;
         componentsContainer.appendChild(div);
 
-        elementSelected.dataset.twvContent = textContent;
+        elementSelected.dataset.twvContent = innerHTML;
         elementSelected.contentEditable = true;
         elementSelected.focus();
 
@@ -797,7 +807,7 @@ class TwigVisual {
             e.preventDefault();
             elementSelected.contentEditable = false;
             componentsContainer.innerHTML = '';
-            elementSelected.textContent = textContent;
+            elementSelected.innerHTML = innerHTML;
         });
     }
 
@@ -1107,16 +1117,16 @@ class TwigVisual {
         const compStyles = window.getComputedStyle(element);
         let boxShadow = '0 0 0 2px #007bff';
         if (compStyles['padding-top'] !== '0px') {
-            boxShadow += `, inset 0 ${compStyles['padding-top']} 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset 0 ${compStyles['padding-top']} 0 0 rgba(50,168,82,0.15)`;
         }
         if (compStyles['padding-bottom'] !== '0px') {
-            boxShadow += `, inset 0 -${compStyles['padding-bottom']} 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset 0 -${compStyles['padding-bottom']} 0 0 rgba(50,168,82,0.15)`;
         }
         if (compStyles['padding-left'] !== '0px') {
-            boxShadow += `, inset ${compStyles['padding-left']} 0 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset ${compStyles['padding-left']} 0 0 0 rgba(50,168,82,0.15)`;
         }
         if (compStyles['padding-right'] !== '0px') {
-            boxShadow += `, inset -${compStyles['padding-right']} 0 0 0 rgba(50,168,82,0.1)`;
+            boxShadow += `, inset -${compStyles['padding-right']} 0 0 0 rgba(50,168,82,0.15)`;
         }
         if (boxShadow) {
             element.style.boxShadow = boxShadow;
@@ -1241,5 +1251,28 @@ class TwigVisual {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
         return result;
+    }
+
+    setCookie(cname, cvalue, exdays = 7) {
+        var d = new Date();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        var expires = 'expires=' + d.toUTCString();
+        document.cookie = cname + '=' + cvalue + ';' + expires + ';path=/';
+    }
+
+    getCookie(cname) {
+        var name = cname + '=';
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return '';
     }
 }

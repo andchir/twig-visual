@@ -144,7 +144,7 @@ class TwigVisualService {
         $o = $commentKey ? PHP_EOL . "        <!-- {$commentKey} -->" : '';
         $c = $commentKey ? "<!-- /{$commentKey} -->" . PHP_EOL : '';
         return $o . '
-        {% if app.environment == \'dev\' and is_granted(\'ROLE_ADMIN\') %}
+        {% if is_granted(\'ROLE_ADMIN\') %}
             <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
             <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
             <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
@@ -377,8 +377,11 @@ class TwigVisualService {
     {
         $template = $this->twig->resolveTemplate($templateName);
         $templateSource = $template->getSourceContext();
-        
-        $templateCode = self::cutCommentContent('twv-script', $templateSource->getCode());
+        $templateCode = $templateSource->getCode();
+        if (!$templateSource->getCode() && file_exists($templateSource->getPath())) {
+            $templateCode = file_get_contents($templateSource->getPath());
+        }
+        $templateCode = self::cutCommentContent('twv-script', $templateCode);
 
         if ($replaceFromCache) {
             $cacheItem = $this->cache->getItem($this->getCurrentThemeName());

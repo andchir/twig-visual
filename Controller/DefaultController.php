@@ -299,7 +299,7 @@ class DefaultController extends AbstractController
                 case 'elementSelect':
 
                     if (!isset($opts['outerHTML'])) {
-                        continue;
+                        break;
                     }
                     $outerHTML = TwigVisualService::replaceXMLTags(
                         $opts['outerHTML'],
