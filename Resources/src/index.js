@@ -478,8 +478,8 @@ class TwigVisual {
                     
                     d.innerHTML = `
                     <div class="twv-mb-2">
-                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">Значение</label>
-                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" value="">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="">
                     </div>
                     `;
                     div.appendChild(d);

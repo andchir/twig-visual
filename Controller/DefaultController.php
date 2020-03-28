@@ -235,61 +235,9 @@ class DefaultController extends AbstractController
         $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
 
-        // Prepare UI blocks templates
-        foreach ($uiBlockConfig['components'] as $key => &$opts) {
-            if (!isset($elements[$key]) || !isset($opts['template'])) {
-                continue;
-            }
-            $parentNode = null;
-            $innerHTML = '';
-            $template = new \IvoPetkov\HTML5DOMDocument();
-            $template->loadXML($opts['template']);
-            if ($template->hasChildNodes() && $template->childNodes->item(0)->hasChildNodes()) {
-                foreach($template->childNodes->item(0)->childNodes as $index => $tChildNode) {
-                    if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
-                        if (isset($elements[$tChildNode->tagName])) {
-                            if (!$parentNode) {
-                                $parentNode = isset($elements[$tChildNode->tagName])
-                                    ? $elements[$tChildNode->tagName]->parentNode
-                                    : $elements[$key];
-                            }
-                            $innerHTML .= PHP_EOL . "<{$tChildNode->tagName}/>";
-                        } else {
-                            if (isset($uiBlockConfig['components'][$tChildNode->tagName])) {
-                                if (empty($uiBlockConfig['components'][$tChildNode->tagName]['used'])) {
-                                    
-                                }
-                            } else {
-                                $childNode = $elements[$key]->querySelector($tChildNode->tagName);
-                                if ($childNode) {
-                                    $attributes = $tChildNode->getAttributes();
-                                    foreach ($attributes as $k => $attribute) {
-                                        $childNode->setAttribute($k, $attribute);
-                                    }
-                                    $childNode->textContent =  $tChildNode->textContent;
-                                    if (TwigVisualService::getNextSiblingByType($tChildNode) && TwigVisualService::getNextSiblingByType($childNode)) {
-                                        $tNextSibling = TwigVisualService::getNextSiblingByType($tChildNode);
-                                        if (isset($uiBlockConfig['components'][$tNextSibling->tagName])) {
-                                            TwigVisualService::getNextSiblingByType($childNode)->outerHTML ="<{$tNextSibling->tagName}/>";
-                                            $uiBlockConfig['components'][$tNextSibling->tagName]['used'] = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else if ($tChildNode->nodeType === XML_TEXT_NODE) {
-                        if ($nodeValue = trim($tChildNode->nodeValue)) {
-                            $innerHTML .= PHP_EOL . $nodeValue;
-                        }
-                    }
-                }
-            }
-            if ($parentNode) {
-                $parentNode->innerHTML = $innerHTML . PHP_EOL;
-            }
-            $opts['outerHTML'] = TwigVisualService::unescapeUrls($elements[$key]->outerHTML);
-        }
+        $this->service->prepareUiOptions($uiBlockConfig, $elements, $data);
+        
+        // var_dump($uiBlockConfig); exit;
 
         foreach ($uiBlockConfig['components'] as $key => $opts) {
             if (!isset($opts['type'])) {
@@ -320,13 +268,13 @@ class DefaultController extends AbstractController
                         file_put_contents($tplFilePath, $outerHTML);
                     }
                     if (!empty($opts['src'])) {
-                        if (!empty($opts['isFunction'])) {
+                        //if (!empty($opts['isFunction'])) {
                             $cacheKey = $this->service->cacheAdd(
                                 $opts['sourceHTML'],
                                 $templateName . '-' . $type . '-' . $key,
                                 $this->service->getCurrentThemeName()
                             );
-                        }
+                        //}
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 

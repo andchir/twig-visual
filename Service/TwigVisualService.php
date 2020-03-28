@@ -332,6 +332,7 @@ class TwigVisualService {
                 $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
             }
         }
+        var_dump($htmlContent); exit;
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -432,6 +433,118 @@ class TwigVisualService {
             }
         }
         return $elements;
+    }
+
+    /**
+     * @param array $uiBlockConfig
+     * @param array $elements
+     * @param array $data
+     * @return bool
+     */
+    public function prepareUiOptions(&$uiBlockConfig, $elements, $data = [])
+    {
+        foreach ($uiBlockConfig['components'] as $key => &$opts) {
+            if (!isset($opts['type'])) {
+                continue;
+            }
+            switch ($opts['type']) {
+                case 'elementSelect':
+
+                    if (!isset($elements[$key]) || !isset($opts['template'])) {
+                        continue;
+                    }
+                    if ($key == 'root' && empty($opts['src'])) {
+                        $opts['src'] = "<{$key}/>";
+                    }
+                    $parentNode = null;
+                    $innerHTML = '';
+                    $template = new \IvoPetkov\HTML5DOMDocument();
+                    try {
+                        $template->loadXML(self::replaceTemplateVariable($opts['template'], $data['data'] ?? []));
+                    } catch (\Exception $e) {
+                        $this->setErrorMessage($e->getMessage());
+                        return false;
+                    }
+                    
+                    // Prepare element attributes from template
+                    $rootAttributes = $template->childNodes->item(0)->hasAttributes() ? $template->childNodes->item(0)->getAttributes() : [];
+                    if (!empty($rootAttributes)) {
+                        foreach ($rootAttributes as $k => $attribute) {
+                            if ($k === 'class') {
+                                $classValue = $elements[$key]->getAttribute('class');
+                                $classValue .= $classValue ? ' ' . $attribute : $attribute;
+                                $elements[$key]->setAttribute($k, $classValue);
+                            } else {
+                                $elements[$key]->setAttribute($k, $attribute);
+                            }
+                        }
+                    }
+                    
+                    if ($template->hasChildNodes() && $template->childNodes->item(0)->hasChildNodes()) {
+                        foreach($template->childNodes->item(0)->childNodes as $index => $tChildNode) {
+                            if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
+                                if (isset($elements[$tChildNode->tagName])) {
+                                    if (!$parentNode) {
+                                        $parentNode = isset($elements[$tChildNode->tagName])
+                                            ? $elements[$tChildNode->tagName]->parentNode
+                                            : $elements[$key];
+                                    }
+                                    $innerHTML .= PHP_EOL . "<{$tChildNode->tagName}/>";
+                                } else {
+                                    if (isset($uiBlockConfig['components'][$tChildNode->tagName])) {
+                                        if (empty($uiBlockConfig['components'][$tChildNode->tagName]['used'])) {
+
+                                        }
+                                    } else {
+                                        $childNode = $elements[$key]->querySelector($tChildNode->tagName);
+                                        if ($childNode) {
+                                            $attributes = $tChildNode->getAttributes();
+                                            foreach ($attributes as $k => $attribute) {
+                                                $childNode->setAttribute($k, $attribute);
+                                            }
+                                            $childNode->textContent = $tChildNode->textContent;
+                                            if (self::getNextSiblingByType($tChildNode) && self::getNextSiblingByType($childNode)) {
+                                                $tNextSibling = self::getNextSiblingByType($tChildNode);
+                                                if (isset($uiBlockConfig['components'][$tNextSibling->tagName])) {
+                                                    self::getNextSiblingByType($childNode)->outerHTML = "<{$tNextSibling->tagName}/>";
+                                                    $uiBlockConfig['components'][$tNextSibling->tagName]['used'] = true;
+                                                }
+                                            }
+                                        } else if ($elements[$key]->hasChildNodes()) {
+                                            $childNodes = $elements[$key]->childNodes;
+                                            foreach ($childNodes as $childNode) {
+                                                if ($childNode instanceof \DOMText) {
+                                                    $childNode->textContent = $tChildNode->textContent;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if ($tChildNode->nodeType === XML_TEXT_NODE) {
+                                if ($nodeValue = trim($tChildNode->nodeValue)) {
+                                    $innerHTML .= PHP_EOL . $nodeValue;
+                                }
+                            }
+                        }
+                    }
+                    if ($parentNode) {
+                        $parentNode->innerHTML = $innerHTML . PHP_EOL;
+                    }
+                    $opts['outerHTML'] = self::unescapeUrls($elements[$key]->outerHTML);
+                    
+                    break;
+                case 'text':
+
+                    $opts['value'] = isset($data['data'])
+                        ? $data['data'][$key] ?? ''
+                        : '';
+                    
+                    break;
+            }
+        }
+        return true;
     }
 
     /**
@@ -677,6 +790,19 @@ class TwigVisualService {
     {
         return PHP_EOL . "<!-- {$commentKey} -->" . PHP_EOL . $commentContent
             . PHP_EOL . "<!-- /{$commentKey} -->" . PHP_EOL;
+    }
+
+    /**
+     * @param string $inputString
+     * @param array $data
+     * @return string|string[]
+     */
+    public static function replaceTemplateVariable($inputString, array $data)
+    {
+        foreach ($data as $key => $value) {
+            $inputString = str_replace(["{{{$key}}}", "{{ {$key} }}"], $value, $inputString);
+        }
+        return $inputString;
     }
 
     /**
