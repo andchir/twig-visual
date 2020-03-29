@@ -22,6 +22,7 @@ class TwigVisual {
         this.listenerOnMouseWheel = this.onMouseWheel.bind(this);
         this.listenerOnMouseClick = this.onSelectedElementClick.bind(this);
         this.currentElements = [];
+        this.selectedElement = null;
 
         TwigVisual.onReady(this.init.bind(this));
     }
@@ -161,11 +162,11 @@ class TwigVisual {
         this.selectModeToggle();
         this.selectionModeDestroy();
         
-        const siblingComment = this.getNodePreviousSiblingByType(currentElement, Node.COMMENT_NODE, 2);
-        if (siblingComment && siblingComment.nodeValue.indexOf('twv-') >= 0) {
-            this.addAlertMessage('Выбранный элемент не является статичным.');
-            return;
-        }
+        // const siblingComment = this.getNodePreviousSiblingByType(currentElement, Node.COMMENT_NODE, 2);
+        // if (siblingComment && siblingComment.nodeValue.indexOf('twv-') >= 0) {
+        //     this.addAlertMessage('Выбранный элемент не является статичным.');
+        //     return;
+        // }
 
         // Clear selection
         if (this.data[this.dataKey]) {
@@ -176,9 +177,8 @@ class TwigVisual {
         const xpath = this.getXPathForElement(currentElement);
         this.data[this.dataKey] = xpath;
 
-        console.log(this.dataKey, this.data);
-
         if (this.dataKey === 'source') {
+            this.parentElement = currentElement;
             this.createSelectionOptions(xpath);
         } else {
 
@@ -226,10 +226,7 @@ class TwigVisual {
             buttonStart.parentNode.classList.remove('twv-block-active-status-active');
             this.container.querySelector('.twv-inner').innerHTML = '';
 
-            // Remove overlay
-            if (document.querySelector('.twv-back-overlay')) {
-                this.removeEl(document.querySelector('.twv-back-overlay'));
-            }
+            this.removeOverlay();
 
             // Remove selection of parent element
             const elementSelected = document.querySelector('.twv-selected-element');
@@ -297,13 +294,40 @@ class TwigVisual {
      * @param xpath
      */
     removeSelectionInnerByXPath(xpath) {
+        this.removeOverlay();
         const element = this.getElementByXPath(xpath);
+        if (!element) {
+            return false;
+        }
+        this.addOverlay();
         if (element.dataset.twvTitle) {
             element.setAttribute('title', element.dataset.twvTitle);
         } else {
             element.removeAttribute('title');
         }
         element.classList.remove('twv-selected-success');
+        return true;
+    }
+    
+    addOverlay(element = null) {
+        if (document.querySelector('.twv-back-overlay')) {
+            return;
+        }
+        if (!element) {
+            element = this.parentElement;
+        }
+        const backgroundOverlay = document.createElement('div');
+        backgroundOverlay.className = 'twv-back-overlay';
+        this.insertBefore(backgroundOverlay, element);
+    }
+
+    /**
+     * Remove overlay
+     */
+    removeOverlay() {
+        if (document.querySelector('.twv-back-overlay')) {
+            this.removeEl(document.querySelector('.twv-back-overlay'));
+        }
     }
 
     updateXPathInfo(element) {
@@ -352,8 +376,9 @@ class TwigVisual {
         return  '';
     }
 
-    getElementByXPath(xpath) {
-        return document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+    getElementByXPath(xpath, parentEl = window.document) {
+        const result = document.evaluate(xpath, parentEl, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+        return result.singleNodeValue;
     }
 
     createContainer() {
@@ -604,8 +629,11 @@ class TwigVisual {
         if (buttons.length === 1) {
             this.makeButtonSelected(buttons[0], true, () => {
                 const xpath = this.data[dataKey] || null;
-                this.removeSelectionInnerByXPath(xpath);
-                delete this.data[dataKey];
+                if (this.removeSelectionInnerByXPath(xpath)) {
+                    delete this.data[dataKey];
+                    return true;
+                }
+                return false;
             });
         }
     }
@@ -652,9 +680,10 @@ class TwigVisual {
 
         buttonEl.parentNode.querySelector('.twv-block-active-status-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
-            this.makeButtonSelected(buttonEl, false);
             if (typeof cancelFunc === 'function') {
-                cancelFunc();
+                cancelFunc() && this.makeButtonSelected(buttonEl, false);
+            } else {
+                this.makeButtonSelected(buttonEl, false);
             }
         });
     }
@@ -667,6 +696,7 @@ class TwigVisual {
         const buttonStart = this.container.querySelector('.twv-button-start-select');
         this.makeButtonSelected(buttonStart, true, () => {
             this.selectionModeDestroy(true);
+            return true;
         });
 
         this.container.querySelector('.twv-inner').innerHTML = '';
@@ -738,9 +768,7 @@ class TwigVisual {
         if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {
             // elementSelected.style.backgroundColor = '#fff';
         }
-        const backgroundOverlay = document.createElement('div');
-        backgroundOverlay.className = 'twv-back-overlay';
-        this.insertBefore(backgroundOverlay, elementSelected);
+        this.addOverlay(elementSelected);
 
         this.setToParents(elementSelected, {transform: 'none', transition: 'none'});
 

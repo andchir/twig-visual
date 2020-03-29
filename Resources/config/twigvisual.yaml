@@ -37,81 +37,90 @@ twig_visual:
                     type: elementSelect
                     isFunction: true
                     src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
-                    template: |
-                        <root>
-                            <containerFirst/>
-                        </root>
+#                    template: |
+#                        <root>
+#                            <containerFirst/>
+#                        </root>
+                    template: '<root/>'
                     templatePath: nav/menu_dropdown
     
-                containerFirst:
-                    title: Контейнер первого уровня
-                    type: elementSelect
-                    template: |
-                        <containerFirst>
-                            {% for category in children %}
-                                <itemFirst/>
-                            {%  endfor %}
-                        </containerFirst>
+#                containerFirst:
+#                    title: Контейнер первого уровня
+#                    type: elementSelect
+#                    template: |
+#                        <containerFirst>
+#                            {% for category in children %}
+#                                <itemFirst/>
+#                            {%  endfor %}
+#                        </containerFirst>
     
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
                     template: |
+                        {% for category in children %}
                         <itemFirst class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
-                            <itemSubmenu/>
+                            {{ itemSubmenu }}
                         </itemFirst>
+                        {%  endfor %}
                 
                 itemSubmenu:
-                    outerHTML: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
+                    type: static
+                    value: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
     
-                containerSecond:
-                    title: Контейнер второго уровня
-                    type: elementSelect
-                    template: |
-                        <containerSecond>
-                            {% for category in children %}
-                                <itemSecond/>
-                            {%  endfor %}
-                        </containerSecond>
-                    templatePath: nav/menu_dropdown_child
+#                containerSecond:
+#                    title: Контейнер второго уровня
+#                    type: elementSelect
+#                    template: |
+#                        <containerSecond>
+#                            {% for category in children %}
+#                                <itemSecond/>
+#                            {%  endfor %}
+#                        </containerSecond>
+#                    templatePath: nav/menu_dropdown_child
     
                 itemSecond:
                     title: Пункт меню второго уровня
                     type: elementSelect
                     template: |
+                        {% for category in children %}
                         <itemSecond class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">
                                 {{ category.title }}
                             </a>
                             {{ categoriesTree(category.id, 'menu_dropdown_child_child', category) }}
                         </itemSecond>
+                        {%  endfor %}
     
-                containerThird:
-                    title: Пункт меню третьего уровня
-                    type: elementSelect
-                    template: |
-                        <containerThird>
-                            {% for category in children %}
-                                <itemThird/>
-                            {%  endfor %}
-                        </containerThird>
-                    templatePath: nav/menu_dropdown_child_child
+#                containerThird:
+#                    title: Пункт меню третьего уровня
+#                    type: elementSelect
+#                    template: |
+#                        <containerThird>
+#                            {% for category in children %}
+#                                <itemThird/>
+#                            {%  endfor %}
+#                        </containerThird>
+#                    templatePath: nav/menu_dropdown_child_child
     
                 itemThird:
                     title: Пункт меню третьего уровня
                     type: elementSelect
                     template: |
+                        {% for category in children %}
                         <itemThird class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">
                                 {{ category.title }}
                             </a>
                             {{ categoriesTree(category.id, 'menu_dropdown_child', category) }}
                         </itemThird>
+                        {%  endfor %}
 
                 activeClassName:
                     title: CSS класс активности
                     type: text
+                    value: active
 
         photogallery:
             title: Фотогалерея

@@ -332,7 +332,6 @@ class TwigVisualService {
                 $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
             }
         }
-        var_dump($htmlContent); exit;
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -437,11 +436,129 @@ class TwigVisualService {
 
     /**
      * @param array $uiBlockConfig
+     * @param array $data
+     */
+    public function prepareOptionsByValues(&$uiBlockConfig, $data)
+    {
+        if (!isset($data['data'])) {
+            return;
+        }
+        foreach ($uiBlockConfig['components'] as $key => &$opts) {
+            if (!isset($opts['type'])) {
+                continue;
+            }
+            switch ($opts['type']) {
+                case 'text':
+                    if (isset($data['data'][$key])) {
+                        $opts['value'] = $data['data'][$key];
+                    }
+                    break;
+                case 'elementSelect':
+                    if (isset($opts['template'])) {
+                        $opts['template'] = self::replaceTemplateVariables($opts['template'], $data['data']);
+                    }
+                    break;
+            }
+        }
+    }
+
+    /**
+     * @param array $uiBlockConfig
+     * @param array $elements
+     * @return bool
+     */
+    public function prepareOptionsByTemplates(&$uiBlockConfig, &$elements)
+    {
+        // Get static options
+        $staticOptions = [];
+        foreach ($uiBlockConfig['components'] as $key => $opts) {
+            $type = $opts['type'] ?? '';
+            if (in_array($type, ['static', 'text']) && isset($opts['value'])) {
+                $staticOptions[$key] = $opts['value'];
+            }
+        }
+        unset($key);
+        
+        foreach ($uiBlockConfig['components'] as $key => &$opts) {
+            $type = $opts['type'] ?? '';
+            switch ($type) {
+                case 'elementSelect':
+
+                    if (!isset($elements[$key]) || !isset($opts['template'])) {
+                        break;
+                    }
+                    if ($key == 'root' && empty($opts['src'])) {
+                        $opts['src'] = "<{$key}/>";
+                    }
+                    
+                    $templateCode = self::replaceTemplateVariables($opts['template'], $staticOptions);
+                    $this->prepareHTMLByTemplate(
+                        $elements[$key],
+                        $templateCode,
+                        $key
+                    );
+
+                    $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
+                    
+                    break;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param HTML5DOMElement $domElement
+     * @param string $templateCode
+     * @param string $key
+     * @return bool
+     */
+    public function prepareHTMLByTemplate(&$domElement, $templateCode, $key)
+    {
+        if (!($domElement instanceof \DOMElement)
+            && !($domElement instanceof HTML5DOMElement)
+            && !($domElement instanceof \DOMText)) {
+            return false;
+        }
+
+        $template = new \IvoPetkov\HTML5DOMDocument();
+        try {
+            $template->loadXML('<body>' . $templateCode . '</body>');
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        
+        if (!($templateMainElement = self::findChildByTagName($template->querySelector('body'), $key))) {
+            $this->setErrorMessage("Element \"{ $key}\" not found in template.");
+            return false;
+        }
+
+        if ($templateMainElement->hasChildNodes()) {
+            foreach($templateMainElement->childNodes as $index => $tChildNode) {
+                if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
+                    try {
+                        $childNode = $domElement->querySelector($tChildNode->tagName);
+                    } catch (\Exception $e) {
+                        $childNode = null;
+                    }
+                    if ($childNode) {
+                        self::copyAttributes($tChildNode, $childNode, true);
+                        self::copyNextSiblings($tChildNode, $childNode);
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * @param array $uiBlockConfig
      * @param array $elements
      * @param array $data
      * @return bool
      */
-    public function prepareUiOptions(&$uiBlockConfig, $elements, $data = [])
+    public function _prepareOptionsByTemplates(&$elements, &$uiBlockConfig, $data = [])
     {
         foreach ($uiBlockConfig['components'] as $key => &$opts) {
             if (!isset($opts['type'])) {
@@ -451,7 +568,7 @@ class TwigVisualService {
                 case 'elementSelect':
 
                     if (!isset($elements[$key]) || !isset($opts['template'])) {
-                        continue;
+                        break;
                     }
                     if ($key == 'root' && empty($opts['src'])) {
                         $opts['src'] = "<{$key}/>";
@@ -460,7 +577,7 @@ class TwigVisualService {
                     $innerHTML = '';
                     $template = new \IvoPetkov\HTML5DOMDocument();
                     try {
-                        $template->loadXML(self::replaceTemplateVariable($opts['template'], $data['data'] ?? []));
+                        $template->loadXML(self::replaceTemplateVariables($opts['template'], $data['data'] ?? []));
                     } catch (\Exception $e) {
                         $this->setErrorMessage($e->getMessage());
                         return false;
@@ -511,12 +628,8 @@ class TwigVisualService {
                                                 }
                                             }
                                         } else if ($elements[$key]->hasChildNodes()) {
-                                            $childNodes = $elements[$key]->childNodes;
-                                            foreach ($childNodes as $childNode) {
-                                                if ($childNode instanceof \DOMText) {
-                                                    $childNode->textContent = $tChildNode->textContent;
-                                                    break;
-                                                }
+                                            if ($childNodeText = self::findChildByType($elements[$key], XML_TEXT_NODE)) {
+                                                $childNodeText->textContent = $tChildNode->textContent;
                                             }
                                         }
                                     }
@@ -797,12 +910,30 @@ class TwigVisualService {
      * @param array $data
      * @return string|string[]
      */
-    public static function replaceTemplateVariable($inputString, array $data)
+    public static function replaceTemplateVariables($inputString, array $data)
     {
         foreach ($data as $key => $value) {
             $inputString = str_replace(["{{{$key}}}", "{{ {$key} }}"], $value, $inputString);
         }
         return $inputString;
+    }
+
+    /**
+     * @param string $templateCode
+     * @param string $tagName
+     * @param string $content
+     * @return string|string[]
+     */
+    public static function replaceByTag($templateCode, $tagName, $content)
+    {
+        if (strpos($templateCode, "<{$tagName}/>") !== false) {
+            return str_replace("<{$tagName}/>", $content, $templateCode);
+        }
+        $regex = "/<{$tagName}[^>]*>(.*?)<\/{$tagName}>/s";
+        if (!preg_match($regex, $templateCode)) {
+            return $content;
+        }
+        return preg_replace("/<{$tagName}[^>]*>(.*?)<\/{$tagName}>/s", $content, $templateCode);
     }
 
     /**
@@ -860,6 +991,45 @@ class TwigVisualService {
     }
 
     /**
+     * @param \DOMElement|\DOMNode $sourceElement
+     * @param \DOMElement|\DOMNode $targetElement
+     * @param bool $includeTextContent
+     */
+    public static function copyAttributes($sourceElement, &$targetElement, $includeTextContent = false)
+    {
+        if (!$sourceElement->hasAttributes()) {
+            return;
+        }
+        $attributes = $sourceElement->getAttributes();
+        if (!empty($attributes)) {
+            foreach ($attributes as $k => $attribute) {
+                if ($k === 'class') {
+                    $classValue = $targetElement->getAttribute('class');
+                    $classValue .= $classValue ? ' ' . $attribute : $attribute;
+                    $targetElement->setAttribute($k, $classValue);
+                } else {
+                    $targetElement->setAttribute($k, $attribute);
+                }
+            }
+        }
+        $targetElement->textContent = $sourceElement->textContent;
+    }
+
+    /**
+     * @param \DOMElement|\DOMNode $sourceElement
+     * @param \DOMElement|\DOMNode $targetElement
+     */
+    public static function copyNextSiblings($sourceElement, &$targetElement)
+    {
+        if ($tSibling = self::getNextSiblingByType($sourceElement, XML_TEXT_NODE)) {
+            if ($targetElement->parentNode && $targetElement->nextSibling) {
+                $newText = new \DOMText($tSibling->nodeValue);
+                $targetElement->parentNode->insertBefore($newText, $targetElement->nextSibling);
+            }
+        }
+    }
+
+    /**
      * @param mixed $domElement
      * @param int $type
      * @return \DOMElement|\DOMNode|null
@@ -875,6 +1045,58 @@ class TwigVisualService {
             return self::getNextSiblingByType($domElement->nextSibling, $type);
         }
         return $domElement->nextSibling;
+    }
+
+    /**
+     * @param mixed $domElement
+     * @param int $type
+     * @return |null
+     */
+    public static function findChildByType($domElement, $type = XML_ELEMENT_NODE)
+    {
+        if (!($domElement instanceof \DOMElement)
+            && !($domElement instanceof HTML5DOMElement)
+            && !($domElement instanceof \DOMText)) {
+            return null;
+        }
+        if (!$domElement->hasChildNodes()) {
+            return null;
+        }
+        $childNodes = $domElement->childNodes;
+        $result = null;
+        foreach ($childNodes as $childNode) {
+            if ($childNode->nodeType === $type) {
+                $result = $childNode;
+                break;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param mixed $domElement
+     * @param int $tagName
+     * @return |null
+     */
+    public static function findChildByTagName($domElement, $tagName)
+    {
+        if (!($domElement instanceof \DOMElement)
+            && !($domElement instanceof HTML5DOMElement)
+            && !($domElement instanceof \DOMText)) {
+            return null;
+        }
+        if (!$domElement->hasChildNodes()) {
+            return null;
+        }
+        $childNodes = $domElement->childNodes;
+        $result = null;
+        foreach ($childNodes as $childNode) {
+            if ($childNode->nodeName === $tagName) {
+                $result = $childNode;
+                break;
+            }
+        }
+        return $result;
     }
 
     /**

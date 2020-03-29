@@ -235,9 +235,11 @@ class DefaultController extends AbstractController
         $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
 
-        $this->service->prepareUiOptions($uiBlockConfig, $elements, $data);
+        $this->service->prepareOptionsByValues($uiBlockConfig, $data);
+        $result = $this->service->prepareOptionsByTemplates($uiBlockConfig, $elements);
         
-        // var_dump($uiBlockConfig); exit;
+        var_dump($uiBlockConfig);
+        var_dump($result, $this->service->getErrorMessage()); exit;
 
         foreach ($uiBlockConfig['components'] as $key => $opts) {
             if (!isset($opts['type'])) {
@@ -254,7 +256,7 @@ class DefaultController extends AbstractController
                         $uiBlockConfig['components'],
                         'outerHTML'
                     );
-                    $outerHTML = $this->service->beautify($outerHTML);
+                    // $outerHTML = $this->service->beautify($outerHTML);
 
                     if (!empty($opts['templatePath'])) {
                         $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
@@ -275,7 +277,10 @@ class DefaultController extends AbstractController
                                 $this->service->getCurrentThemeName()
                             );
                         //}
-                        $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
+                        // var_dump($opts['src']); exit;
+                        var_dump($elements[$key]); exit;
+                        $elements[$key]->innerHTML = '';
+                        $elements[$key]->outerHTML = $opts['src'];//TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 
                     break;
@@ -292,6 +297,8 @@ class DefaultController extends AbstractController
                     break;
             }
         }
+        
+        // var_dump($uiBlockConfig); exit;
 
         if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
             return $this->setError($this->service->getErrorMessage());
