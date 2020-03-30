@@ -98,9 +98,12 @@ class TwigVisualService {
         $uiConfig = $this->getConfigValue('ui');
         $uiOutput = [];
         foreach ($uiConfig as $key => $opts) {
+            if (!isset($opts['title']) || !isset($opts['title'])) {
+                continue;
+            }
             $components = [];
             foreach ($opts['components'] as $k => $v) {
-                if ($k === 'root' || (!isset($v['title']) && !isset($v['type']))) {
+                if ($k === 'root' || !isset($v['title']) || !isset($v['type'])) {
                     continue;
                 }
                 $components[] = [

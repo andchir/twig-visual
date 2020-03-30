@@ -1,9 +1,9 @@
 @font-face {
   font-family: 'twv-icomoon';
   src:
-    url('fonts/twv-icomoon.ttf?gw6rdu') format('truetype'),
-    url('fonts/twv-icomoon.woff?gw6rdu') format('woff'),
-    url('fonts/twv-icomoon.svg?gw6rdu#twv-icomoon') format('svg');
+    url('fonts/twv-icomoon.ttf?w2duq7') format('truetype'),
+    url('fonts/twv-icomoon.woff?w2duq7') format('woff'),
+    url('fonts/twv-icomoon.svg?w2duq7#twv-icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -24,6 +24,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.twv-icon-move:before {
+  content: "\e928";
+}
 .twv-icon-error:before {
   content: "\e911";
 }

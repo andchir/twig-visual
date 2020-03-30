@@ -723,6 +723,9 @@ class TwigVisual {
             <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="Delete element">
                 <i class="twv-icon-clearclose"></i>
             </button>
+            <button type="button" class="twv-btn twv-mr-1 twv-button-move-element" title="Move element">
+                <i class="twv-icon-move"></i>
+            </button>
         </div>
         <div class="twv-mb-3 twv-ui-element-select">
             <select class="twv-custom-select">
