@@ -228,14 +228,17 @@ class DefaultController extends AbstractController
         }
         list($templateFilePath, $doc, $node) = $result;
         $templateDirPath = dirname($templateFilePath);
-
+        
+        // Step #1
         $elements = $this->service->getUiElements($doc, $data, $uiBlockConfig);
         $elements['root'] = $node;
-        $uiBlockConfig['components']['root']['outerHTML'] = $node->outerHTML;
         $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
-
+        
+        // Step #2
         $this->service->prepareOptionsByValues($uiBlockConfig, $data);
+        
+        // Step #3
         $result = $this->service->prepareOptionsByTemplates($uiBlockConfig, $elements);
         
         var_dump($uiBlockConfig);

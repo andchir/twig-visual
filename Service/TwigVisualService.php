@@ -424,8 +424,8 @@ class TwigVisualService {
                         return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
                     }
                     $elements[$key] = $entries->item(0);
-                    $uiBlockConfig['components'][$key]['outerHTML'] = $elements[$key]->outerHTML;
                     $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
+                    
                     break;
                 case 'pageField':
 
@@ -464,7 +464,7 @@ class TwigVisualService {
             }
         }
     }
-
+    
     /**
      * @param array $uiBlockConfig
      * @param array $elements
@@ -481,8 +481,38 @@ class TwigVisualService {
             }
         }
         unset($key);
+
+        $keys = array_keys($uiBlockConfig['components']);
+        $keys = array_reverse($keys);
+
+        foreach ($keys as $key) {
+            $opts = &$uiBlockConfig['components'][$key];
+            $type = $opts['type'] ?? '';
+            switch ($type) {
+                case 'elementSelect':
+
+                    if (!isset($elements[$key]) || !isset($opts['template'])) {
+                        break;
+                    }
+                    
+                    $templateCode = self::replaceTemplateVariables($opts['template'], $staticOptions);
+                    $result = $this->prepareHTMLByTemplate(
+                        $elements[$key],
+                        $templateCode,
+                        $key
+                    );
+
+                    $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
+                    
+                    if (!empty($opts['src'])) {
+                        $elements[$key]->outerHTML = $opts['src'];
+                    }
+
+                    break;
+            }
+        }
         
-        foreach ($uiBlockConfig['components'] as $key => &$opts) {
+        /*foreach ($uiBlockConfig['components'] as $key => &$opts) {
             $type = $opts['type'] ?? '';
             switch ($type) {
                 case 'elementSelect':
@@ -505,7 +535,7 @@ class TwigVisualService {
                     
                     break;
             }
-        }
+        }*/
         return true;
     }
 
@@ -532,9 +562,11 @@ class TwigVisualService {
         }
         
         if (!($templateMainElement = self::findChildByTagName($template->querySelector('body'), $key))) {
-            $this->setErrorMessage("Element \"{ $key}\" not found in template.");
+            $this->setErrorMessage("Element \"{$key}\" not found in template.");
             return false;
         }
+        
+        var_dump($templateMainElement->hasChildNodes());
 
         if ($templateMainElement->hasChildNodes()) {
             foreach($templateMainElement->childNodes as $index => $tChildNode) {
