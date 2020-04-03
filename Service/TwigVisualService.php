@@ -505,7 +505,8 @@ class TwigVisualService {
                     $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
                     
                     if (!empty($opts['src'])) {
-                        $elements[$key]->outerHTML = $opts['src'];
+                        // $elements[$key]->outerHTML = $opts['src'];
+                        $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['src'], $key);
                     }
 
                     break;
@@ -565,8 +566,6 @@ class TwigVisualService {
             $this->setErrorMessage("Element \"{$key}\" not found in template.");
             return false;
         }
-        
-        var_dump($templateMainElement->hasChildNodes());
 
         if ($templateMainElement->hasChildNodes()) {
             foreach($templateMainElement->childNodes as $index => $tChildNode) {
@@ -870,6 +869,28 @@ class TwigVisualService {
     public function getRootDirPath()
     {
         return realpath($this->params->get('kernel.root_dir') . '/../..');
+    }
+
+    /**
+     * @param \DOMElement|\DOMNode $element
+     * @param string $content
+     * @param string $tagName
+     * @param string $cacheKey
+     */
+    public static function replaceHTMLElement($element, $content, $tagName = '', $cacheKey = '')
+    {
+        $result = null;
+        $isHTML = strpos(trim($content), '<') === 0;
+        if ($isHTML) {
+            $result = new \DOMElement($tagName);
+            $element->parentNode->insertBefore($result, $element);
+            $element->parentNode->removeChild($element);
+        } else {
+            $result = new \DOMText($content);
+            $element->parentNode->insertBefore($result, $element);
+            $element->parentNode->removeChild($element);
+        }
+        return $result;
     }
 
     /**
