@@ -272,7 +272,8 @@ class DefaultController extends AbstractController
                         }
                         file_put_contents($tplFilePath, $outerHTML);
                     }
-                    if (!empty($opts['src'])) {
+                    
+                    if ($key === 'root' && !empty($opts['src'])) {
                         $cacheKey = '';
                         if ($key === 'root') {
                             $cacheKey = $this->service->cacheAdd(
@@ -281,7 +282,7 @@ class DefaultController extends AbstractController
                                 $this->service->getCurrentThemeName()
                             );
                         }
-                        var_dump($key);
+                        // var_dump($key);
                         // $elements[$key]->innerHTML = '';
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                         // TwigVisualService::replaceHTMLElement($elements[$key], $opts['src'], $cacheKey);

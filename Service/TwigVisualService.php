@@ -505,7 +505,6 @@ class TwigVisualService {
                     $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
                     
                     if (!empty($opts['src'])) {
-                        // $elements[$key]->outerHTML = $opts['src'];
                         $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['src'], $key);
                     }
 
