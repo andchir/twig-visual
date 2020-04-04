@@ -10,6 +10,7 @@
         }
     ],
     "require": {
-        "ivopetkov/html5-dom-document-php": "^2.2"
+        "ivopetkov/html5-dom-document-php": "^2.2",
+        "machy8/xhtml-formatter": "^1.0"
     }
 }

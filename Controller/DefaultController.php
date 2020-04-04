@@ -240,10 +240,8 @@ class DefaultController extends AbstractController
         
         // Step #3
         $result = $this->service->prepareOptionsByTemplates($uiBlockConfig, $elements);
-        
-        // var_dump($uiBlockConfig);
-        // var_dump($result, $this->service->getErrorMessage()); exit;
 
+        // Step #4
         foreach ($uiBlockConfig['components'] as $key => $opts) {
             if (!isset($opts['type'])) {
                 continue;
@@ -259,7 +257,7 @@ class DefaultController extends AbstractController
                         $uiBlockConfig['components'],
                         'outerHTML'
                     );
-                    // $outerHTML = $this->service->beautify($outerHTML);
+                    $outerHTML = $this->service->beautify($outerHTML);
 
                     if (!empty($opts['templatePath'])) {
                         $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
@@ -274,18 +272,12 @@ class DefaultController extends AbstractController
                     }
                     
                     if ($key === 'root' && !empty($opts['src'])) {
-                        $cacheKey = '';
-                        if ($key === 'root') {
-                            $cacheKey = $this->service->cacheAdd(
-                                $opts['sourceHTML'],
-                                $templateName . '-' . $type . '-' . $key,
-                                $this->service->getCurrentThemeName()
-                            );
-                        }
-                        // var_dump($key);
-                        // $elements[$key]->innerHTML = '';
+                        $cacheKey = $this->service->cacheAdd(
+                            $opts['sourceHTML'],
+                            $templateName . '-' . $type . '-' . $key,
+                            $this->service->getCurrentThemeName()
+                        );
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
-                        // TwigVisualService::replaceHTMLElement($elements[$key], $opts['src'], $cacheKey);
                     }
 
                     break;
@@ -303,7 +295,7 @@ class DefaultController extends AbstractController
             }
         }
         
-        // var_dump($doc->saveHTML()); exit;
+        var_dump($doc->saveHTML()); exit;
 
         if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
             return $this->setError($this->service->getErrorMessage());

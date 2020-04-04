@@ -14,6 +14,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Twig\Environment as TwigEnvironment;
+use XhtmlFormatter\Formatter;
 
 class TwigVisualService {
 
@@ -23,8 +24,6 @@ class TwigVisualService {
     protected $params;
     /** @var KernelInterface */
     protected $kernel;
-    /** @var Beautify_Html */
-    public $beautifyHtml;
     /** @var array */
     protected $config;
     /** @var FilesystemAdapter */
@@ -38,14 +37,12 @@ class TwigVisualService {
         ParameterBagInterface $params,
         TwigEnvironment $twig,
         KernelInterface $kernel,
-        Beautify_Html $beautifyHtml,
         array $config = []
     )
     {
         $this->kernel = $kernel;
         $this->params = $params;
         $this->twig = $twig;
-        $this->beautifyHtml = $beautifyHtml;
 
         $this->cache = new FilesystemAdapter('twigvisualcache', 0, $this->getRootDirPath() . '/var/cache');
         
@@ -421,7 +418,7 @@ class TwigVisualService {
                     /** @var \DOMNodeList $entries */
                     $entries = $xpath->evaluate($xpathQuery, $doc);
                     if ($entries->count() === 0) {
-                        return $this->setError("Element ({$key}) not found for xPath: {$xpathQuery}.");
+                        return $this->setErrorMessage("Element ({$key}) not found for xPath: {$xpathQuery}.");
                     }
                     $elements[$key] = $entries->item(0);
                     $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
@@ -504,38 +501,13 @@ class TwigVisualService {
 
                     $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
                     
-                    if (!empty($opts['src'])) {
+                    if ($key !== 'root' && !empty($opts['src'])) {
                         $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['src'], $key);
                     }
 
                     break;
             }
         }
-        
-        /*foreach ($uiBlockConfig['components'] as $key => &$opts) {
-            $type = $opts['type'] ?? '';
-            switch ($type) {
-                case 'elementSelect':
-
-                    if (!isset($elements[$key]) || !isset($opts['template'])) {
-                        break;
-                    }
-                    if ($key == 'root' && empty($opts['src'])) {
-                        $opts['src'] = "<{$key}/>";
-                    }
-                    
-                    $templateCode = self::replaceTemplateVariables($opts['template'], $staticOptions);
-                    $this->prepareHTMLByTemplate(
-                        $elements[$key],
-                        $templateCode,
-                        $key
-                    );
-
-                    $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
-                    
-                    break;
-            }
-        }*/
         return true;
     }
 
@@ -582,114 +554,6 @@ class TwigVisualService {
             }
         }
         
-        return true;
-    }
-
-    /**
-     * @param array $uiBlockConfig
-     * @param array $elements
-     * @param array $data
-     * @return bool
-     */
-    public function _prepareOptionsByTemplates(&$elements, &$uiBlockConfig, $data = [])
-    {
-        foreach ($uiBlockConfig['components'] as $key => &$opts) {
-            if (!isset($opts['type'])) {
-                continue;
-            }
-            switch ($opts['type']) {
-                case 'elementSelect':
-
-                    if (!isset($elements[$key]) || !isset($opts['template'])) {
-                        break;
-                    }
-                    if ($key == 'root' && empty($opts['src'])) {
-                        $opts['src'] = "<{$key}/>";
-                    }
-                    $parentNode = null;
-                    $innerHTML = '';
-                    $template = new \IvoPetkov\HTML5DOMDocument();
-                    try {
-                        $template->loadXML(self::replaceTemplateVariables($opts['template'], $data['data'] ?? []));
-                    } catch (\Exception $e) {
-                        $this->setErrorMessage($e->getMessage());
-                        return false;
-                    }
-                    
-                    // Prepare element attributes from template
-                    $rootAttributes = $template->childNodes->item(0)->hasAttributes() ? $template->childNodes->item(0)->getAttributes() : [];
-                    if (!empty($rootAttributes)) {
-                        foreach ($rootAttributes as $k => $attribute) {
-                            if ($k === 'class') {
-                                $classValue = $elements[$key]->getAttribute('class');
-                                $classValue .= $classValue ? ' ' . $attribute : $attribute;
-                                $elements[$key]->setAttribute($k, $classValue);
-                            } else {
-                                $elements[$key]->setAttribute($k, $attribute);
-                            }
-                        }
-                    }
-                    
-                    if ($template->hasChildNodes() && $template->childNodes->item(0)->hasChildNodes()) {
-                        foreach($template->childNodes->item(0)->childNodes as $index => $tChildNode) {
-                            if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
-                                if (isset($elements[$tChildNode->tagName])) {
-                                    if (!$parentNode) {
-                                        $parentNode = isset($elements[$tChildNode->tagName])
-                                            ? $elements[$tChildNode->tagName]->parentNode
-                                            : $elements[$key];
-                                    }
-                                    $innerHTML .= PHP_EOL . "<{$tChildNode->tagName}/>";
-                                } else {
-                                    if (isset($uiBlockConfig['components'][$tChildNode->tagName])) {
-                                        if (empty($uiBlockConfig['components'][$tChildNode->tagName]['used'])) {
-
-                                        }
-                                    } else {
-                                        $childNode = $elements[$key]->querySelector($tChildNode->tagName);
-                                        if ($childNode) {
-                                            $attributes = $tChildNode->getAttributes();
-                                            foreach ($attributes as $k => $attribute) {
-                                                $childNode->setAttribute($k, $attribute);
-                                            }
-                                            $childNode->textContent = $tChildNode->textContent;
-                                            if (self::getNextSiblingByType($tChildNode) && self::getNextSiblingByType($childNode)) {
-                                                $tNextSibling = self::getNextSiblingByType($tChildNode);
-                                                if (isset($uiBlockConfig['components'][$tNextSibling->tagName])) {
-                                                    self::getNextSiblingByType($childNode)->outerHTML = "<{$tNextSibling->tagName}/>";
-                                                    $uiBlockConfig['components'][$tNextSibling->tagName]['used'] = true;
-                                                }
-                                            }
-                                        } else if ($elements[$key]->hasChildNodes()) {
-                                            if ($childNodeText = self::findChildByType($elements[$key], XML_TEXT_NODE)) {
-                                                $childNodeText->textContent = $tChildNode->textContent;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else if ($tChildNode->nodeType === XML_TEXT_NODE) {
-                                if ($nodeValue = trim($tChildNode->nodeValue)) {
-                                    $innerHTML .= PHP_EOL . $nodeValue;
-                                }
-                            }
-                        }
-                    }
-                    if ($parentNode) {
-                        $parentNode->innerHTML = $innerHTML . PHP_EOL;
-                    }
-                    $opts['outerHTML'] = self::unescapeUrls($elements[$key]->outerHTML);
-                    
-                    break;
-                case 'text':
-
-                    $opts['value'] = isset($data['data'])
-                        ? $data['data'][$key] ?? ''
-                        : '';
-                    
-                    break;
-            }
-        }
         return true;
     }
 
@@ -806,9 +670,12 @@ class TwigVisualService {
      * @param string $html
      * @return string
      */
-    public function beautify($html) {
-        //return $this->service->beautifyHtml->beautify($html);
-        return $html;
+    public function beautify($html)
+    {
+        $formatter = new Formatter();
+        return $formatter
+            ->setSpacesIndentationMethod(4)
+            ->format($html);
     }
 
     /**
@@ -879,7 +746,7 @@ class TwigVisualService {
     public static function replaceHTMLElement($element, $content, $tagName = '', $cacheKey = '')
     {
         $result = null;
-        $isHTML = strpos(trim($content), '<') === 0;
+        $isHTML = strpos(trim($content), "<{$tagName}") === 0;
         if ($isHTML) {
             $result = new \DOMElement($tagName);
             $element->parentNode->insertBefore($result, $element);

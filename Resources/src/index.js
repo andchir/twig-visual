@@ -1212,7 +1212,6 @@ class TwigVisual {
     
     windowReload() {
         let locationHref = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
-        locationHref += '?reload=' + this.generateRandomString();
         window.location.href = locationHref;
     }
     
