@@ -10,6 +10,7 @@
 .twv-flex-fill { -ms-flex: 1 1 auto; flex: 1 1 auto; }
 .twv-text-success { color: #28a745; }
 .twv-display-block { display: block; }
+.twv-float-right { float: right; }
 
 /* panel */
 .twig-visual-container { position: fixed; width: 300px; height: 100%; background-color: #fff; border-left: 1px solid #ddd; z-index: 1777; padding: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.2); transition: right 400ms, left 400ms; box-sizing: border-box; }
@@ -25,6 +26,8 @@
 .twv-panel-right.twv-panel-hidden { right: -300px; }
 .twv-panel-left.twv-panel-hidden .twv-button-panel-right { position: fixed; left: 15px; top: 15px; }
 .twv-panel-right.twv-panel-hidden .twv-button-panel-left { position: fixed; right: 15px; top: 15px; }
+.twv-panel-right .twv-panel-header-buttons { float: right; }
+.twv-panel-left .twv-panel-header-buttons { float: left; }
 
 /* buttons */
 .twv-btn { display: inline-block; font-weight: 400; color: #212529; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; background-color: #fff; border: 1px solid #6c757d; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; border-radius: .25rem; transition: background-color 500ms; }

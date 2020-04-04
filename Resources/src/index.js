@@ -7,6 +7,7 @@ class TwigVisual {
         this.parentElement = null;
         this.dataKey = 'source';
         this.data = {};
+        this.actions = [];
         this.timer = null;
         this.components = [];
         this.options = Object.assign({
@@ -161,12 +162,6 @@ class TwigVisual {
 
         this.selectModeToggle();
         this.selectionModeDestroy();
-        
-        // const siblingComment = this.getNodePreviousSiblingByType(currentElement, Node.COMMENT_NODE, 2);
-        // if (siblingComment && siblingComment.nodeValue.indexOf('twv-') >= 0) {
-        //     this.addAlertMessage('Выбранный элемент не является статичным.');
-        //     return;
-        // }
 
         // Clear selection
         if (this.data[this.dataKey]) {
@@ -387,6 +382,12 @@ class TwigVisual {
         containerEl.className = 'twig-visual-container twv-panel-right';
         containerEl.innerHTML = `
         <div class="twv-panel-header">
+            <div class="twv-panel-header-buttons">
+                <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-execute-batch" type="button" title="Выполнить пакет операций" style="display: none;">
+                    <i class="twv-icon-format_list_bulleted"></i>
+                    <span></span>
+                </button>
+            </div>
             <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left" type="button" title="Передвинуть влево">
                 <i class="twv-icon-arrow_back"></i>
             </button>
@@ -426,6 +427,11 @@ class TwigVisual {
         containerEl.querySelector('.twv-button-panel-right').addEventListener('click', (e) => {
             e.preventDefault();
             this.panelMove('right');
+        });
+        
+        containerEl.querySelector('.twv-button-execute-batch').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.executeActionBatch();
         });
 
         return containerEl;
@@ -552,8 +558,13 @@ class TwigVisual {
         div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
-            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Применить</button>
-            <button type="button" class="twv-btn twv-button-cancel">Отменить</button>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                <i class="twv-icon-done"></i>
+                Применить
+            </button>
+            <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                <i class="twv-icon-clearclose"></i>
+            </button>
         `;
         componentsContainer.appendChild(div);
 
@@ -721,7 +732,7 @@ class TwigVisual {
                 <i class="twv-icon-linkinsert_link"></i>
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="Delete element">
-                <i class="twv-icon-clearclose"></i>
+                <i class="twv-icon-delete_outline"></i>
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-move-element" title="Move element">
                 <i class="twv-icon-move"></i>
@@ -791,8 +802,16 @@ class TwigVisual {
         const div = document.createElement('div');
         div.innerHTML = `
             <div class="twv-mb-3">
-                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                    <i class="twv-icon-done"></i>
+                    Сохранить
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                    <i class="twv-icon-format_list_bulleted"></i>
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                    <i class="twv-icon-clearclose"></i>
+                </button>
             </div>
             `;
         componentsContainer.appendChild(div);
@@ -833,6 +852,13 @@ class TwigVisual {
             }, 'POST');
         });
 
+        // Add to action list
+        this.container.querySelector('.twv-button-add-list')
+            .addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addToActionBatch('edit_content', this.data.source, {value: elementSelected.innerHTML});
+            });
+
         // Cancel
         buttonCancel.addEventListener('click', (e) => {
             e.preventDefault();
@@ -871,8 +897,16 @@ class TwigVisual {
                 </select>
             </div>
             <div class="twv-mb-3">
-                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Сохранить</button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                    <i class="twv-icon-done"></i>
+                    Сохранить
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                    <i class="twv-icon-format_list_bulleted"></i>
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                    <i class="twv-icon-clearclose"></i>
+                </button>
             </div>
             `;
         componentsContainer.appendChild(div);
@@ -907,6 +941,16 @@ class TwigVisual {
             }, 'POST');
         });
 
+        // Add to action list
+        this.container.querySelector('.twv-button-add-list')
+            .addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addToActionBatch('edit_link', this.data.source, {
+                    href: div.querySelector('input[type="text"]').value,
+                    target: div.querySelector('select').value
+                });
+            });
+
         // Cancel
         buttonCancel.addEventListener('click', (e) => {
             e.preventDefault();
@@ -930,8 +974,16 @@ class TwigVisual {
         div.innerHTML = `
             <div class="twv-mb-3">Вы уверены, что хотите удалить выбранный элемент?</div>
             <div class="twv-mb-3">
-                <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Подтвердить</button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                    <i class="twv-icon-done"></i>
+                    Подтвердить
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                    <i class="twv-icon-format_list_bulleted"></i>
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                    <i class="twv-icon-clearclose"></i>
+                </button>
             </div>
             `;
         componentsContainer.appendChild(div);
@@ -969,6 +1021,13 @@ class TwigVisual {
             e.preventDefault();
             componentsContainer.innerHTML = '';
         });
+        
+        // Add to action list
+        this.container.querySelector('.twv-button-add-list')
+            .addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addToActionBatch('delete', this.data.source);
+            });
     }
 
     addNewThemeInit() {
@@ -988,7 +1047,7 @@ class TwigVisual {
             <input type="text" id="tww-field-theme-mainpage" class="twv-form-control" value="index.html">
         </div>
         <div class="twv-mb-3">
-            <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Создать</button>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Создать</button>
             <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
         </div>
         `;
@@ -1056,7 +1115,7 @@ class TwigVisual {
             </select>
         </div>
         <div class="twv-mb-3">
-            <button type="button" class="twv-btn twv-btn-primary twv-mr-2 twv-button-submit">Создать</button>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Создать</button>
             <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
         </div>
         `;
@@ -1096,6 +1155,52 @@ class TwigVisual {
             e.preventDefault();
             innerContainerEl.innerHTML = '';
         });
+    }
+
+    /**
+     * Add operation for batch execution
+     * @param {string} action
+     * @param {string} xpath
+     * @param {object} options
+     */
+    addToActionBatch(action, xpath, options = {}) {
+        this.actions.push({
+            action,
+            xpath,
+            options
+        });
+        this.selectionModeDestroy(true);
+        
+        const buttonEl = this.container.querySelector('.twv-button-execute-batch');
+        buttonEl.querySelector('span').textContent = `${this.actions.length}`;
+        buttonEl.style.display = 'inline-block';
+        
+        this.actions.forEach((action) => {
+            const element = this.getElementByXPath(action.xpath);
+            if (element) {
+                element.classList.add('twv-selected-success');
+            }
+        });
+    }
+
+    /**
+     * Execute actions batch
+     */
+    executeActionBatch() {
+        if (this.actions.length === 0) {
+            return;
+        }
+        this.showLoading(true);
+        this.request('/twigvisual/batch', {
+            templateName: this.options.templateName,
+            actions: this.actions
+        }, (res) => {
+            this.windowReload();
+            this.showLoading(false);
+        }, (err) => {
+            this.addAlertMessage(err.error || err);
+            this.showLoading(false);
+        }, 'POST');
     }
     
     showLoading(enabled = true) {

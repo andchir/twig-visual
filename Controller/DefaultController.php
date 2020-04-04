@@ -304,6 +304,94 @@ class DefaultController extends AbstractController
             'success' => true
         ]);
     }
+
+    /**
+     * @Route("/batch", methods={"POST"})
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     */
+    public function batchAction(Request $request, TranslatorInterface $translator)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $actions = $data['actions'] ?? [];
+
+        try {
+            $result = $this->service->getDocumentNode($templateName, null, true);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
+        list($templateFilePath, $doc) = $result;
+        
+        $errors = [];
+        $elements = [];
+        foreach ($actions as $action) {
+            if (empty($action['xpath']) || empty($action['action'])) {
+                $elements[] = null;
+                continue;
+            }
+            $node = TwigVisualService::fintElementByXPath($doc, $action['xpath']);
+            if ($this->isVisualized($node)) {
+                $errors[] = "The item \"{$action['xpath']}\" is already visualized.";
+            } else {
+                $elements[] = $node;
+            }
+        }
+
+        if (count($errors) > 1) {
+            return $this->setError($errors[0]);
+        }
+
+        foreach ($actions as $index => $action) {
+            if (empty($action['action']) || !$elements[$index]) {
+                continue;
+            }
+            $options = $action['options'] ?? [];
+            switch ($action['action']) {
+                case 'edit_content':
+                    
+                    $innerHTML = $options['value'] ?? '';
+                    $elements[$index]->innerHTML = $innerHTML;
+                    
+                    break;
+                case 'edit_link':
+
+                    $attributes = [
+                        'href' => $options['href'] ?? '',
+                        'target' => $options['target'] ?? ''
+                    ];
+                    try {
+                        foreach ($attributes as $key => $value) {
+                            $elements[$index]->setAttribute($key, $value);
+                        }
+                    } catch (\Exception $e) {
+                        $errors[] = $e->getMessage();
+                    }
+
+                    break;
+                case 'delete':
+                    try {
+                        $elements[$index]->parentNode->removeChild($elements[$index]);
+                    } catch (\Exception $e) {
+                        $errors[] = $e->getMessage();
+                    }
+                    break;
+            }
+        }
+        
+        if (count($errors) > 1) {
+            return $this->setError($errors[0]);
+        }
+
+        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+        
+        return $this->json([
+            'success' => true
+        ]);
+    }
     
     /**
      * @param $message

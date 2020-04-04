@@ -15,6 +15,7 @@ use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Twig\Environment as TwigEnvironment;
 use XhtmlFormatter\Formatter;
+use IvoPetkov\HTML5DOMDocument;
 
 class TwigVisualService {
 
@@ -253,7 +254,7 @@ class TwigVisualService {
     public function editTextContent($templateName, $xpathQuery, $innerHTML)
     {
         try {
-            $result = $this->getDocumentNode($templateName, $xpathQuery);
+            $result = $this->getDocumentNode($templateName, $xpathQuery, true);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
@@ -273,7 +274,7 @@ class TwigVisualService {
     public function editAttributes($templateName, $xpathQuery, $attributes)
     {
         try {
-            $result = $this->getDocumentNode($templateName, $xpathQuery);
+            $result = $this->getDocumentNode($templateName, $xpathQuery, true);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
@@ -294,7 +295,7 @@ class TwigVisualService {
     public function deleteElement($templateName, $xpathQuery)
     {
         try {
-            $result = $this->getDocumentNode($templateName, $xpathQuery);
+            $result = $this->getDocumentNode($templateName, $xpathQuery, true);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
@@ -312,13 +313,13 @@ class TwigVisualService {
     }
 
     /**
-     * @param \IvoPetkov\HTML5DOMDocument $doc
+     * @param HTML5DOMDocument $doc
      * @param string $templateFilePath
      * @param bool $clearCache
      * @param bool $replaceFromLocalCache
      * @return bool
      */
-    public function saveTemplateContent(\IvoPetkov\HTML5DOMDocument $doc, $templateFilePath, $clearCache = true, $replaceFromLocalCache = true)
+    public function saveTemplateContent(HTML5DOMDocument $doc, $templateFilePath, $clearCache = true, $replaceFromLocalCache = true)
     {
         if (!is_writable($templateFilePath)) {
             $this->setErrorMessage('Template is not writable.');
@@ -343,21 +344,24 @@ class TwigVisualService {
 
     /**
      * @param string $templateName
-     * @param string $xpathQuery
+     * @param string|null $xpathQuery
      * @param bool $checkIsVisualized
      * @return array
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\SyntaxError
      */
-    public function getDocumentNode($templateName, $xpathQuery, $checkIsVisualized = false)
+    public function getDocumentNode($templateName, $xpathQuery = null, $checkIsVisualized = false)
     {
         $templateData = $this->getTemplateSource($templateName);
         $templateCode = $templateData['source_code'];
         
-        $docTemplate = new \IvoPetkov\HTML5DOMDocument();
+        $docTemplate = new HTML5DOMDocument();
 
         $docTemplate->loadHTML($templateCode);
+        if (!$xpathQuery) {
+            return [$templateData['file_path'], $docTemplate, null];
+        }
         $xpath = new \DOMXPath($docTemplate);
 
         /** @var \DOMNodeList $entries */
@@ -408,7 +412,7 @@ class TwigVisualService {
     }
 
     /**
-     * @param \IvoPetkov\HTML5DOMDocument $doc
+     * @param HTML5DOMDocument $doc
      * @param array $data
      * @param array $uiBlockConfig
      * @return array
@@ -533,7 +537,7 @@ class TwigVisualService {
             return false;
         }
 
-        $template = new \IvoPetkov\HTML5DOMDocument();
+        $template = new HTML5DOMDocument();
         try {
             $template->loadXML('<body>' . $templateCode . '</body>');
         } catch (\Exception $e) {
@@ -1070,6 +1074,18 @@ class TwigVisualService {
         return $result;
     }
 
+    /**
+     * @param HTML5DOMElement $doc
+     * @param string $xpathQuery
+     */
+    public static function fintElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery)
+    {
+        $xpath = new \DOMXPath($doc);
+        /** @var \DOMNodeList $entries */
+        $entries = $xpath->evaluate($xpathQuery, $doc);
+        return $entries->count() > 0 ? $entries->item(0) : null;
+    }
+    
     /**
      * @param array $data
      * @return array
