@@ -538,6 +538,8 @@ class TwigVisualService {
             return false;
         }
 
+        self::copyAttributes($templateMainElement, $domElement);
+        
         if ($templateMainElement->hasChildNodes()) {
             foreach($templateMainElement->childNodes as $index => $tChildNode) {
                 if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
@@ -909,7 +911,7 @@ class TwigVisualService {
      */
     public static function unescapeUrls($content)
     {
-        return str_replace(['%7B%7B%20', '%7B%7B', '%20%7D%7D', '%7D%7D', '%20'], ['{{ ', '{{', ' }}', '}}', ' '], $content);
+        return str_replace(['%7B', '%7D', '%20'], ['{', '}', ' '], $content);
     }
 
     /**
@@ -934,7 +936,9 @@ class TwigVisualService {
                 }
             }
         }
-        $targetElement->textContent = $sourceElement->textContent;
+        if ($includeTextContent) {
+            $targetElement->textContent = $sourceElement->textContent;
+        }
     }
 
     /**

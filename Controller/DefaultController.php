@@ -295,7 +295,7 @@ class DefaultController extends AbstractController
             }
         }
         
-        var_dump($doc->saveHTML()); exit;
+        // var_dump($doc->saveHTML()); exit;
 
         if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
             return $this->setError($this->service->getErrorMessage());
