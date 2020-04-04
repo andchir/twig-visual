@@ -332,7 +332,7 @@ class DefaultController extends AbstractController
                 continue;
             }
             $node = TwigVisualService::fintElementByXPath($doc, $action['xpath']);
-            if ($this->isVisualized($node)) {
+            if ($this->service->isVisualized($node)) {
                 $errors[] = "The item \"{$action['xpath']}\" is already visualized.";
             } else {
                 $elements[] = $node;
