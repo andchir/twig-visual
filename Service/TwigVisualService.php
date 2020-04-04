@@ -344,9 +344,13 @@ class TwigVisualService {
     /**
      * @param string $templateName
      * @param string $xpathQuery
-     * @return array|bool
+     * @param bool $checkIsVisualized
+     * @return array
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\SyntaxError
      */
-    public function getDocumentNode($templateName, $xpathQuery)
+    public function getDocumentNode($templateName, $xpathQuery, $checkIsVisualized = false)
     {
         $templateData = $this->getTemplateSource($templateName);
         $templateCode = $templateData['source_code'];
@@ -361,8 +365,12 @@ class TwigVisualService {
         if ($entries->count() === 0) {
             throw new \Exception('Element not found.');
         }
+        $node = $entries->item(0);
+        if ($checkIsVisualized && $this->isVisualized($node)) {
+            throw new \Exception('The item is already visualized.');
+        }
 
-        return [$templateData['file_path'], $docTemplate, $entries->item(0)];
+        return [$templateData['file_path'], $docTemplate, $node];
     }
 
     /**
@@ -557,6 +565,25 @@ class TwigVisualService {
         }
         
         return true;
+    }
+
+    /**
+     * @param $domElement
+     * @return bool
+     */
+    public function isVisualized($domElement)
+    {
+        $commentOpen = self::getPreviousSiblingByType($domElement, XML_COMMENT_NODE);
+        $commentClosed = self::getNextSiblingByType($domElement, XML_COMMENT_NODE);
+        if ($commentOpen
+            && $commentClosed
+            && strpos($commentOpen->nodeValue, 'twv-') !== false
+            && strpos($commentClosed->nodeValue, '/twv-') !== false) {
+                return true;
+        }
+        return $domElement->parentNode
+            ? $this->isVisualized($domElement->parentNode)
+            : false;
     }
 
     /**
@@ -971,6 +998,24 @@ class TwigVisualService {
             return self::getNextSiblingByType($domElement->nextSibling, $type);
         }
         return $domElement->nextSibling;
+    }
+
+    /**
+     * @param mixed $domElement
+     * @param int $type
+     * @return \DOMElement|\DOMNode|null
+     */
+    public static function getPreviousSiblingByType($domElement, $type = XML_ELEMENT_NODE)
+    {
+        if (!($domElement instanceof \DOMElement)
+            && !($domElement instanceof HTML5DOMElement)
+            && !($domElement instanceof \DOMText)) {
+            return null;
+        }
+        if ($domElement->previousSibling && $domElement->previousSibling->nodeType !== $type) {
+            return self::getPreviousSiblingByType($domElement->previousSibling, $type);
+        }
+        return $domElement->previousSibling;
     }
 
     /**

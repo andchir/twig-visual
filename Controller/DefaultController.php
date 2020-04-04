@@ -221,10 +221,9 @@ class DefaultController extends AbstractController
             return $this->setError('Please select a root item.');
         }
         try {
-            $result = $this->service->getDocumentNode($templateName, $data['data']['source']);
+            $result = $this->service->getDocumentNode($templateName, $data['data']['source'], true);
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
-            return false;
         }
         list($templateFilePath, $doc, $node) = $result;
         $templateDirPath = dirname($templateFilePath);
