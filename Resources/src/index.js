@@ -1,4 +1,8 @@
-
+/**
+ * TwigVisual
+ * @version 1.0.0
+ * @author Andchir<andchir@gmail.com>
+ */
 class TwigVisual {
 
     constructor(options) {
@@ -90,6 +94,7 @@ class TwigVisual {
         const panelClassName = this.getCookie('twv-panel-class-name');
         if (panelClassName) {
             this.container.className = panelClassName;
+            this.container.classList.add('twig-visual-container');
         }
     }
 
@@ -383,7 +388,10 @@ class TwigVisual {
         containerEl.innerHTML = `
         <div class="twv-panel-header">
             <div class="twv-panel-header-buttons">
-                <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-execute-batch" type="button" title="Выполнить пакет операций" style="display: none;">
+                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-undo" type="button" title="Отменить последнее действие">
+                    <i class="twv-icon-undo"></i>
+                </button>
+                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-execute-batch" type="button" title="Выполнить пакет операций" style="display: none;">
                     <i class="twv-icon-format_list_bulleted"></i>
                     <span></span>
                 </button>
@@ -396,13 +404,13 @@ class TwigVisual {
             </button>
         </div>
         <div class="twv-mb-2">
-            <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-theme">
+            <button type="button" class="twv-btn twv-btn-block twv-button-new-theme">
                 <i class="twv-icon-add"></i>
                 Создать новую тему
             </button>
         </div>
         <div class="twv-mb-2">
-            <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-new-template">
+            <button type="button" class="twv-btn twv-btn-block twv-button-new-template">
                 <i class="twv-icon-add"></i>
                 Создать шаблон
             </button>
@@ -736,6 +744,9 @@ class TwigVisual {
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-move-element" title="Move element">
                 <i class="twv-icon-move"></i>
+            </button>
+            <button type="button" class="twv-btn twv-mr-1 twv-button-restore-static" title="Restore static">
+                <i class="twv-icon-cached"></i>
             </button>
         </div>
         <div class="twv-mb-3 twv-ui-element-select">

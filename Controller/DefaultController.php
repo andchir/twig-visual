@@ -194,7 +194,7 @@ class DefaultController extends AbstractController
             return $this->setError('XPath can not be empty.');
         }
         $this->service->setRefererUrl($request->server->get('HTTP_REFERER'));
-        if (!$this->service->deleteElement($templateName, $xpath)) {
+        if (!$this->service->deleteTemplateElement($templateName, $xpath)) {
             return $this->setError($this->service->getErrorMessage());
         }
         return $this->json([
@@ -271,11 +271,14 @@ class DefaultController extends AbstractController
                     }
                     
                     if ($key === 'root' && !empty($opts['src'])) {
-                        $cacheKey = $this->service->cacheAdd(
-                            $opts['sourceHTML'],
-                            $templateName . '-' . $type . '-' . $key,
-                            $this->service->getCurrentThemeName()
-                        );
+                        try {
+                            $cacheKey = $this->service->cacheAdd(
+                                $opts['sourceHTML'],
+                                $templateName . '-' . $type . '-' . $key
+                            );
+                        } catch (\Exception $e) {
+                            return $this->setError($e->getMessage());
+                        }
                         $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
                     }
 
@@ -332,8 +335,8 @@ class DefaultController extends AbstractController
                 continue;
             }
             $node = TwigVisualService::fintElementByXPath($doc, $action['xpath']);
-            if ($this->service->isVisualized($node)) {
-                $errors[] = "The item \"{$action['xpath']}\" is already visualized.";
+            if ($this->service->isDinamic($node)) {
+                $errors[] = 'The item is already dynamic.';
             } else {
                 $elements[] = $node;
             }

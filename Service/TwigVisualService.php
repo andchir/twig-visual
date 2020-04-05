@@ -2,6 +2,7 @@
 
 namespace Andchir\TwigVisualBundle\Service;
 
+use IvoPetkov\HTML5DOMElement;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -10,9 +11,9 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bridge\Twig\AppVariable;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
+use Symfony\Component\Yaml\Yaml;
 use Twig\Environment as TwigEnvironment;
 use XhtmlFormatter\Formatter;
 use IvoPetkov\HTML5DOMDocument;
@@ -27,8 +28,6 @@ class TwigVisualService {
     protected $kernel;
     /** @var array */
     protected $config;
-    /** @var FilesystemAdapter */
-    protected $cache;
     private $cacheArray = [];
     private $refererUrl = '';
     private $errorMessage = '';
@@ -44,8 +43,6 @@ class TwigVisualService {
         $this->kernel = $kernel;
         $this->params = $params;
         $this->twig = $twig;
-
-        $this->cache = new FilesystemAdapter('twigvisualcache', 0, $this->getRootDirPath() . '/var/cache');
         
         if (empty($config) && $params->has('twigvisual_config')) {
             $this->config = $params->get('twigvisual_config');
@@ -292,24 +289,45 @@ class TwigVisualService {
      * @param string $templateName
      * @param string $xpathQuery
      */
-    public function deleteElement($templateName, $xpathQuery)
+    public function deleteTemplateElement($templateName, $xpathQuery)
     {
         try {
-            $result = $this->getDocumentNode($templateName, $xpathQuery, true);
+            $result = $this->getDocumentNode($templateName, $xpathQuery);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
         list($templateFilePath, $doc, $node) = $result;
-
+        
         try {
-            $node->parentNode->removeChild($node);
+            $this->deleteElement($node);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
         
         return $this->saveTemplateContent($doc, $templateFilePath);
+    }
+
+    /**
+     * @param HTML5DOMElement $node
+     */
+    public function deleteElement($node)
+    {
+        $dinamicParent = self::findDinamicParent($node);
+        if (!empty($dinamicParent)) {
+            if ($dinamicParent === $node) {
+                $commentOpen = self::getPreviousSiblingByType($node, XML_COMMENT_NODE);
+                $commentClosed = self::getNextSiblingByType($node, XML_COMMENT_NODE);
+                $node->parentNode->removeChild($commentOpen);
+                $node->parentNode->removeChild($commentClosed);
+                $node->parentNode->removeChild($node);
+            } else {
+                throw new \Exception('The item is already dynamic.');
+            }
+        } else {
+            $node->parentNode->removeChild($node);
+        }
     }
 
     /**
@@ -345,13 +363,13 @@ class TwigVisualService {
     /**
      * @param string $templateName
      * @param string|null $xpathQuery
-     * @param bool $checkIsVisualized
+     * @param bool $checkIsDinamic
      * @return array
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\SyntaxError
      */
-    public function getDocumentNode($templateName, $xpathQuery = null, $checkIsVisualized = false)
+    public function getDocumentNode($templateName, $xpathQuery = null, $checkIsDinamic = false)
     {
         $templateData = $this->getTemplateSource($templateName);
         $templateCode = $templateData['source_code'];
@@ -370,8 +388,8 @@ class TwigVisualService {
             throw new \Exception('Element not found.');
         }
         $node = $entries->item(0);
-        if ($checkIsVisualized && $this->isVisualized($node)) {
-            throw new \Exception('The item is already visualized.');
+        if ($checkIsDinamic && $this->isDinamic($node)) {
+            throw new \Exception('The item is already dynamic.');
         }
 
         return [$templateData['file_path'], $docTemplate, $node];
@@ -396,8 +414,7 @@ class TwigVisualService {
         $templateCode = self::cutCommentContent('twv-script', $templateCode);
 
         if ($replaceFromCache) {
-            $cacheItem = $this->cache->getItem($this->getCurrentThemeName());
-            $cacheContentArray = $cacheItem->isHit() ? $cacheItem->get() : [];
+            $cacheContentArray = $this->cacheGet($this->getCurrentThemeName());
             foreach ($cacheContentArray as $key => $val) {
                 $this->cacheArray[$key] = self::getCommentContent($key, $templateCode);
                 $templateCode = self::replaceCommentContent($key, $val, $templateCode);
@@ -572,10 +589,20 @@ class TwigVisualService {
     }
 
     /**
-     * @param $domElement
+     * @param HTML5DOMElement $domElement
      * @return bool
      */
-    public function isVisualized($domElement)
+    public function isDinamic($domElement)
+    {
+        $dinamicParent = self::findDinamicParent($domElement);
+        return !empty($dinamicParent);
+    }
+
+    /**
+     * @param HTML5DOMElement $domElement
+     * @return HTML5DOMElement
+     */
+    public static function findDinamicParent($domElement)
     {
         $commentOpen = self::getPreviousSiblingByType($domElement, XML_COMMENT_NODE);
         $commentClosed = self::getNextSiblingByType($domElement, XML_COMMENT_NODE);
@@ -583,11 +610,11 @@ class TwigVisualService {
             && $commentClosed
             && strpos($commentOpen->nodeValue, 'twv-') !== false
             && strpos($commentClosed->nodeValue, '/twv-') !== false) {
-                return true;
+                return $domElement;
         }
         return $domElement->parentNode
-            ? $this->isVisualized($domElement->parentNode)
-            : false;
+            ? self::findDinamicParent($domElement->parentNode)
+            : null;
     }
 
     /**
@@ -668,23 +695,40 @@ class TwigVisualService {
     /**
      * @param strin $outerHTML
      * @param strin $key
-     * @param string $itemKey
      * @param string $keyPrefix
      * @return string
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function cacheAdd($outerHTML, $key, $itemKey = 'templateData', $keyPrefix = 'twv-')
+    public function cacheAdd($outerHTML, $key, $keyPrefix = 'twv-')
     {
-        $uniqid = uniqid($keyPrefix . $key . '-', true);
-        $cacheItem = $this->cache->getItem($itemKey);
-        if ($cacheItem) {
-            $cacheContentArray = $cacheItem->isHit() ? $cacheItem->get() : [];
-            $cacheContentArray[$uniqid] = $outerHTML;
-            
-            $cacheItem->set($cacheContentArray);
-            $this->cache->save($cacheItem);
+        $themeDirPath = $this->getCurrentThemeDirPath();
+        $cacheFilePath = $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
+        if (file_exists($cacheFilePath) && !is_writable($cacheFilePath)) {
+            throw new \Exception('Cache file is not writable.');
         }
+        if (!file_exists($cacheFilePath) && !is_writable(dirname($cacheFilePath))) {
+            throw new \Exception('Theme directory is not writable.');
+        }
+        $cacheContentArray = $this->cacheGet();
+        $uniqid = uniqid($keyPrefix . $key . '-', true);
+        
+        $cacheContentArray[$uniqid] = str_replace("\r\n", "\n", $outerHTML);
+        file_put_contents($cacheFilePath, Yaml::dump($cacheContentArray, 2, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK));
+        
         return $uniqid;
+    }
+
+    /**
+     * @return array
+     */
+    public function cacheGet()
+    {
+        $themeDirPath = $this->getCurrentThemeDirPath();
+        $cacheFilePath = $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
+        if (!file_exists($cacheFilePath)) {
+            return [];
+        }
+        return Yaml::parseFile($cacheFilePath) ?: [];
     }
 
     /**
