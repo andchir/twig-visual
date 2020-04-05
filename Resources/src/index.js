@@ -57,6 +57,7 @@ class TwigVisual {
         buttonStart.addEventListener('click', (e) => {
             e.preventDefault();
             e.target.setAttribute('disabled', 'disabled');
+            this.removeSelectionInner();
             this.selectModeToggle(document.body, 'source');
         });
 
@@ -129,11 +130,91 @@ class TwigVisual {
             buttonStart.removeAttribute('disabled');
             
             this.state = 'inactive';
+            this.onAfterSelect();
+        }
+    }
+
+    onAfterSelect() {
+        switch (this.dataKey) {
+            case 'moveTarget':
+                
+                const innerContainerEl = this.container.querySelector('.twv-inner');
+                const buttonStart = this.container.querySelector('.twv-button-start-select');
+                this.makeButtonSelected(buttonStart, true, () => {
+                    this.selectionModeDestroy(true);
+                    return true;
+                });
+                this.removeOverlay();
+                innerContainerEl.innerHTML = '';
+
+                const div = document.createElement('div');
+                div.className = 'twv-pt-1 twv-mb-3';
+                div.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block">
+                            <input type="radio" name="insertMode" value="inside" checked="checked">
+                            Вставить
+                        </label>
+                        <label class="twv-display-block">
+                            <input type="radio" name="insertMode" value="before">
+                            Вставить до
+                        </label>
+                        <label class="twv-display-block">
+                            <input type="radio" name="insertMode" value="after">
+                            Вставить после
+                        </label>
+                    </div>
+                    <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                        <i class="twv-icon-done"></i>
+                        Применить
+                    </button>
+                    <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                        <i class="twv-icon-clearclose"></i>
+                    </button>
+                `;
+                innerContainerEl.appendChild(div);
+
+                const buttonSubmit = innerContainerEl.querySelector('.twv-button-submit');
+                const buttonCancel = innerContainerEl.querySelector('.twv-button-cancel');
+
+                // Submit data
+                buttonSubmit.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    const insertMode = innerContainerEl.querySelector('input[name="insertMode"]:checked').value;
+                    this.showLoading(true);
+
+                    this.request('/twigvisual/move_element', {
+                        templateName: this.options.templateName,
+                        xpath: this.data.source,
+                        xpathTarget: this.data.moveTarget,
+                        insertMode
+                    }, (res) => {
+                        if (res.success) {
+                            this.windowReload();
+                        } else {
+                            this.showLoading(false);
+                        }
+                    }, (err) => {
+                        this.addAlertMessage(err.error || err);
+                        this.showLoading(false);
+                    }, 'POST');
+                });
+
+                // Submit data
+                buttonCancel.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    innerContainerEl.innerHTML = '';
+                    this.selectionModeDestroy(true);
+                });
+                
+                break;
         }
     }
 
     onMouseOver(e) {
-        if (this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
+        const xpath = this.getXPathForElement(e.target, true);
+        if (!xpath || this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
             return;
         }
         this.currentElements = [];
@@ -143,7 +224,8 @@ class TwigVisual {
     }
 
     onMouseOut(e) {
-        if (this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
+        const xpath = this.getXPathForElement(e.target, true);
+        if (!xpath || this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
             return;
         }
         this.currentElements = [];
@@ -155,7 +237,8 @@ class TwigVisual {
     }
 
     onSelectedElementClick(e) {
-        if (this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
+        const xpath = this.getXPathForElement(e.target, true);
+        if (!xpath || this.getXPathForElement(e.target, true).indexOf('twig-visual-container') > -1) {
             return;
         }
         e.preventDefault();
@@ -164,27 +247,29 @@ class TwigVisual {
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
+        
+        const currentElementXpath = this.getXPathForElement(currentElement);
+        this.data[this.dataKey] = currentElementXpath;
 
-        this.selectModeToggle();
-        this.selectionModeDestroy();
-
+        this.removeOverlay();
+        
         // Clear selection
         if (this.data[this.dataKey]) {
             const xpath = this.data[this.dataKey];
             this.removeSelectionInnerByXPath(xpath);
         }
-
-        const xpath = this.getXPathForElement(currentElement);
-        this.data[this.dataKey] = xpath;
+        
+        if (this.state === 'active') {
+            this.selectModeToggle();
+        }
+        this.selectionModeDestroy();
 
         if (this.dataKey === 'source') {
             this.parentElement = currentElement;
-            this.createSelectionOptions(xpath);
+            this.createSelectionOptions(currentElementXpath);
         } else {
 
-            this.data[this.dataKey] = this.data[this.dataKey].substr(this.data['source'].length);
-            this.data[this.dataKey] = this.data['source'] + this.data[this.dataKey];
-
+            this.addOverlay();
             currentElement.classList.add('twv-selected-success');
 
             const index = this.components.findIndex((item) => {
@@ -203,10 +288,10 @@ class TwigVisual {
 
     /**
      * Destroy selection mode
-     * @param reset
+     * @param {boolean} reset
+     * @param {boolean} resetData
      */
-    selectionModeDestroy(reset = false) {
-        this.state = 'inactive';
+    selectionModeDestroy(reset = false, resetData = true) {
         if (document.querySelector('.twv-info')) {
             this.removeEl(document.querySelector('.twv-info'));
         }
@@ -217,7 +302,9 @@ class TwigVisual {
         });
 
         if (reset) {
-            this.data = {};
+            if (resetData) {
+                this.data = {};
+            }
             this.currentElements = [];
             this.components = [];
             const buttonStart = this.container.querySelector('.twv-button-start-select');
@@ -299,7 +386,6 @@ class TwigVisual {
         if (!element) {
             return false;
         }
-        this.addOverlay();
         if (element.dataset.twvTitle) {
             element.setAttribute('title', element.dataset.twvTitle);
         } else {
@@ -352,6 +438,8 @@ class TwigVisual {
             return ('/HTML[1]').toLowerCase();
         if (element === document.body)
             return ('/HTML[1]/BODY[1]').toLowerCase();
+        if (!element.parentNode)
+            return '';
 
         let ix = 0;
         const siblings = element.parentNode.childNodes;
@@ -641,6 +729,9 @@ class TwigVisual {
 
     componentButtonMakeSelected(dataKey) {
         const componentsContainer = this.container.querySelector('.twv-ui-components');
+        if (!componentsContainer) {
+            return;
+        }
         let buttons = Array.from(componentsContainer.querySelectorAll('button'));
         buttons = buttons.filter((buttonEl) => {
             return buttonEl.dataset.twvKey === dataKey;
@@ -782,6 +873,17 @@ class TwigVisual {
         this.container.querySelector('.twv-button-delete-element').addEventListener('click', (e) => {
             e.preventDefault();
             this.deleteElementInit(elementSelected);
+        });
+        
+        this.container.querySelector('.twv-button-move-element').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.target.setAttribute('disabled', 'disabled');
+            this.moveElementInit();
+        });
+
+        this.container.querySelector('.twv-button-restore-static').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.restoreStaticInit();
         });
 
         const compStyles = window.getComputedStyle(elementSelected);
@@ -1039,6 +1141,72 @@ class TwigVisual {
                 e.preventDefault();
                 this.addToActionBatch('delete', this.data.source);
             });
+    }
+
+    moveElementInit() {
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        componentsContainer.innerHTML = '';
+        
+        this.selectionModeDestroy(true, false);
+        setTimeout(() => {
+            this.selectModeToggle(document.body, 'moveTarget');
+        }, 1);
+    }
+
+    restoreStaticInit() {
+        this.clearMessage();
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        componentsContainer.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div class="twv-mb-3">Вы уверены, что хотите вернуть исходное состояние элемента?</div>
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                    <i class="twv-icon-done"></i>
+                    Подтвердить
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                    <i class="twv-icon-clearclose"></i>
+                </button>
+            </div>
+            `;
+        componentsContainer.appendChild(div);
+
+        const buttonSubmit = componentsContainer.querySelector('.twv-button-submit');
+        const buttonCancel = componentsContainer.querySelector('.twv-button-cancel');
+
+        // Submit data
+        buttonSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            this.showLoading(true);
+
+            this.request('/twigvisual/restore_static', {
+                templateName: this.options.templateName,
+                xpath: this.data.source
+            }, (res) => {
+                if (res.success) {
+                    this.windowReload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
+                }
+            }, (err) => {
+                this.addAlertMessage(err.error || err);
+                buttonSubmit.removeAttribute('disabled');
+                buttonCancel.removeAttribute('disabled');
+                this.showLoading(false);
+            }, 'POST');
+        });
+
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.clearMessage();
+            componentsContainer.innerHTML = '';
+        });
     }
 
     addNewThemeInit() {

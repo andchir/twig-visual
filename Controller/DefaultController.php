@@ -269,7 +269,6 @@ class DefaultController extends AbstractController
                         }
                         file_put_contents($tplFilePath, $outerHTML);
                     }
-                    
                     if ($key === 'root' && !empty($opts['src'])) {
                         try {
                             $cacheKey = $this->service->cacheAdd(
@@ -334,7 +333,7 @@ class DefaultController extends AbstractController
                 $elements[] = null;
                 continue;
             }
-            $node = TwigVisualService::fintElementByXPath($doc, $action['xpath']);
+            $node = TwigVisualService::findElementByXPath($doc, $action['xpath']);
             if ($this->service->isDinamic($node)) {
                 $errors[] = 'The item is already dynamic.';
             } else {
@@ -387,7 +386,112 @@ class DefaultController extends AbstractController
             return $this->setError($errors[0]);
         }
 
-        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
+        if (!($this->service->saveTemplateContent($doc, $templateFilePath))) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+        
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
+     * @Route("/move_element", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function moveElementAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+        $xpathTarget = $data['xpathTarget'] ?? '';
+        $insertMode = $data['insertMode'] ?? 'after';
+
+        try {
+            $result = $this->service->getDocumentNode($templateName, null, true);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
+        list($templateFilePath, $doc) = $result;
+
+        $node = TwigVisualService::findElementByXPath($doc, $xpath);
+        if ($this->service->isDinamic($node)) {
+            return $this->setError('The item is already dynamic.');
+        }
+
+        $nodeTarget = TwigVisualService::findElementByXPath($doc, $xpathTarget);
+        if ($this->service->isDinamic($nodeTarget)) {
+            return $this->setError('The item is already dynamic.');
+        }
+        
+        switch ($insertMode) {
+            case 'inside':
+                $nodeTarget->appendChild($node);
+                break;
+            case 'before':
+                $nodeTarget->parentNode->insertBefore($node, $nodeTarget);
+                break;
+            case 'after':
+                $nodeTarget->parentNode->insertBefore($node, $nodeTarget->nextSibling);
+                break;
+        }
+
+        if (!($this->service->saveTemplateContent($doc, $templateFilePath))) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+        
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
+     * @Route("/restore_static", methods={"POST"})
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function restoreStaticAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+        if (!$xpath) {
+            return $this->setError('XPath can not be empty.');
+        }
+
+        try {
+            $result = $this->service->getDocumentNode($templateName, null, true);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
+        list($templateFilePath, $doc) = $result;
+
+        $node = TwigVisualService::findElementByXPath($doc, $xpath);
+        $parentDinamic = TwigVisualService::findDinamicParent($node);
+        
+        if ($node !== $parentDinamic) {
+            return $this->setError('You cannot restore the source code of this item.');
+        }
+
+        $commentOpen = TwigVisualService::getPreviousSiblingByType($node, XML_COMMENT_NODE);
+        $commentClosed = TwigVisualService::getNextSiblingByType($node, XML_COMMENT_NODE);
+        $commentValue = trim($commentOpen->nodeValue);
+        
+        $cacheDataArray = $this->service->cacheGet();
+        if (!isset($cacheDataArray[$commentValue])) {
+            return $this->setError('You cannot restore the source code of this item.');
+        }
+
+        $node->outerHTML = $cacheDataArray[$commentValue];
+        $commentOpen->parentNode->removeChild($commentOpen);
+        $commentClosed->parentNode->removeChild($commentClosed);
+
+        if (!($this->service->saveTemplateContent($doc, $templateFilePath))) {
             return $this->setError($this->service->getErrorMessage());
         }
         

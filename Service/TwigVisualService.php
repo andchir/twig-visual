@@ -1122,7 +1122,7 @@ class TwigVisualService {
      * @param HTML5DOMElement $doc
      * @param string $xpathQuery
      */
-    public static function fintElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery)
+    public static function findElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery)
     {
         $xpath = new \DOMXPath($doc);
         /** @var \DOMNodeList $entries */
