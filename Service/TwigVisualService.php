@@ -441,23 +441,16 @@ class TwigVisualService {
             if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
                 continue;
             }
-            switch ($uiBlockConfig['components'][$key]['type']) {
-                case 'elementSelect':
-                    $xpath = new \DOMXPath($doc);
-                    /** @var \DOMNodeList $entries */
-                    $entries = $xpath->evaluate($xpathQuery, $doc);
-                    if ($entries->count() === 0) {
-                        return $this->setErrorMessage("Element ({$key}) not found for xPath: {$xpathQuery}.");
-                    }
-                    $elements[$key] = $entries->item(0);
-                    $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
-                    
-                    break;
-                case 'pageField':
-
-
-
-                    break;
+            if ($uiBlockConfig['components'][$key]['type'] == 'elementSelect') {
+                $xpath = new \DOMXPath($doc);
+                /** @var \DOMNodeList $entries */
+                $entries = $xpath->evaluate($xpathQuery, $doc);
+                if ($entries->count() === 0) {
+                    $elements[$key] = null;
+                    continue;
+                }
+                $elements[$key] = $entries->item(0);
+                $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
             }
         }
         return $elements;
@@ -516,7 +509,7 @@ class TwigVisualService {
             $type = $opts['type'] ?? '';
             switch ($type) {
                 case 'elementSelect':
-
+                    
                     if (!isset($elements[$key]) || !isset($opts['template'])) {
                         break;
                     }
@@ -527,7 +520,7 @@ class TwigVisualService {
                         $templateCode,
                         $key
                     );
-
+                    
                     $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
                     
                     if ($key !== 'root' && !empty($opts['src'])) {

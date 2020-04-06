@@ -244,14 +244,14 @@ class TwigVisual {
         e.preventDefault();
         e.stopPropagation();
 
+        this.removeOverlay();
+        
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
         
         const currentElementXpath = this.getXPathForElement(currentElement);
         this.data[this.dataKey] = currentElementXpath;
-
-        this.removeOverlay();
         
         // Clear selection
         if (this.data[this.dataKey]) {
