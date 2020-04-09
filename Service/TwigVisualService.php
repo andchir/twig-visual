@@ -573,6 +573,8 @@ class TwigVisualService {
                     if ($childNode) {
                         self::copyAttributes($tChildNode, $childNode, true);
                         self::copyNextSiblings($tChildNode, $childNode);
+                    } else {
+                        self::copyAttributes($tChildNode, $domElement, true);
                     }
                 }
             }
@@ -1005,7 +1007,12 @@ class TwigVisualService {
             }
         }
         if ($includeTextContent) {
-            $targetElement->textContent = $sourceElement->textContent;
+            $textNode = self::findChildByType($targetElement, XML_TEXT_NODE);
+            if ($textNode) {
+                $textNode->nodeValue = $sourceElement->textContent;
+            } else {
+                $targetElement->textContent = $sourceElement->textContent;
+            }
         }
     }
 

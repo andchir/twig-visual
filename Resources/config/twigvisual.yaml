@@ -13,6 +13,7 @@ twig_visual:
         - catalog/languages_list
     templates:
         - homepage
+        - text-content_category
         - text-content_content-page
         - category
         - content-page
@@ -84,6 +85,7 @@ twig_visual:
                 itemThird:
                     title: Пункт меню третьего уровня
                     type: elementSelect
+                    src: '<itemThird/>'
                     template: |
                         {% for category in children %}
                         <itemThird class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
@@ -109,28 +111,20 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    template: |
-                        <root>
-                            <container/>
-                        </root>
-                    
-                container:
-                    title: Контейнер
-                    type: elementSelect
-                    template: |
-                        <container>
-                            {% for crumb in breadcrumbs %}
-                                <childItem/>
-                            {% endfor %}
-                        </container>
+                    src: "{% include 'nav/breadcrumbs.html.twig' %}"
+                    template: '<root/>'
+                    templatePath: nav/breadcrumbs
 
                 childItem:
                     title: Элемент
                     type: elementSelect
+                    src: '<childItem/>'
                     template: |
-                        <childItem href="{{ catalogPath(crumb.uri) }}">
+                        {% for crumb in breadcrumbs %}
+                        <childItem>
                             <a href="{{ catalogPath(crumb.uri) }}">{{ crumb.title }}</a>
                         </childItem>
+                        {% endfor %}
                     
         shoppingCart:
             title: Корзина покупок
