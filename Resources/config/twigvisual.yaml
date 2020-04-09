@@ -36,7 +36,7 @@ twig_visual:
                     type: pageField
         
         menu:
-            title: Меню
+            title: Основное меню
             components:
                 root:
                     title: Корневой элемент
@@ -98,6 +98,28 @@ twig_visual:
                     type: text
                     value: active
 
+        child_menu:
+            title: Меню подкатегорий
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    isFunction: true
+                    src: "{% include 'nav/child-categories-menu.html.twig' %}"
+                    template: '<root/>'
+                    templatePath: nav/child-categories-menu
+                    
+                itemFirst:
+                    title: Пункт меню первого уровня
+                    type: elementSelect
+                    src: '<itemFirst/>'
+                    template: |
+                        {% for category in categoriesMenu %}
+                        <itemFirst>
+                            <a href="{{ catalogPath(category.uri) }}">{{ category.title }}</a>
+                        </itemFirst>
+                        {%  endfor %}
+        
         photogallery:
             title: Фотогалерея
             components:
