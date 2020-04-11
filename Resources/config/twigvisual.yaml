@@ -31,25 +31,51 @@ twig_visual:
         field:
             title: Поле контента
             components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    output: '<root/>'
+                    template: '<root>{% if {{ fieldName }}<key/> is defined %}{{ {{ fieldName }}<key/> }}{% endif %}</root>'
+                    
                 fieldName:
                     title: Поле контента
                     type: pageField
+                
+                key:
+                    title: Ключ значения
+                    type: text
+                    output: ".{{ key }}"
+                    cleanSrcIfEmptyValue: true
         
+        include:
+            title: Сделать встроенным
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    output: "{% include 'generic/{{ includeName }}.html.twig' %}"
+                    templatePath: "generic/{{ includeName }}"
+                    template: '<root/>'
+                    
+                includeName:
+                    title: Название элемента
+                    type: text
+                    
         menu:
             title: Основное меню
             components:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    isFunction: true
-                    src: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
                     template: '<root/>'
                     templatePath: nav/menu_dropdown
+                    caching: true
     
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
-                    src: '<itemFirst/>'
+                    output: '<itemFirst/>'
                     template: |
                         {% for category in children %}
                         <itemFirst class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
@@ -60,14 +86,14 @@ twig_visual:
                 containerSecond:
                     title: Контейнер второго уровня
                     type: elementSelect
-                    src: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
                     template: '<containerSecond/>'
                     templatePath: nav/menu_dropdown_child
     
                 itemSecond:
                     title: Пункт меню второго уровня
                     type: elementSelect
-                    src: '<itemSecond/>'
+                    output: '<itemSecond/>'
                     template: |
                         {% for category in children %}
                         <itemSecond class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
@@ -78,14 +104,14 @@ twig_visual:
                 containerThird:
                     title: Контейнер третьего уровня
                     type: elementSelect
-                    src: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
                     template: '<containerThird/>'
                     templatePath: nav/menu_dropdown_child_child
     
                 itemThird:
                     title: Пункт меню третьего уровня
                     type: elementSelect
-                    src: '<itemThird/>'
+                    output: '<itemThird/>'
                     template: |
                         {% for category in children %}
                         <itemThird class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
@@ -105,14 +131,15 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     isFunction: true
-                    src: "{% include 'nav/child-categories-menu.html.twig' %}"
+                    output: "{% include 'nav/child-categories-menu.html.twig' %}"
                     template: '<root/>'
                     templatePath: nav/child-categories-menu
+                    caching: true
                     
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
-                    src: '<itemFirst/>'
+                    output: '<itemFirst/>'
                     template: |
                         {% for category in categoriesMenu %}
                         <itemFirst>
@@ -133,14 +160,15 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    src: "{% include 'nav/breadcrumbs.html.twig' %}"
+                    output: "{% include 'nav/breadcrumbs.html.twig' %}"
                     template: '<root/>'
                     templatePath: nav/breadcrumbs
+                    caching: true
 
                 childItem:
                     title: Элемент
                     type: elementSelect
-                    src: '<childItem/>'
+                    output: '<childItem/>'
                     template: |
                         {% for crumb in breadcrumbs %}
                         <childItem>

@@ -238,61 +238,48 @@ class DefaultController extends AbstractController
         $this->service->prepareOptionsByValues($uiBlockConfig, $data);
         
         // Step #3
-        $result = $this->service->prepareOptionsByTemplates($uiBlockConfig, $elements);
+        if (!$this->service->prepareOptionsByTemplates($uiBlockConfig, $elements, $templateName)) {
+            return $this->setError($this->service->getErrorMessage());
+        }
 
+        // var_dump($uiBlockConfig);
+        
         // Step #4
         foreach ($uiBlockConfig['components'] as $key => $opts) {
             if (!isset($opts['type'])) {
                 continue;
             }
-            switch ($opts['type']) {
-                case 'elementSelect':
+            if (!empty($opts['outerHTML'])) {
+                $outerHTML = TwigVisualService::replaceXMLTags(
+                    $opts['outerHTML'],
+                    $uiBlockConfig['components'],
+                    'outerHTML'
+                );
+                $outerHTML = $this->service->beautify($outerHTML);
 
-                    if (!isset($opts['outerHTML'])) {
-                        break;
+                if (!empty($opts['templatePath'])) {
+                    $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
+
+                    if (!is_dir(dirname($tplFilePath))) {
+                        mkdir(dirname($tplFilePath));
                     }
-                    $outerHTML = TwigVisualService::replaceXMLTags(
-                        $opts['outerHTML'],
-                        $uiBlockConfig['components'],
-                        'outerHTML'
-                    );
-                    $outerHTML = $this->service->beautify($outerHTML);
-
-                    if (!empty($opts['templatePath'])) {
-                        $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
-
-                        if (!is_dir(dirname($tplFilePath))) {
-                            mkdir(dirname($tplFilePath));
-                        }
-                        if (file_exists($tplFilePath)) {
-                            unlink($tplFilePath);
-                        }
-                        file_put_contents($tplFilePath, $outerHTML);
+                    if (file_exists($tplFilePath)) {
+                        unlink($tplFilePath);
                     }
-                    if ($key === 'root' && !empty($opts['src'])) {
-                        try {
-                            $cacheKey = $this->service->cacheAdd(
-                                $opts['sourceHTML'],
-                                $templateName . '-' . $type . '-' . $key
-                            );
-                        } catch (\Exception $e) {
-                            return $this->setError($e->getMessage());
-                        }
-                        $elements[$key]->outerHTML = TwigVisualService::createCommentContent($cacheKey, $opts['src']);
+                    file_put_contents($tplFilePath, $outerHTML);
+                }
+                if (!empty($opts['caching'])) {
+                    try {
+                        $cacheKey = $this->service->cacheAdd(
+                            $opts['sourceHTML'],
+                            $templateName . '-' . $type . '-' . $key
+                        );
+                    } catch (\Exception $e) {
+                        $this->setError($e->getMessage());
+                        return false;
                     }
-
-                    break;
-                case 'pageField':
-
-                    if ($elements['root'] && isset($data['data'][$key])) {
-                        $textContent = $data['data'][$key];
-                        if (!empty($data['data']['key'])) {
-                            $textContent .= '.' . $data['data']['key'];
-                        }
-                        $elements['root']->textContent = "{{ {$textContent} }}";
-                    }
-
-                    break;
+                    TwigVisualService::elementWrapComment($elements[$key], $cacheKey);
+                }
             }
         }
         

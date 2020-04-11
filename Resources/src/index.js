@@ -626,16 +626,18 @@ class TwigVisual {
                             ${optionsHTML}
                         </select>
                     </div>
-                    <div class="twv-mb-3" style="display: none;">
-                        <label class="twv-display-block twv-mb-1" for="tww-field-option-key-${cmp.name}">Ключ значения</label>
-                        <input type="text" id="tww-field-option-key-${cmp.name}" class="twv-form-control" name="key" value="">
-                    </div>
                     `;
                     div.appendChild(d);
                     
                     const onFieldSelectChange = (value, type) => {
-                        const textFieldBlockEl = d.querySelector('input[type="text"]').parentNode;
-                        textFieldBlockEl.style.display = ['object', 'array'].indexOf(type) > -1 ? 'block' : 'none';
+                        const keyFieldEl = componentsContainer.querySelector('input[name="key"]');
+                        if (keyFieldEl) {
+                            const textFieldBlockEl = keyFieldEl.parentNode;
+                            textFieldBlockEl.style.display = ['object', 'array'].indexOf(type) > -1 ? 'block' : 'none';
+                            if (['object', 'array'].indexOf(type) === -1) {
+                                keyFieldEl.value = '';
+                            }
+                        }
                     };
 
                     d.querySelector('select').addEventListener('change', (e) => {
@@ -644,7 +646,9 @@ class TwigVisual {
                         onFieldSelectChange(selectEl.value, selectedOption.dataset.type);
                     });
 
-                    onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
+                    setTimeout(() => {
+                        onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
+                    }, 1);
                     
                     break;
             }

@@ -469,17 +469,17 @@ class TwigVisualService {
             if (!isset($opts['type'])) {
                 continue;
             }
-            switch ($opts['type']) {
-                case 'text':
-                    if (isset($data['data'][$key])) {
-                        $opts['value'] = $data['data'][$key];
-                    }
-                    break;
-                case 'elementSelect':
-                    if (isset($opts['template'])) {
-                        $opts['template'] = self::replaceTemplateVariables($opts['template'], $data['data']);
-                    }
-                    break;
+            if (isset($data['data'][$key])) {
+                $opts['value'] = $data['data'][$key];
+            }
+            if (isset($opts['template'])) {
+                $opts['template'] = self::replaceTemplateVariables($opts['template'], $data['data']);
+            }
+            if (isset($opts['templatePath'])) {
+                $opts['templatePath'] = self::replaceTemplateVariables($opts['templatePath'], $data['data']);
+            }
+            if (isset($opts['output'])) {
+                $opts['output'] = self::replaceTemplateVariables($opts['output'], $data['data']);
             }
         }
     }
@@ -487,9 +487,10 @@ class TwigVisualService {
     /**
      * @param array $uiBlockConfig
      * @param array $elements
+     * @param string $templateName
      * @return bool
      */
-    public function prepareOptionsByTemplates(&$uiBlockConfig, &$elements)
+    public function prepareOptionsByTemplates(&$uiBlockConfig, &$elements, $templateName)
     {
         // Get static options
         $staticOptions = [];
@@ -507,27 +508,22 @@ class TwigVisualService {
         foreach ($keys as $key) {
             $opts = &$uiBlockConfig['components'][$key];
             $type = $opts['type'] ?? '';
-            switch ($type) {
-                case 'elementSelect':
-                    
-                    if (!isset($elements[$key]) || !isset($opts['template'])) {
-                        break;
-                    }
-                    
-                    $templateCode = self::replaceTemplateVariables($opts['template'], $staticOptions);
-                    $result = $this->prepareHTMLByTemplate(
-                        $elements[$key],
-                        $templateCode,
-                        $key
-                    );
-                    
-                    $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
-                    
-                    if ($key !== 'root' && !empty($opts['src'])) {
-                        $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['src'], $key);
-                    }
 
-                    break;
+            if (!isset($elements[$key]) || empty($opts['template'])) {
+                continue;
+            }
+
+            $templateCode = self::replaceTemplateVariables($opts['template'], $staticOptions);
+            $result = $this->prepareHTMLByTemplate(
+                $elements[$key],
+                $templateCode,
+                $key
+            );
+
+            $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
+
+            if (!empty($opts['output'])) {
+                $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['output'], $key);
             }
         }
         return true;
@@ -910,6 +906,23 @@ class TwigVisualService {
             $inputString = str_replace(["{{{$key}}}", "{{ {$key} }}"], $value, $inputString);
         }
         return $inputString;
+    }
+
+    /**
+     * @param \DOMElement|\DOMNode $element
+     * @param string $commentOpen
+     * @param string $commentClose
+     */
+    public static function elementWrapComment($element, $commentOpen, $commentClose = '')
+    {
+        if (!$commentClose) {
+            $commentClose = $commentOpen;
+        }
+        $element->parentNode->insertBefore(new \DOMText("\n"), $element);
+        $element->parentNode->insertBefore(new \DOMComment(" {$commentOpen} "), $element);
+        $element->parentNode->insertBefore(new \DOMText("\n"), $element);
+        $element->parentNode->insertBefore(new \DOMComment(" /{$commentClose} "), $element->nextSibling);
+        $element->parentNode->insertBefore(new \DOMText("\n"), $element->nextSibling);
     }
 
     /**
