@@ -465,6 +465,25 @@ class TwigVisualService {
         if (!isset($data['data'])) {
             return;
         }
+        
+        // Prepare data
+        foreach ($data['data'] as $key => &$v) {
+            $opts = $uiBlockConfig['components'][$key] ?? [];
+            if (!empty($opts['join'])) {
+                $keysArr = explode(',', $opts['join']);
+                $valuesArr = [];
+                $separator = $opts['separator'] ?? '.';
+                foreach ($keysArr as $k) {
+                    if (!empty($data['data'][$k])) {
+                        $valuesArr[] = $data['data'][$k];
+                    }
+                }
+                if (!empty($valuesArr)) {
+                    $data['data'][$key] .= $separator . implode($separator, $valuesArr);
+                }
+            }
+        }
+        
         foreach ($uiBlockConfig['components'] as $key => &$opts) {
             if (!isset($opts['type'])) {
                 continue;
@@ -558,9 +577,11 @@ class TwigVisualService {
 
         self::copyAttributes($templateMainElement, $domElement);
         
+        $hasChildHTML = false;
         if ($templateMainElement->hasChildNodes()) {
             foreach($templateMainElement->childNodes as $index => $tChildNode) {
                 if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
+                    $hasChildHTML = true;
                     try {
                         $childNode = $domElement->querySelector($tChildNode->tagName);
                     } catch (\Exception $e) {
@@ -574,6 +595,9 @@ class TwigVisualService {
                     }
                 }
             }
+        }
+        if (!$hasChildHTML) {
+            self::copyAttributes($templateMainElement, $domElement, true);
         }
         
         return true;
@@ -814,9 +838,12 @@ class TwigVisualService {
     public static function replaceHTMLElement($element, $content, $tagName = '', $cacheKey = '')
     {
         $result = null;
-        $isHTML = strpos(trim($content), "<{$tagName}") === 0;
+        if (!$element->parentNode) {
+            return $result;
+        }
+        $isHTML = strpos(trim($content), '<') === 0;
         if ($isHTML) {
-            $result = new \DOMElement($tagName);
+            $result = new HTML5DOMElement($tagName);//new \DOMElement($tagName);
             $element->parentNode->insertBefore($result, $element);
             $element->parentNode->removeChild($element);
         } else {
@@ -1004,18 +1031,17 @@ class TwigVisualService {
      */
     public static function copyAttributes($sourceElement, &$targetElement, $includeTextContent = false)
     {
-        if (!$sourceElement->hasAttributes()) {
-            return;
-        }
-        $attributes = $sourceElement->getAttributes();
-        if (!empty($attributes)) {
-            foreach ($attributes as $k => $attribute) {
-                if ($k === 'class') {
-                    $classValue = $targetElement->getAttribute('class');
-                    $classValue .= $classValue ? ' ' . $attribute : $attribute;
-                    $targetElement->setAttribute($k, $classValue);
-                } else {
-                    $targetElement->setAttribute($k, $attribute);
+        if ($sourceElement->hasAttributes()) {
+            $attributes = $sourceElement->getAttributes();
+            if (!empty($attributes)) {
+                foreach ($attributes as $k => $attribute) {
+                    if ($k === 'class') {
+                        $classValue = $targetElement->getAttribute('class');
+                        $classValue .= $classValue ? ' ' . $attribute : $attribute;
+                        $targetElement->setAttribute($k, $classValue);
+                    } else {
+                        $targetElement->setAttribute($k, $attribute);
+                    }
                 }
             }
         }

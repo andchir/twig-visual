@@ -3,6 +3,7 @@
 namespace Andchir\TwigVisualBundle\Controller;
 
 use Andchir\TwigVisualBundle\Service\TwigVisualService;
+use IvoPetkov\HTML5DOMDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -225,6 +226,7 @@ class DefaultController extends AbstractController
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
         }
+        /** @var HTML5DOMDocument $doc */
         list($templateFilePath, $doc, $node) = $result;
         $templateDirPath = dirname($templateFilePath);
         
@@ -242,7 +244,7 @@ class DefaultController extends AbstractController
             return $this->setError($this->service->getErrorMessage());
         }
 
-        // var_dump($uiBlockConfig);
+        // var_dump($uiBlockConfig); exit;
         
         // Step #4
         foreach ($uiBlockConfig['components'] as $key => $opts) {
@@ -256,18 +258,7 @@ class DefaultController extends AbstractController
                     'outerHTML'
                 );
                 $outerHTML = $this->service->beautify($outerHTML);
-
-                if (!empty($opts['templatePath'])) {
-                    $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
-
-                    if (!is_dir(dirname($tplFilePath))) {
-                        mkdir(dirname($tplFilePath));
-                    }
-                    if (file_exists($tplFilePath)) {
-                        unlink($tplFilePath);
-                    }
-                    file_put_contents($tplFilePath, $outerHTML);
-                }
+                
                 if (!empty($opts['caching'])) {
                     try {
                         $cacheKey = $this->service->cacheAdd(
@@ -279,6 +270,19 @@ class DefaultController extends AbstractController
                         return false;
                     }
                     TwigVisualService::elementWrapComment($elements[$key], $cacheKey);
+                }
+                if (!empty($opts['templatePath'])) {
+                    $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
+
+                    if (!is_dir(dirname($tplFilePath))) {
+                        mkdir(dirname($tplFilePath));
+                    }
+                    if (file_exists($tplFilePath)) {
+                        unlink($tplFilePath);
+                    }
+                    file_put_contents($tplFilePath, $outerHTML);
+                } else {
+                    $elements[$key]->outerHTML = $outerHTML;
                 }
             }
         }

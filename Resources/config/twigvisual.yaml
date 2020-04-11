@@ -34,18 +34,17 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    output: '<root/>'
-                    template: '<root>{% if {{ fieldName }}<key/> is defined %}{{ {{ fieldName }}<key/> }}{% endif %}</root>'
+                    template: '<root>{% if {{ fieldName }} is defined %}{{ {{ fieldName }} }}{% endif %}</root>'
                     
                 fieldName:
                     title: Поле контента
                     type: pageField
+                    join: key
+                    separator: '.'
                 
                 key:
                     title: Ключ значения
                     type: text
-                    output: ".{{ key }}"
-                    cleanSrcIfEmptyValue: true
         
         include:
             title: Сделать встроенным
