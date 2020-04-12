@@ -136,6 +136,17 @@ class TwigVisualService {
     }
 
     /**
+     * @param string $key
+     * @param mixed $value
+     * @return $this
+     */
+    public function setConfigValue($key, $value)
+    {
+        $this->config[$key] = $value;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getScriptContent($commentKey = '')
@@ -295,6 +306,7 @@ class TwigVisualService {
      */
     public function updateIncludes($templateCode)
     {
+        $updateIncludeSource = $this->getConfigValue('updateIncludeSource', '', true);
         $includes = $this->getIncludesList();
         $themeDirPath = $this->getCurrentThemeDirPath();
         foreach ($includes as $templateName) {
@@ -303,8 +315,10 @@ class TwigVisualService {
             if (!$commentContent) {
                 continue;
             }
-            $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
-            file_put_contents($templatePath, $commentContent);
+            if ($updateIncludeSource) {
+                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
+                file_put_contents($templatePath, trim($commentContent));
+            }
             $includeCode = '{% include \'' . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName . '\' %}';
             $templateCode = self::replaceCommentContent($commentKey, $includeCode, $templateCode, true);
         }
@@ -415,13 +429,12 @@ class TwigVisualService {
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
         $htmlContent = self::replaceCommentContent('twv-script', $this->getScriptContent(), $htmlContent);
-        $htmlContent = $this->updateIncludes($htmlContent);
-        
         if ($replaceFromLocalCache) {
             foreach ($this->cacheArray as $key => $val) {
                 $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
             }
         }
+        $htmlContent = $this->updateIncludes($htmlContent);
 
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -995,8 +1008,8 @@ class TwigVisualService {
      */
     public static function createCommentContent($commentKey, $commentContent)
     {
-        return PHP_EOL . "<!-- {$commentKey} -->" . PHP_EOL . $commentContent
-            . PHP_EOL . "<!-- /{$commentKey} -->" . PHP_EOL;
+        return "<!-- {$commentKey} -->" . PHP_EOL . $commentContent
+            . PHP_EOL . "<!-- /{$commentKey} -->";
     }
 
     /**

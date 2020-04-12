@@ -251,6 +251,28 @@ class DefaultController extends AbstractController
             return $this->setError($this->service->getErrorMessage());
         }
 
+        switch ($type) {
+            case 'include':
+
+                $themeDirPath = $this->service->getCurrentThemeDirPath();
+                $templatesExtension = $this->service->getConfigValue('templates_extension');
+                $includes = $this->service->getIncludesList(true);
+                $includeTemplateName = $data['data']['include'] ?? '';
+                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
+                $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
+                if (!$includeTemplateName || !in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
+                    break;
+                }
+
+                $commentKey = 'twv-include-' . TwigVisualService::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR;
+                $commentKey .= $includeTemplateName . '.' . $templatesExtension;
+
+                $this->service->elementWrapComment($elements['root'], $commentKey);
+                $this->service->setConfigValue('updateIncludeSource', false);
+
+                break;
+        }
+
         // var_dump($uiBlockConfig); exit;
         
         // Step #4
@@ -289,7 +311,7 @@ class DefaultController extends AbstractController
                     }
                     file_put_contents($tplFilePath, $outerHTML);
                 } else {
-                    $elements[$key]->outerHTML = $outerHTML;
+                    // $elements[$key]->outerHTML = $outerHTML;
                 }
             }
         }

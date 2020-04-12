@@ -671,7 +671,7 @@ class TwigVisual {
                     d.innerHTML = `
                     <div class="twv-mb-3">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="fieldName">
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="${cmp.type}">
                             ${optionsHTML}
                         </select>
                     </div>

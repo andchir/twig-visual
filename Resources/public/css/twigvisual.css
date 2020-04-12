@@ -23,15 +23,15 @@
 .twv-panel-left { left: 0; top: 0; }
 .twv-panel-hidden { box-shadow: none; }
 .twv-panel-left .twv-panel-header { text-align: right; }
-.twv-panel-left.twv-panel-hidden { left: -300px; }
-.twv-panel-right.twv-panel-hidden { right: -300px; }
+.twv-panel-left.twv-panel-hidden { left: -325px; }
+.twv-panel-right.twv-panel-hidden { right: -325px; }
 .twv-panel-left.twv-panel-hidden .twv-button-panel-right { position: fixed; left: 15px; top: 15px; }
 .twv-panel-right.twv-panel-hidden .twv-button-panel-left { position: fixed; right: 15px; top: 15px; }
 .twv-panel-right .twv-panel-header-buttons { float: right; }
 .twv-panel-left .twv-panel-header-buttons { float: left; }
 
 /* buttons */
-.twv-btn { display: inline-block; font-weight: 400; color: #212529; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; background-color: #fff; border: 1px solid #6c757d; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; border-radius: .25rem; transition: background-color 500ms; box-shadow: 2px 2px 1px rgba(0,0,0,.1), inset -1px -1px 1px rgba(0,0,0,.3); }
+.twv-btn { display: inline-block; font-weight: 400; color: #212529; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; background-color: #fff; border: 1px solid #6c757d; padding: .375rem .75rem; font-size: 1rem; line-height: 1.5; border-radius: .25rem; transition: background-color 500ms; box-shadow: 2px 2px 1px rgba(0,0,0,.1); }
 .twv-btn:hover { background-color: #eee; }
 .twv-btn-block { display: block; width: 100%; }
 .twv-btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.2rem; }
