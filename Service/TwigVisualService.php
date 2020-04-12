@@ -20,6 +20,7 @@ use IvoPetkov\HTML5DOMDocument;
 
 class TwigVisualService {
 
+    const INCLUDES_DIRNAME = 'generic';
     /** @var TwigEnvironment */
     protected $twig;
     /** @var ParameterBagInterface */
@@ -243,6 +244,74 @@ class TwigVisualService {
     }
 
     /**
+     * @param bool $cleanExtensions
+     * @return array
+     * @throws \Twig\Error\LoaderError
+     */
+    public function getIncludesList($cleanExtensions = false)
+    {
+        $templatesExtension = $this->getConfigValue('templates_extension');
+        $themeDirPath = $this->getCurrentThemeDirPath();
+        $templatesDirPath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME;
+        $files = array_slice(scandir($templatesDirPath), 2);
+        if ($cleanExtensions) {
+            $files = array_map(function($fileName) use ($templatesExtension) {
+                return str_replace('.' . $templatesExtension, '', $fileName);
+            }, $files);
+        }
+        return $files;
+    }
+
+    /**
+     * @param string $templateCode
+     * @return string
+     */
+    public function parseIncludes($templateCode)
+    {
+        $templatesExtension = $this->getConfigValue('templates_extension');
+        $themeDirPath = $this->getCurrentThemeDirPath();
+        
+        $pattern = "/\{% include '([^\']+)' %\}/";
+        preg_match_all($pattern, $templateCode, $matches);
+        
+        foreach ($matches[0] as $index => $match) {
+            $templateName = $matches[1][$index];
+            $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . $templateName;
+            if (!file_exists($templatePath)) {
+                continue;
+            }
+            $content = file_get_contents($templatePath);
+            $content = self::createCommentContent('twv-include-' . $templateName, $content);
+            $templateCode = str_replace($match, $content, $templateCode);
+        }
+        
+        return $templateCode;
+    }
+
+    /**
+     * @param string $templateCode
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     */
+    public function updateIncludes($templateCode)
+    {
+        $includes = $this->getIncludesList();
+        $themeDirPath = $this->getCurrentThemeDirPath();
+        foreach ($includes as $templateName) {
+            $commentKey = 'twv-include-' . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
+            $commentContent = self::getCommentContent($commentKey, $templateCode);
+            if (!$commentContent) {
+                continue;
+            }
+            $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
+            file_put_contents($templatePath, $commentContent);
+            $includeCode = '{% include \'' . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName . '\' %}';
+            $templateCode = self::replaceCommentContent($commentKey, $includeCode, $templateCode, true);
+        }
+        return $templateCode;
+    }
+
+    /**
      * @param string $templateName
      * @param string $xpathQuery
      * @param string $textContent
@@ -346,6 +415,8 @@ class TwigVisualService {
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
         $htmlContent = self::replaceCommentContent('twv-script', $this->getScriptContent(), $htmlContent);
+        $htmlContent = $this->updateIncludes($htmlContent);
+        
         if ($replaceFromLocalCache) {
             foreach ($this->cacheArray as $key => $val) {
                 $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
@@ -412,6 +483,7 @@ class TwigVisualService {
             $templateCode = file_get_contents($templateSource->getPath());
         }
         $templateCode = self::cutCommentContent('twv-script', $templateCode);
+        $templateCode = $this->parseIncludes($templateCode);
 
         if ($replaceFromCache) {
             $cacheContentArray = $this->cacheGet($this->getCurrentThemeName());
@@ -623,6 +695,7 @@ class TwigVisualService {
         $commentClosed = self::getNextSiblingByType($domElement, XML_COMMENT_NODE);
         if ($commentOpen
             && $commentClosed
+            && strpos($commentOpen->nodeValue, 'twv-include-') === false
             && strpos($commentOpen->nodeValue, 'twv-') !== false
             && strpos($commentClosed->nodeValue, '/twv-') !== false) {
                 return $domElement;
@@ -893,9 +966,10 @@ class TwigVisualService {
      * @param string $commentKey
      * @param string $commentContent
      * @param string $content
+     * @param bool $removeComment
      * @return string
      */
-    public static function replaceCommentContent($commentKey, $commentContent, $content)
+    public static function replaceCommentContent($commentKey, $commentContent, $content, $removeComment = false)
     {
         $o = strpos($content, "<!-- {$commentKey} -->") !== false
             ? "<!-- {$commentKey} -->"
@@ -906,6 +980,9 @@ class TwigVisualService {
         $oPos = strpos($content, $o);
         $cPos = strpos($content, $c);
         if ($oPos !== false && $cPos !== false) {
+            if ($removeComment) {
+                return substr($content, 0, $oPos) . $commentContent . substr($content, $cPos + strlen($c));
+            }
             return substr($content, 0, $oPos) . $o . $commentContent . substr($content, $cPos);
         }
         return $content;

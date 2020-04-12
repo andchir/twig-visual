@@ -314,16 +314,8 @@ class DefaultController extends AbstractController
      */
     public function includesListAction(Request $request)
     {
-        $templatesExtension = $this->service->getConfigValue('templates_extension');
-        $themeDirPath = $this->service->getCurrentThemeDirPath();
-        $templatesDirPath = $themeDirPath . DIRECTORY_SEPARATOR . 'generic';
-        $files = array_slice(scandir($templatesDirPath), 2);
-        $files = array_map(function($fileName) use ($templatesExtension) {
-            return str_replace('.' . $templatesExtension, '', $fileName);
-        }, $files);
-
         return $this->json([
-            'templates' => $files
+            'templates' => $this->service->getIncludesList(true)
         ]);
     }
 
