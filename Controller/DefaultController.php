@@ -5,6 +5,7 @@ namespace Andchir\TwigVisualBundle\Controller;
 use Andchir\TwigVisualBundle\Service\TwigVisualService;
 use IvoPetkov\HTML5DOMDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -29,6 +30,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/create", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @return JsonResponse
      */
     public function createThemeAction(Request $request, TranslatorInterface $translator)
@@ -75,6 +77,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/create_template", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @return JsonResponse
      */
     public function createTemplateAction(Request $request, TranslatorInterface $translator)
@@ -121,6 +124,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/edit_content", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
@@ -148,6 +152,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/edit_link", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
@@ -179,6 +184,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/delete_element", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
      */
@@ -205,6 +211,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/insert/{type}", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
@@ -299,7 +306,30 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/includes", methods={"GET"})
+     * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     */
+    public function includesListAction(Request $request)
+    {
+        $templatesExtension = $this->service->getConfigValue('templates_extension');
+        $themeDirPath = $this->service->getCurrentThemeDirPath();
+        $templatesDirPath = $themeDirPath . DIRECTORY_SEPARATOR . 'generic';
+        $files = array_slice(scandir($templatesDirPath), 2);
+        $files = array_map(function($fileName) use ($templatesExtension) {
+            return str_replace('.' . $templatesExtension, '', $fileName);
+        }, $files);
+
+        return $this->json([
+            'templates' => $files
+        ]);
+    }
+
+    /**
      * @Route("/batch", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
@@ -388,6 +418,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/move_element", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
      */
@@ -439,6 +470,7 @@ class DefaultController extends AbstractController
 
     /**
      * @Route("/restore_static", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
      */

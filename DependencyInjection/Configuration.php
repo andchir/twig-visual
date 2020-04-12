@@ -27,6 +27,7 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('cache_location')
                     ->scalarPrototype()->end()
                 ->end()
+                ->scalarNode('templates_extension')->end()
                 ->arrayNode('templates')
                     ->scalarPrototype()->end()
                 ->end()

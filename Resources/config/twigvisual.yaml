@@ -27,6 +27,7 @@ twig_visual:
         - profile/change_password
     cache_location:
         - var/cache/filecache
+    templates_extension: html.twig
     ui:
         field:
             title: Поле контента
@@ -46,7 +47,7 @@ twig_visual:
                     title: Ключ значения
                     type: text
         
-        include:
+        includeCreate:
             title: Сделать встроенным
             components:
                 root:
@@ -59,6 +60,17 @@ twig_visual:
                 includeName:
                     title: Название элемента
                     type: text
+
+        include:
+            title: Заменить на встраиваемый
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+
+                includeName:
+                    title: Встраиваемый блок
+                    type: include
                     
         menu:
             title: Основное меню

@@ -574,6 +574,7 @@ class TwigVisual {
         });
 
         let div = document.createElement('div');
+        let optionsHTML = '';
         div.className = 'twv-pt-1 twv-mb-3';
         const opt = this.options.uiOptions[typeValue];
         this.components = opt.components;
@@ -614,7 +615,7 @@ class TwigVisual {
                     break;
                 case 'pageField':
 
-                    let optionsHTML = '';
+                    optionsHTML = '';
                     this.options.pageFields.forEach((pageField) => {
                         optionsHTML += `<option value="${pageField.name}" data-type="${pageField.type}">${pageField.name} - ${pageField.type}</option>`;
                     });
@@ -649,6 +650,33 @@ class TwigVisual {
                     setTimeout(() => {
                         onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
                     }, 1);
+                    
+                    break;
+                case 'include':
+
+                    optionsHTML = '';
+                    this.request(`/twigvisual/includes`, {}, (res) => {
+                        if (res.templates) {
+                            res.templates.forEach((templateName) => {
+                                optionsHTML += `<option value="${templateName}">${templateName}</option>`;
+                            });
+                            d.querySelector('select').innerHTML = optionsHTML;
+                        }
+                        this.showLoading(false);
+                    }, (err) => {
+                        this.addAlertMessage(err.error || err);
+                        this.showLoading(false);
+                    });
+
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="fieldName">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    `;
+                    div.appendChild(d);
                     
                     break;
             }
@@ -827,12 +855,15 @@ class TwigVisual {
         <div class="twv-p-1 twv-mb-3 twv-small twv-bg-gray">
             <div class="twv-text-overflow" title="${xpathEscaped}">${xpath}</div>
         </div>
-        <div class="twv-mb-3">
+        <div class="twv-mb-3 twv-nowrap">
             <button type="button" class="twv-btn twv-mr-1 twv-button-edit-text" title="Edit text content">
                 <i class="twv-icon-createmode_editedit"></i>
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-edit-link" title="Edit link">
                 <i class="twv-icon-linkinsert_link"></i>
+            </button>
+            <button type="button" class="twv-btn twv-mr-1 twv-button-replace-image" title="Replace image">
+                <i class="twv-icon-insert_photoimagephoto"></i>
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="Delete element">
                 <i class="twv-icon-delete_outline"></i>
@@ -1460,8 +1491,7 @@ class TwigVisual {
      * @param failFn
      * @param method
      */
-    request(url, data, successFn, failFn, method) {
-        method = method || 'GET';
+    request(url, data, successFn, failFn, method = 'GET') {
         const request = new XMLHttpRequest();
         request.open(method, url, true);
 

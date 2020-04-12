@@ -226,8 +226,8 @@ class TwigVisualService {
             $sourceFilePath = $currentThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
             $targetFilePath = $newThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
             if (!file_exists($sourceFilePath)) {
-                $sourceFilePath .= '.html.twig';
-                $targetFilePath .= '.html.twig';
+                $sourceFilePath .= '.' . $this->config['templates_extension'];
+                $targetFilePath .= '.' . $this->config['templates_extension'];
             }
             if (!is_dir(dirname($targetFilePath))) {
                 mkdir(dirname($targetFilePath));
