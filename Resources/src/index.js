@@ -655,6 +655,7 @@ class TwigVisual {
                 case 'include':
 
                     optionsHTML = '';
+                    this.showLoading(true);
                     this.request(`/twigvisual/includes`, {}, (res) => {
                         if (res.templates) {
                             res.templates.forEach((templateName) => {
@@ -1316,11 +1317,26 @@ class TwigVisual {
             optionsHTML += `<option value="${templatePath}">${templatePath}</option>`;
         });
 
+        this.showLoading(true);
+        this.request('/twigvisual/html_files', {}, (res) => {
+            if (res.files) {
+                let html = '';
+                res.files.forEach((fileName) => {
+                    html += `<option value="${fileName}">${fileName}</option>`;
+                });
+                document.getElementById('tww-field-source-file').innerHTML = html;
+            }
+            this.showLoading(false);
+        }, (err) => {
+            this.addAlertMessage(err.error || err);
+            this.showLoading(false);
+        });
+
         const div = document.createElement('div');
         div.innerHTML = `
         <div class="twv-mb-3">
             <label class="twv-display-block twv-mb-1" for="tww-field-source-file">HTML-файл</label>
-            <input type="text" id="tww-field-source-file" class="twv-form-control" value="">
+            <select id="tww-field-source-file" class="twv-custom-select"></select>
         </div>
         <div class="twv-mb-3">
             <label class="twv-display-block twv-mb-1" for="tww-field-template-name">Название шаблона</label>

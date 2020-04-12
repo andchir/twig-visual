@@ -311,7 +311,11 @@ class DefaultController extends AbstractController
                     }
                     file_put_contents($tplFilePath, $outerHTML);
                 } else {
-                    // $elements[$key]->outerHTML = $outerHTML;
+                    try {
+                        $elements[$key]->outerHTML = $outerHTML;
+                    } catch (\Exception $e) {
+                        
+                    }
                 }
             }
         }
@@ -338,6 +342,27 @@ class DefaultController extends AbstractController
     {
         return $this->json([
             'templates' => $this->service->getIncludesList(true)
+        ]);
+    }
+
+    /**
+     * @Route("/html_files", methods={"GET"})
+     * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     */
+    public function htmlFilesListAction()
+    {
+        $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($this->service->getCurrentThemeName());
+        $files = array_slice(scandir($publicTemplateDirPath), 2);
+        $files = array_values(array_filter($files, function ($fileName) {
+            return strpos($fileName, '.html') !== false;
+        }));
+        sort($files);
+        
+        return $this->json([
+            'files' => $files
         ]);
     }
 

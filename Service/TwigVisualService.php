@@ -105,7 +105,8 @@ class TwigVisualService {
                 $components[] = [
                     'name' => $k,
                     'title' => $v['title'],
-                    'type' => $v['type']
+                    'type' => $v['type'],
+                    'required' => !empty($v['required'])
                 ];
             }
             $uiOutput[$key] = [
@@ -270,6 +271,7 @@ class TwigVisualService {
                 return str_replace('.' . $templatesExtension, '', $fileName);
             }, $files);
         }
+        sort($files);
         return $files;
     }
 

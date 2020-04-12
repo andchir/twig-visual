@@ -35,6 +35,7 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
                     template: '<root>{% if {{ fieldName }} is defined %}{{ {{ fieldName }} }}{% endif %}</root>'
                     
                 fieldName:
@@ -53,6 +54,7 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
                     output: "{% include 'generic/{{ includeName }}.html.twig' %}"
                     templatePath: "generic/{{ includeName }}"
                     template: '<root/>'
@@ -60,6 +62,7 @@ twig_visual:
                 includeName:
                     title: Название элемента
                     type: text
+                    required: true
 
         include:
             title: Заменить на встраиваемый
@@ -67,10 +70,12 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
 
                 includeName:
                     title: Встраиваемый блок
                     type: include
+                    required: true
                     
         menu:
             title: Основное меню
@@ -78,6 +83,7 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
                     output: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
                     template: '<root/>'
                     templatePath: nav/menu_dropdown
@@ -86,6 +92,7 @@ twig_visual:
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
+                    required: true
                     output: '<itemFirst/>'
                     template: |
                         {% for category in children %}
@@ -141,15 +148,17 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
                     isFunction: true
                     output: "{% include 'nav/child-categories-menu.html.twig' %}"
-                    template: '<root/>'
+                    template: '{%% if categoriesMenu | length > 0 %%}<root/>{%% endif %%}'
                     templatePath: nav/child-categories-menu
                     caching: true
                     
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
+                    required: true
                     output: '<itemFirst/>'
                     template: |
                         {% for category in categoriesMenu %}
@@ -157,13 +166,6 @@ twig_visual:
                             <a href="{{ catalogPath(category.uri) }}">{{ category.title }}</a>
                         </itemFirst>
                         {%  endfor %}
-        
-        photogallery:
-            title: Фотогалерея
-            components:
-                root:
-                    title: Корневой элемент
-                    type: elementSelect
                     
         breadcrumbs:
             title: Хлебные крошки
@@ -187,6 +189,13 @@ twig_visual:
                         </childItem>
                         {% endfor %}
                     
+        photogallery:
+            title: Фотогалерея
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+        
         shoppingCart:
             title: Корзина покупок
             components:
@@ -207,3 +216,14 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+        
+        wrapTag:
+            title: Создать блок
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    required: true
+                    output: '<root/>'
+                    template: '<div><root/></div>'
+                    
