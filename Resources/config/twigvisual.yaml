@@ -216,7 +216,55 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-        
+
+        editMargin:
+            title: Редактировать внешние отступы
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    required: true
+                marginTop:
+                    title: Отступ сверху
+                    type: text
+                    styleName: 'margin-top'
+                marginRight:
+                    title: Отступ справа
+                    type: text
+                    styleName: 'margin-right'
+                marginBottom:
+                    title: Отступ снизу
+                    type: text
+                    styleName: 'margin-bottom'
+                marginLeft:
+                    title: Отступ слева
+                    type: text
+                    styleName: 'margin-left'
+
+        editPadding:
+            title: Редактировать внутренние отступы
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    required: true
+                marginTop:
+                    title: Отступ сверху
+                    type: text
+                    styleName: 'padding-top'
+                marginRight:
+                    title: Отступ справа
+                    type: text
+                    styleName: 'padding-right'
+                marginBottom:
+                    title: Отступ снизу
+                    type: text
+                    styleName: 'padding-bottom'
+                marginLeft:
+                    title: Отступ слева
+                    type: text
+                    styleName: 'padding-left'
+            
         wrapTag:
             title: Создать блок
             components:

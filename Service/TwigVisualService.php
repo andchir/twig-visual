@@ -106,7 +106,8 @@ class TwigVisualService {
                     'name' => $k,
                     'title' => $v['title'],
                     'type' => $v['type'],
-                    'required' => !empty($v['required'])
+                    'required' => !empty($v['required']),
+                    'styleName' => $v['styleName'] ?? ''
                 ];
             }
             $uiOutput[$key] = [

@@ -604,10 +604,18 @@ class TwigVisual {
                     break;
                 case 'text':
                     
+                    let value = '';
+                    if (cmp.styleName) {
+                        const compStyles = window.getComputedStyle(this.parentElement);
+                        if (compStyles[cmp.styleName]) {
+                            value = compStyles[cmp.styleName];
+                        }
+                    }
+                    
                     d.innerHTML = `
                     <div class="twv-mb-2">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="">
+                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">
                     </div>
                     `;
                     div.appendChild(d);
@@ -683,6 +691,8 @@ class TwigVisual {
             }
         });
         componentsContainer.appendChild(div);
+        
+        
         
         div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
