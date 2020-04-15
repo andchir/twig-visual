@@ -3,7 +3,7 @@ TwigVisual
 
 Current version: **ALPHA**
 
-Add to base template before </head> tag:
+Add to base template before ``</head>`` tag:
 ~~~
 <!-- twv-script -->
 {% if is_granted('ROLE_ADMIN') %}
