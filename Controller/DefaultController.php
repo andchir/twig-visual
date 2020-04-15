@@ -228,6 +228,14 @@ class DefaultController extends AbstractController
         if (!isset($data['data']) || !isset($data['data']['source'])) {
             return $this->setError('Please select a root item.');
         }
+        
+        // Update configuration
+        if (!empty($uiBlockConfig['configuration']) && is_array($uiBlockConfig['configuration'])) {
+            foreach ($uiBlockConfig['configuration'] as $key => $val) {
+                $this->service->setConfigValue($key, $val);
+            }
+        }
+        
         try {
             $result = $this->service->getDocumentNode($templateName, $data['data']['source'], true);
         } catch (\Exception $e) {
@@ -268,7 +276,6 @@ class DefaultController extends AbstractController
                 $commentKey .= $includeTemplateName . '.' . $templatesExtension;
 
                 $this->service->elementWrapComment($elements['root'], $commentKey);
-                $this->service->setConfigValue('updateIncludeSource', false);
 
                 break;
         }

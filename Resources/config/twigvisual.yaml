@@ -50,6 +50,8 @@ twig_visual:
         
         includeCreate:
             title: Сделать встроенным
+            configuration:
+                replaceFromCache: false
             components:
                 root:
                     title: Корневой элемент
@@ -66,6 +68,8 @@ twig_visual:
 
         include:
             title: Заменить на встраиваемый
+            configuration:
+                updateIncludeSource: false
             components:
                 root:
                     title: Корневой элемент

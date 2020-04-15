@@ -487,14 +487,14 @@ class TwigVisualService {
 
     /**
      * @param string $templateName
-     * @param bool $replaceFromCache
      * @return array
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\SyntaxError
      */
-    public function getTemplateSource($templateName, $replaceFromCache = true)
+    public function getTemplateSource($templateName)
     {
+        $replaceFromCache = $this->getConfigValue('replaceFromCache', '', true);
         $template = $this->twig->resolveTemplate($templateName);
         $templateSource = $template->getSourceContext();
         $templateCode = $templateSource->getCode();
