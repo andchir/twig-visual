@@ -248,19 +248,19 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                marginTop:
+                paddingTop:
                     title: Отступ сверху
                     type: text
                     styleName: 'padding-top'
-                marginRight:
+                paddingRight:
                     title: Отступ справа
                     type: text
                     styleName: 'padding-right'
-                marginBottom:
+                paddingBottom:
                     title: Отступ снизу
                     type: text
                     styleName: 'padding-bottom'
-                marginLeft:
+                paddingLeft:
                     title: Отступ слева
                     type: text
                     styleName: 'padding-left'

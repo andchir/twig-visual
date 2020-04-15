@@ -1251,6 +1251,36 @@ class TwigVisualService {
     }
 
     /**
+     * @param HTML5DOMElement $domElement
+     * @param $styleName
+     * @param $value
+     */
+    public static function updateStyles(\IvoPetkov\HTML5DOMElement $domElement, $styleName, $value)
+    {
+        $stylesString = $domElement->hasAttribute('style')
+            ? $domElement->getAttribute('style')
+            : '';
+        $stylesArr = $stylesString ? explode(';', $stylesString) : [];
+        $stylesArr = array_map('trim', $stylesArr);
+        $stylesArr = array_filter($stylesArr, function($item) {
+            return !empty($item);
+        });
+        
+        $styleCurrent = array_filter($stylesArr, function($item) use ($styleName) {
+            return strpos($item, $styleName) !== false;
+        });
+        if (!empty($styleCurrent)) {
+            $newStyleString = "{$styleName}: {$value}";
+            $keys = array_keys($styleCurrent);
+            $stylesArr[$keys[0]] = $newStyleString;
+        } else {
+            $stylesArr[] = "{$styleName}: {$value}";
+        }
+        
+        $domElement->setAttribute('style', implode('; ', $stylesArr));
+    }
+
+    /**
      * @param HTML5DOMElement $doc
      * @param string $xpathQuery
      */

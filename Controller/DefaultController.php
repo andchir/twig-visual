@@ -280,6 +280,9 @@ class DefaultController extends AbstractController
             if (!isset($opts['type'])) {
                 continue;
             }
+            if (!empty($opts['styleName'])) {
+                TwigVisualService::updateStyles($elements['root'], $opts['styleName'], $opts['value']);
+            }
             if (!empty($opts['outerHTML'])) {
                 $outerHTML = TwigVisualService::replaceXMLTags(
                     $opts['outerHTML'],
