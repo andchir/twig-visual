@@ -358,12 +358,14 @@ class DefaultController extends AbstractController
     public function htmlFilesListAction()
     {
         $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($this->service->getCurrentThemeName());
-        $files = array_slice(scandir($publicTemplateDirPath), 2);
-        $files = array_values(array_filter($files, function ($fileName) {
-            return strpos($fileName, '.html') !== false;
-        }));
-        sort($files);
-        
+        $files = [];
+        if (is_dir($publicTemplateDirPath)) {
+            $files = array_slice(scandir($publicTemplateDirPath), 2);
+            $files = array_values(array_filter($files, function ($fileName) {
+                return strpos($fileName, '.html') !== false;
+            }));
+            sort($files);
+        }
         return $this->json([
             'files' => $files
         ]);

@@ -266,6 +266,9 @@ class TwigVisualService {
         $templatesExtension = $this->getConfigValue('templates_extension');
         $themeDirPath = $this->getCurrentThemeDirPath();
         $templatesDirPath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME;
+        if (!is_dir($templatesDirPath)) {
+            return [];
+        }
         $files = array_slice(scandir($templatesDirPath), 2);
         if ($cleanExtensions) {
             $files = array_map(function($fileName) use ($templatesExtension) {
