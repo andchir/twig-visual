@@ -1,6 +1,8 @@
 TwigVisual
 ----------
 
+Current version: **ALPHA**
+
 Add to base template before </head> tag:
 ~~~
 <!-- twv-script -->
