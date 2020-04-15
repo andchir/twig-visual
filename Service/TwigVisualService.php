@@ -441,7 +441,7 @@ class TwigVisualService {
             }
         }
         $htmlContent = $this->updateIncludes($htmlContent);
-
+        
         file_put_contents($templateFilePath, $htmlContent);
 
         if ($clearCache) {

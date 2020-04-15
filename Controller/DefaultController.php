@@ -210,17 +210,18 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/insert/{type}", methods={"POST"})
+     * @Route("/insert/{actionName}", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
+     * @param string $actionName
      * @return JsonResponse
      */
-    public function insertAction(Request $request, TranslatorInterface $translator, $type)
+    public function insertAction(Request $request, TranslatorInterface $translator, $actionName)
     {
         $data = json_decode($request->getContent(), true);
         $templateName = $data['templateName'] ?? '';
-        $uiBlockConfig = $this->service->getConfigValue('ui', $type,  []);
+        $uiBlockConfig = $this->service->getConfigValue('ui', $actionName,  []);
 
         if (!$templateName) {
             return $this->setError('Template can not be empty.');
@@ -259,13 +260,13 @@ class DefaultController extends AbstractController
             return $this->setError($this->service->getErrorMessage());
         }
 
-        switch ($type) {
+        switch ($actionName) {
             case 'include':
 
                 $themeDirPath = $this->service->getCurrentThemeDirPath();
                 $templatesExtension = $this->service->getConfigValue('templates_extension');
                 $includes = $this->service->getIncludesList(true);
-                $includeTemplateName = $data['data']['include'] ?? '';
+                $includeTemplateName = $data['data']['includeName'] ?? '';
                 $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
                 $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
                 if (!$includeTemplateName || !in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
@@ -302,7 +303,7 @@ class DefaultController extends AbstractController
                     try {
                         $cacheKey = $this->service->cacheAdd(
                             $opts['sourceHTML'],
-                            $templateName . '-' . $type . '-' . $key
+                            $templateName . '-' . $actionName . '-' . $key
                         );
                     } catch (\Exception $e) {
                         $this->setError($e->getMessage());
