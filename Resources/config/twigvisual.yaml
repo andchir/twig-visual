@@ -52,6 +52,7 @@ twig_visual:
             title: Сделать встроенным
             configuration:
                 replaceFromCache: false
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -70,6 +71,7 @@ twig_visual:
             title: Заменить на встраиваемый
             configuration:
                 updateIncludeSource: false
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -83,6 +85,8 @@ twig_visual:
                     
         menu:
             title: Основное меню
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -148,6 +152,8 @@ twig_visual:
 
         child_menu:
             title: Меню подкатегорий
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -173,11 +179,13 @@ twig_visual:
                     
         breadcrumbs:
             title: Хлебные крошки
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    output: "{% include 'nav/breadcrumbs.html.twig' %}"
+                    output: "{% include 'generic/breadcrumbs.html.twig' %}"
                     template: '<root/>'
                     templatePath: nav/breadcrumbs
                     caching: true
@@ -192,7 +200,39 @@ twig_visual:
                             <a href="{{ catalogPath(crumb.uri) }}">{{ crumb.title }}</a>
                         </childItem>
                         {% endfor %}
+
+        catalog_products:
+            title: Товары каталога
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+
+                container:
+                    title: Контейнер
+                    type: elementSelect
                     
+                childItem:
+                    title: Блок товара
+                    type: elementSelect
+                    template: |
+                        {% for item in items %}
+                        <childItem/>
+                        {% endfor %}
+
+                childItemTitle:
+                    title: Название товара
+                    type: elementSelect
+                    template: '<childItemTitle href="{{ catalogPath(currentUri, item.name) }}">{{ item.title }}</childItemTitle>'
+
+                childItemPrice:
+                    title: Цена товара
+                    type: elementSelect
+                    template: |
+                        <childItemPrice class="shk-price">{{ item.price }}</childItemPrice>
+        
         photogallery:
             title: Фотогалерея
             components:
@@ -271,6 +311,8 @@ twig_visual:
             
         wrapTag:
             title: Создать блок
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент

@@ -469,6 +469,44 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/restore_backup", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function restoreBackupAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+
+        if (!$templateName) {
+            return $this->setError('Template can not be empty.');
+        }
+
+        $themeDirPath = $this->service->getCurrentThemeDirPath();
+        $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . $templateName;
+        
+        if (!file_exists($templatePath)) {
+            return $this->setError('Template not found.');
+        }
+
+        $recordId = 'backup-copy-' . $templateName;
+        $cacheContentArray = $this->service->cacheGet();
+        if (!isset($cacheContentArray[$recordId])) {
+            return $this->setError('Backup copy not found.');
+        }
+        
+        file_put_contents($templatePath, $cacheContentArray[$recordId]);
+        unset($cacheContentArray[$recordId]);
+        
+        $this->service->cacheUpdate($cacheContentArray);
+        
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
      * @Route("/move_element", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request

@@ -423,10 +423,9 @@ class TwigVisualService {
      * @param HTML5DOMDocument $doc
      * @param string $templateFilePath
      * @param bool $clearCache
-     * @param bool $replaceFromLocalCache
      * @return bool
      */
-    public function saveTemplateContent(HTML5DOMDocument $doc, $templateFilePath, $clearCache = true, $replaceFromLocalCache = true)
+    public function saveTemplateContent(HTML5DOMDocument $doc, $templateFilePath, $clearCache = true)
     {
         if (!is_writable($templateFilePath)) {
             $this->setErrorMessage('Template is not writable.');
@@ -435,12 +434,17 @@ class TwigVisualService {
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
         $htmlContent = self::replaceCommentContent('twv-script', $this->getScriptContent(), $htmlContent);
-        if ($replaceFromLocalCache) {
+        
+        if ($this->getConfigValue('replaceFromCache', '', true)) {
             foreach ($this->cacheArray as $key => $val) {
                 $htmlContent = self::replaceCommentContent($key, $val, $htmlContent);
             }
         }
         $htmlContent = $this->updateIncludes($htmlContent);
+        
+        if ($this->getConfigValue('saveBackupCopy', '', false)) {
+            $this->cacheAdd(file_get_contents($templateFilePath), basename($templateFilePath), 'backup-copy-', false);
+        }
         
         file_put_contents($templateFilePath, $htmlContent);
 
@@ -494,7 +498,6 @@ class TwigVisualService {
      */
     public function getTemplateSource($templateName)
     {
-        $replaceFromCache = $this->getConfigValue('replaceFromCache', '', true);
         $template = $this->twig->resolveTemplate($templateName);
         $templateSource = $template->getSourceContext();
         $templateCode = $templateSource->getCode();
@@ -504,7 +507,7 @@ class TwigVisualService {
         $templateCode = self::cutCommentContent('twv-script', $templateCode);
         $templateCode = $this->parseIncludes($templateCode);
 
-        if ($replaceFromCache) {
+        if ($this->getConfigValue('replaceFromCache', '', true)) {
             $cacheContentArray = $this->cacheGet($this->getCurrentThemeName());
             foreach ($cacheContentArray as $key => $val) {
                 $this->cacheArray[$key] = self::getCommentContent($key, $templateCode);
@@ -806,7 +809,26 @@ class TwigVisualService {
      * @return string
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function cacheAdd($outerHTML, $key, $keyPrefix = 'twv-')
+    public function cacheAdd($outerHTML, $key, $keyPrefix = 'twv-', $useUniqId = true)
+    {
+        $cacheContentArray = $this->cacheGet();
+        if ($useUniqId) {
+            $recordId = uniqid($keyPrefix . $key . '-', true);
+        } else {
+            $recordId = $keyPrefix . $key;
+        }
+        $cacheContentArray[$recordId] = str_replace("\r\n", "\n", $outerHTML);
+        
+        $this->cacheUpdate($cacheContentArray);
+        
+        return $recordId;
+    }
+
+    /**
+     * @param $cacheContentArray
+     * @throws \Twig\Error\LoaderError
+     */
+    public function cacheUpdate($cacheContentArray)
     {
         $themeDirPath = $this->getCurrentThemeDirPath();
         $cacheFilePath = $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
@@ -816,13 +838,7 @@ class TwigVisualService {
         if (!file_exists($cacheFilePath) && !is_writable(dirname($cacheFilePath))) {
             throw new \Exception('Theme directory is not writable.');
         }
-        $cacheContentArray = $this->cacheGet();
-        $uniqid = uniqid($keyPrefix . $key . '-', true);
-        
-        $cacheContentArray[$uniqid] = str_replace("\r\n", "\n", $outerHTML);
         file_put_contents($cacheFilePath, Yaml::dump($cacheContentArray, 2, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK));
-        
-        return $uniqid;
     }
 
     /**

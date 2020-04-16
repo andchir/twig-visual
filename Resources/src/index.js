@@ -530,6 +530,11 @@ class TwigVisual {
             this.executeActionBatch();
         });
 
+        containerEl.querySelector('.twv-button-undo').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.restoreFromTemplateCopyA();
+        });
+
         return containerEl;
     }
 
@@ -1435,7 +1440,24 @@ class TwigVisual {
             templateName: this.options.templateName,
             actions: this.actions
         }, (res) => {
-            this.windowReload();
+            if (res.success) {
+                this.windowReload();
+            }
+            this.showLoading(false);
+        }, (err) => {
+            this.addAlertMessage(err.error || err);
+            this.showLoading(false);
+        }, 'POST');
+    }
+
+    restoreFromTemplateCopyA() {
+        this.showLoading(true);
+        this.request('/twigvisual/restore_backup', {
+            templateName: this.options.templateName
+        }, (res) => {
+            if (res.success) {
+                this.windowReload();
+            }
             this.showLoading(false);
         }, (err) => {
             this.addAlertMessage(err.error || err);
