@@ -82,13 +82,17 @@ class TwigVisual {
         });
 
         document.body.addEventListener('keyup', (e) => {
-            if (e.code !== 'Escape') {
-                return;
+            if (e.code === 'Escape') {
+                if (this.state === 'active') {
+                    this.selectModeToggle();
+                }
+                this.selectionModeDestroy();
             }
-            if (this.state === 'active') {
-                this.selectModeToggle();
+            if (e.code === 'Enter') {
+                if (this.state === 'active') {
+                    this.selectModeApply();
+                }
             }
-            this.selectionModeDestroy();
         });
         
         // Panel position recovery
@@ -244,21 +248,27 @@ class TwigVisual {
         e.preventDefault();
         e.stopPropagation();
 
-        this.removeOverlay();
-        
+        this.selectModeApply(e.target);
+    }
+    
+    selectModeApply(element = null) {
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
-            : e.target;
-        
+            : element;
+        if (!currentElement) {
+            return;
+        }
+        this.removeOverlay();
+
         const currentElementXpath = this.getXPathForElement(currentElement);
         this.data[this.dataKey] = currentElementXpath;
-        
+
         // Clear selection
         if (this.data[this.dataKey]) {
             const xpath = this.data[this.dataKey];
             this.removeSelectionInnerByXPath(xpath);
         }
-        
+
         if (this.state === 'active') {
             this.selectModeToggle();
         }
@@ -281,7 +291,6 @@ class TwigVisual {
                 }
                 currentElement.setAttribute('title', this.components[index].title);
             }
-
             this.componentButtonMakeSelected(this.dataKey);
         }
     }
@@ -325,6 +334,8 @@ class TwigVisual {
                 }
                 elementSelected.classList.remove('twv-selected-element');
             }
+            elementSelected.style.transform = '';
+            elementSelected.style.transition = '';
             this.setToParents(elementSelected, {transform: '', transition: ''});
 
             this.removeSelectionInner();
@@ -948,6 +959,8 @@ class TwigVisual {
         }
         this.addOverlay(elementSelected);
 
+        elementSelected.style.transform = 'none';
+        elementSelected.style.transition = 'none';
         this.setToParents(elementSelected, {transform: 'none', transition: 'none'});
 
         elementSelected.classList.add('twv-selected-element');

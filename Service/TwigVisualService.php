@@ -668,8 +668,6 @@ class TwigVisualService {
             $this->setErrorMessage("Element \"{$key}\" not found in template.");
             return false;
         }
-
-        self::copyAttributes($templateMainElement, $domElement);
         
         $hasChildHTML = false;
         if ($templateMainElement->hasChildNodes()) {
@@ -692,6 +690,8 @@ class TwigVisualService {
         }
         if (!$hasChildHTML) {
             self::copyAttributes($templateMainElement, $domElement, true);
+        } else {
+            self::copyAttributes($templateMainElement, $domElement);
         }
         
         return true;
@@ -1073,13 +1073,13 @@ class TwigVisualService {
     public static function replaceByTag($templateCode, $tagName, $content)
     {
         if (strpos($templateCode, "<{$tagName}/>") !== false) {
-            return str_replace("<{$tagName}/>", $content, $templateCode);
+            return str_replace("<{$tagName}/>", $content, trim($templateCode));
         }
         $regex = "/<{$tagName}[^>]*>(.*?)<\/{$tagName}>/s";
         if (!preg_match($regex, $templateCode)) {
             return $content;
         }
-        return preg_replace("/<{$tagName}[^>]*>(.*?)<\/{$tagName}>/s", $content, $templateCode);
+        return preg_replace("/<{$tagName}[^>]*>(.*?)<\/{$tagName}>/s", $content, trim($templateCode));
     }
 
     /**
@@ -1143,21 +1143,25 @@ class TwigVisualService {
      */
     public static function copyAttributes($sourceElement, &$targetElement, $includeTextContent = false)
     {
+        $tagName = $targetElement->tagName;
         if ($sourceElement->hasAttributes()) {
             $attributes = $sourceElement->getAttributes();
             if (!empty($attributes)) {
-                foreach ($attributes as $k => $attribute) {
-                    if ($k === 'class') {
+                foreach ($attributes as $attributeName => $attributeValue) {
+                    if ($attributeName === 'class') {
                         $classValue = $targetElement->getAttribute('class');
-                        $classValue .= $classValue ? ' ' . $attribute : $attribute;
-                        $targetElement->setAttribute($k, $classValue);
+                        $classValue .= $classValue ? ' ' . $attributeValue : $attributeValue;
+                        $targetElement->setAttribute($attributeName, $classValue);
                     } else {
-                        $targetElement->setAttribute($k, $attribute);
+                        if ($attributeName == 'href' && $tagName != 'a') {
+                            continue;
+                        }
+                        $targetElement->setAttribute($attributeName, $attributeValue);
                     }
                 }
             }
         }
-        if ($includeTextContent) {
+        if ($includeTextContent && $sourceElement->textContent) {
             $textNode = self::findChildByType($targetElement, XML_TEXT_NODE);
             if ($textNode) {
                 $textNode->nodeValue = $sourceElement->textContent;
