@@ -333,10 +333,10 @@ class TwigVisual {
                     elementSelected.dataset.twvContent = '';
                 }
                 elementSelected.classList.remove('twv-selected-element');
+                elementSelected.style.transform = '';
+                elementSelected.style.transition = '';
+                this.setToParents(elementSelected, {transform: '', transition: ''});
             }
-            elementSelected.style.transform = '';
-            elementSelected.style.transition = '';
-            this.setToParents(elementSelected, {transform: '', transition: ''});
 
             this.removeSelectionInner();
         }
@@ -637,6 +637,17 @@ class TwigVisual {
                     div.appendChild(d);
                     
                     break;
+                case 'checkbox':
+
+                    d.innerHTML = `
+                    <div class="twv-mb-2">
+                        <input type="checkbox" id="tww-field-option-${cmp.name}" name="${cmp.name}" value="1">
+                        <label class="twv-display-inline twv-ml-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                    </div>
+                    `;
+                    div.appendChild(d);
+                    
+                    break;
                 case 'pageField':
 
                     optionsHTML = '';
@@ -708,8 +719,6 @@ class TwigVisual {
         });
         componentsContainer.appendChild(div);
         
-        
-        
         div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
@@ -744,6 +753,9 @@ class TwigVisual {
             });
             Array.from(componentsContainer.querySelectorAll('select')).forEach((el) => {
                 data.data[el.name] = el.value;
+            });
+            Array.from(componentsContainer.querySelectorAll('input[type="checkbox"]')).forEach((el) => {
+                data.data[el.name] = el.checked;
             });
             
             this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {

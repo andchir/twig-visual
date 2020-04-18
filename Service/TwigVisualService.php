@@ -545,6 +545,15 @@ class TwigVisualService {
                 }
                 $elements[$key] = $entries->item(0);
                 $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
+                
+                if (!empty($uiBlockConfig['components'][$key]['isChildItem'])) {
+                    if (!empty($data['data']['deleteLeftSiblings'])) {
+                        self::deleteLeftSiblings($elements[$key]);
+                    }
+                    if (!empty($data['data']['deleteRightSiblings'])) {
+                        self::deleteRightSiblings($elements[$key]);
+                    }
+                }
             }
         }
         return $elements;
@@ -1222,6 +1231,32 @@ class TwigVisualService {
     }
 
     /**
+     * @param $domElement
+     * @param int $type
+     * @param string $direction
+     * @return array
+     */
+    public static function getAllSiblingByType($domElement, $type = XML_ELEMENT_NODE, $direction = 'next')
+    {
+        $siblings = [];
+        $sibling = $direction == 'next'
+            ? self::getNextSiblingByType($domElement, $type)
+            : self::getPreviousSiblingByType($domElement, $type);
+        if ($sibling) {
+            $siblings[] = $sibling;
+        }
+        while ($sibling !== null) {
+            $sibling = $direction == 'next'
+                ? self::getNextSiblingByType($sibling, $type)
+                : self::getPreviousSiblingByType( $sibling, $type);
+            if ($sibling) {
+                $siblings[] = $sibling;
+            }
+        }
+        return $siblings;
+    }
+
+    /**
      * @param mixed $domElement
      * @param int $type
      * @return |null
@@ -1245,6 +1280,28 @@ class TwigVisualService {
             }
         }
         return $result;
+    }
+
+    /**
+     * @param HTML5DOMElement $domElement
+     */
+    public static function deleteLeftSiblings(\IvoPetkov\HTML5DOMElement $domElement)
+    {
+        $siblings = self::getAllSiblingByType($domElement, XML_ELEMENT_NODE, 'previous');
+        foreach ($siblings as $sibling) {
+            $sibling->parentNode->removeChild($sibling);
+        }
+    }
+
+    /**
+     * @param HTML5DOMElement $domElement
+     */
+    public static function deleteRightSiblings(\IvoPetkov\HTML5DOMElement $domElement)
+    {
+        $siblings = self::getAllSiblingByType($domElement, XML_ELEMENT_NODE, 'next');
+        foreach ($siblings as $sibling) {
+            $sibling->parentNode->removeChild($sibling);
+        }
     }
 
     /**

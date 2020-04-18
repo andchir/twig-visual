@@ -51,16 +51,12 @@ twig_visual:
         includeCreate:
             title: Сделать встроенным
             configuration:
-                replaceFromCache: false
                 saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                    output: "{% include 'generic/{{ includeName }}.html.twig' %}"
-                    templatePath: "generic/{{ includeName }}"
-                    template: '<root/>'
                     
                 includeName:
                     title: Название элемента
@@ -100,6 +96,7 @@ twig_visual:
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
+                    isChildItem: true
                     required: true
                     output: '<itemFirst/>'
                     template: |
@@ -119,6 +116,7 @@ twig_visual:
                 itemSecond:
                     title: Пункт меню второго уровня
                     type: elementSelect
+                    isChildItem: true
                     output: '<itemSecond/>'
                     template: |
                         {% for category in children %}
@@ -137,6 +135,7 @@ twig_visual:
                 itemThird:
                     title: Пункт меню третьего уровня
                     type: elementSelect
+                    isChildItem: true
                     output: '<itemThird/>'
                     template: |
                         {% for category in children %}
@@ -149,6 +148,14 @@ twig_visual:
                     title: CSS класс активности
                     type: text
                     value: active
+                    
+                deleteLeftSiblings:
+                    title: Удалить дочерние соседние слева
+                    type: checkbox
+                    
+                deleteRightSiblings:
+                    title: Удалить дочерние соседние справа
+                    type: checkbox
 
         child_menu:
             title: Меню подкатегорий
@@ -159,15 +166,15 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                    isFunction: true
-                    output: "{% include 'nav/child-categories-menu.html.twig' %}"
+                    output: "{% include 'generic/child-categories-menu.html.twig' %}"
                     template: '{%% if categoriesMenu | length > 0 %%}<root/>{%% endif %%}'
-                    templatePath: nav/child-categories-menu
+                    templatePath: generic/child-categories-menu
                     caching: true
                     
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
+                    isChildItem: true
                     required: true
                     output: '<itemFirst/>'
                     template: |
@@ -176,6 +183,14 @@ twig_visual:
                             <a href="{{ catalogPath(category.uri) }}">{{ category.title }}</a>
                         </itemFirst>
                         {%  endfor %}
+                        
+                deleteLeftSiblings:
+                    title: Удалить дочерние соседние слева
+                    type: checkbox
+
+                deleteRightSiblings:
+                    title: Удалить дочерние соседние справа
+                    type: checkbox
                     
         breadcrumbs:
             title: Хлебные крошки
@@ -193,6 +208,7 @@ twig_visual:
                 childItem:
                     title: Элемент
                     type: elementSelect
+                    isChildItem: true
                     output: '<childItem/>'
                     template: |
                         {% for crumb in breadcrumbs %}
@@ -200,6 +216,14 @@ twig_visual:
                             <a href="{{ catalogPath(crumb.uri) }}">{{ crumb.title }}</a>
                         </childItem>
                         {% endfor %}
+
+                deleteLeftSiblings:
+                    title: Удалить дочерние соседние слева
+                    type: checkbox
+
+                deleteRightSiblings:
+                    title: Удалить дочерние соседние справа
+                    type: checkbox
 
         catalog_products:
             title: Товары каталога
@@ -209,14 +233,11 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-
-                container:
-                    title: Контейнер
-                    type: elementSelect
                     
                 childItem:
                     title: Блок товара
                     type: elementSelect
+                    isChildItem: true
                     template: |
                         {% for item in items %}
                         <childItem/>
@@ -234,6 +255,14 @@ twig_visual:
                     template: |
                         <childItemPrice class="shk-price">{{ item.price }}</childItemPrice>
                         <span class="shk-currency">{{ currency }}</span>
+                        
+                deleteLeftSiblings:
+                    title: Удалить дочерние соседние слева
+                    type: checkbox
+
+                deleteRightSiblings:
+                    title: Удалить дочерние соседние справа
+                    type: checkbox
         
         photogallery:
             title: Фотогалерея

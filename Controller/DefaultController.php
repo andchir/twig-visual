@@ -262,17 +262,23 @@ class DefaultController extends AbstractController
 
         switch ($actionName) {
             case 'include':
-
-                $themeDirPath = $this->service->getCurrentThemeDirPath();
-                $templatesExtension = $this->service->getConfigValue('templates_extension');
-                $includes = $this->service->getIncludesList(true);
+            case 'includeCreate':
+                
                 $includeTemplateName = $data['data']['includeName'] ?? '';
-                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
-                $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
-                if (!$includeTemplateName || !in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
+                if (!$includeTemplateName) {
                     break;
                 }
-
+                $templatesExtension = $this->service->getConfigValue('templates_extension');
+                $themeDirPath = $this->service->getCurrentThemeDirPath();
+                $includes = $this->service->getIncludesList(true);
+                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
+                $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
+                
+                if ($actionName == 'includeCreate') {
+                    file_put_contents($templatePath, '');
+                } else if (!in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
+                    break;
+                }
                 $commentKey = 'twv-include-' . TwigVisualService::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR;
                 $commentKey .= $includeTemplateName . '.' . $templatesExtension;
 

@@ -10,6 +10,7 @@
 .twv-flex-fill { -ms-flex: 1 1 auto; flex: 1 1 auto; }
 .twv-text-success { color: #28a745; }
 .twv-display-block { display: block; }
+.twv-display-inline { display: inline; }
 .twv-float-right { float: right; }
 .twv-nowrap { white-space: nowrap; }
 
