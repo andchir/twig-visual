@@ -31,6 +31,8 @@ twig_visual:
     ui:
         field:
             title: Поле контента
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -273,6 +275,8 @@ twig_visual:
         
         shoppingCart:
             title: Корзина покупок
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -331,6 +335,8 @@ twig_visual:
                     
         addToCart:
             title: Добавить в корзину
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -371,6 +377,8 @@ twig_visual:
 
         editMargin:
             title: Редактировать внешние отступы
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
@@ -395,6 +403,8 @@ twig_visual:
 
         editPadding:
             title: Редактировать внутренние отступы
+            configuration:
+                saveBackupCopy: true
             components:
                 root:
                     title: Корневой элемент
