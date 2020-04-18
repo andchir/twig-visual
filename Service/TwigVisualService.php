@@ -323,6 +323,9 @@ class TwigVisualService {
             }
             if ($updateIncludeSource) {
                 $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
+                if (!is_dir(dirname($templatePath))) {
+                    mkdir(dirname($templatePath));
+                }
                 file_put_contents($templatePath, trim($commentContent));
             }
             $includeCode = '{% include \'' . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName . '\' %}';

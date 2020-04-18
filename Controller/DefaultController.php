@@ -275,6 +275,9 @@ class DefaultController extends AbstractController
                 $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
                 
                 if ($actionName == 'includeCreate') {
+                    if (!is_dir(dirname($templatePath))) {
+                        mkdir(dirname($templatePath));
+                    }
                     file_put_contents($templatePath, '');
                 } else if (!in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
                     break;

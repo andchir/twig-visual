@@ -90,7 +90,8 @@ class TwigVisual {
             }
             if (e.code === 'Enter') {
                 if (this.state === 'active') {
-                    this.selectModeApply();
+                    const selectedEl = document.querySelector('.twv-selected');
+                    this.selectModeApply(selectedEl);
                 }
             }
         });
@@ -642,7 +643,7 @@ class TwigVisual {
                     d.innerHTML = `
                     <div class="twv-mb-2">
                         <input type="checkbox" id="tww-field-option-${cmp.name}" name="${cmp.name}" value="1">
-                        <label class="twv-display-inline twv-ml-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <label class="twv-display-inline twv-small twv-ml-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
                     </div>
                     `;
                     div.appendChild(d);

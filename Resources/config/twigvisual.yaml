@@ -150,14 +150,14 @@ twig_visual:
                     value: active
                     
                 deleteLeftSiblings:
-                    title: Удалить дочерние соседние слева
+                    title: Удалить дочерние предыдущие
                     type: checkbox
                     
                 deleteRightSiblings:
-                    title: Удалить дочерние соседние справа
+                    title: Удалить дочерние следующие
                     type: checkbox
 
-        child_menu:
+        childMenu:
             title: Меню подкатегорий
             configuration:
                 saveBackupCopy: true
@@ -185,11 +185,11 @@ twig_visual:
                         {%  endfor %}
                         
                 deleteLeftSiblings:
-                    title: Удалить дочерние соседние слева
+                    title: Удалить дочерние предыдущие
                     type: checkbox
 
                 deleteRightSiblings:
-                    title: Удалить дочерние соседние справа
+                    title: Удалить дочерние следующие
                     type: checkbox
                     
         breadcrumbs:
@@ -218,14 +218,14 @@ twig_visual:
                         {% endfor %}
 
                 deleteLeftSiblings:
-                    title: Удалить дочерние соседние слева
+                    title: Удалить дочерние предыдущие
                     type: checkbox
 
                 deleteRightSiblings:
-                    title: Удалить дочерние соседние справа
+                    title: Удалить дочерние следующие
                     type: checkbox
 
-        catalog_products:
+        catalogProducts:
             title: Товары каталога
             configuration:
                 saveBackupCopy: true
@@ -257,11 +257,11 @@ twig_visual:
                         <span class="shk-currency">{{ currency }}</span>
                         
                 deleteLeftSiblings:
-                    title: Удалить дочерние соседние слева
+                    title: Удалить дочерние предыдущие
                     type: checkbox
 
                 deleteRightSiblings:
-                    title: Удалить дочерние соседние справа
+                    title: Удалить дочерние следующие
                     type: checkbox
         
         photogallery:
@@ -277,6 +277,57 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
+                    required: true
+                    output: "{{ shopCart('shop_cart', 'shop') }}"
+                    template: '<root/>'
+                    templatePath: shop_cart/shop_cart
+                    caching: true
+                    
+                totalCount:
+                    title: Общее количество
+                    type: elementSelect
+                    template: '<totalCount>{{ countTotal }}</totalCount>'
+                    
+                totalPrice:
+                    title: Общяя цена
+                    type: elementSelect
+                    output: '<totalPrice/>'
+                    template: |
+                        <totalPrice class="shk-price">
+                            {{ priceTotal | price }} {{ currencySelected }}
+                        </totalPrice>
+                        
+                linkCartEdit:
+                    title: Ссылка на большую корзину
+                    type: elementSelect
+                    template: |
+                        <linkCartEdit href="{{ pathLocalized('shop_cart_edit') }}"/>
+                        
+                linkCheckout:
+                    title: Ссылка на оформление заказа
+                    type: elementSelect
+                    template: |
+                        <linkCheckout href="{{ pathLocalized('page_checkout') }}"/>
+                    
+                childItem:
+                    title: Элемент товара
+                    type: elementSelect
+                    isChildItem: true
+                    output: '<childItem/>'
+                    template: |
+                        {% for item in items %}
+                        <childItem>
+                            <a href="/{{ item.uri }}">{{ item.title }}</a>
+                        </childItem>
+                        {% endfor %}
+                        
+                deleteLeftSiblings:
+                    title: Удалить дочерние предыдущие
+                    type: checkbox
+
+                deleteRightSiblings:
+                    title: Удалить дочерние следующие
+                    type: checkbox
                     
         addToCart:
             title: Добавить в корзину
