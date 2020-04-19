@@ -426,7 +426,6 @@ class DefaultController extends AbstractController
         if (count($errors) > 1) {
             return $this->setError($errors[0]);
         }
-
         foreach ($actions as $index => $action) {
             if (empty($action['action']) || !$elements[$index]) {
                 continue;

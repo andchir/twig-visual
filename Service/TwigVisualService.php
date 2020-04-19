@@ -680,22 +680,44 @@ class TwigVisualService {
             $this->setErrorMessage("Element \"{$key}\" not found in template.");
             return false;
         }
-        
+
         $hasChildHTML = false;
         if ($templateMainElement->hasChildNodes()) {
+            $childNodesHTML = array_filter(iterator_to_array($templateMainElement->childNodes), function($node) {
+                return $node->nodeType === XML_ELEMENT_NODE;
+            });
+            $hasChildHTML = count($childNodesHTML) > 0;
+            if (count($childNodesHTML) > 1) {
+                $domElement->innerHTML = '';//Delete all nodes, they will be taken from the template
+            }
             foreach($templateMainElement->childNodes as $index => $tChildNode) {
                 if ($tChildNode->nodeType === XML_ELEMENT_NODE) {
-                    $hasChildHTML = true;
-                    try {
-                        $childNode = $domElement->querySelector($tChildNode->tagName);
-                    } catch (\Exception $e) {
-                        $childNode = null;
+                    $childNode = null;
+                    if (count($childNodesHTML) === 1) {
+                        try {
+                            $childNode = $domElement->querySelector($tChildNode->tagName);
+                        } catch (\Exception $e) {
+                            $childNode = null;
+                        }
                     }
                     if ($childNode) {
                         self::copyAttributes($tChildNode, $childNode, true);
-                        self::copyNextSiblings($tChildNode, $childNode);
                     } else {
-                        self::copyAttributes($tChildNode, $domElement, true);
+                        if ($tChildNode->tagName == $domElement->tagName && count($childNodesHTML) === 1) {
+                            self::copyAttributes($tChildNode, $domElement, true);
+                        } else {
+                            $el = new \DOMElement($tChildNode->tagName);
+                            $domElement->appendChild($el);
+                            self::copyAttributes($tChildNode, $el, true);
+                        }
+                    }
+                } else if ($tChildNode->nodeType === XML_TEXT_NODE && !empty(trim($tChildNode->nodeValue))) {
+                    $textNode = self::findChildByType($domElement, XML_TEXT_NODE);
+                    if ($textNode) {
+                        $textNode->nodeValue = $tChildNode->nodeValue;
+                    } else {
+                        $el = new \DOMText($tChildNode->nodeValue);
+                        $domElement->appendChild($el);
                     }
                 }
             }
@@ -705,7 +727,6 @@ class TwigVisualService {
         } else {
             self::copyAttributes($templateMainElement, $domElement);
         }
-        
         return true;
     }
 

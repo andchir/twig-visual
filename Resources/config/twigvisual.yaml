@@ -253,10 +253,11 @@ twig_visual:
                 childItemPrice:
                     title: Цена товара
                     type: elementSelect
-                    output: '<childItemPrice/>'
                     template: |
-                        <childItemPrice class="shk-price">{{ item.price }}</childItemPrice>
-                        <span class="shk-currency">{{ currency }}</span>
+                        <childItemPrice>
+                            <span class="shk-price">{{ item.price }}</span>
+                            <span class="shk-currency">{{ currency }}</span>
+                        </childItemPrice>
                         
                 deleteLeftSiblings:
                     title: Удалить дочерние предыдущие
@@ -265,6 +266,20 @@ twig_visual:
                 deleteRightSiblings:
                     title: Удалить дочерние следующие
                     type: checkbox
+                    
+        productPrice:
+            title: Цена товара
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    template: |
+                        <root>
+                            <span class="shk-price">{{ currentPage.price }}</span>
+                            <span class="shk-currency">{{ currency }}</span>
+                        </root>
         
         photogallery:
             title: Фотогалерея
@@ -298,7 +313,8 @@ twig_visual:
                     output: '<totalPrice/>'
                     template: |
                         <totalPrice class="shk-price">
-                            {{ priceTotal | price }} {{ currencySelected }}
+                            <span class="big shk-price">{{ priceTotal | price }}</span>
+                            <span class="shk-currency">{{ currencySelected }}</span>
                         </totalPrice>
                         
                 linkCartEdit:
@@ -320,10 +336,16 @@ twig_visual:
                     output: '<childItem/>'
                     template: |
                         {% for item in items %}
-                        <childItem>
-                            <a href="/{{ item.uri }}">{{ item.title }}</a>
-                        </childItem>
+                        <childItem/>
                         {% endfor %}
+                        
+                childItemTitle:
+                    title: Название товара
+                    type: elementSelect
+                    template: |
+                        <childItemTitle>
+                            <a href="/{{ item.uri }}">{{ item.title }}</a>
+                        </childItemTitle>
                         
                 deleteLeftSiblings:
                     title: Удалить дочерние предыдущие
