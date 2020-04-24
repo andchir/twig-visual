@@ -266,7 +266,46 @@ twig_visual:
                 deleteRightSiblings:
                     title: Удалить дочерние следующие
                     type: checkbox
-                    
+
+        pagination:
+            title: Постраничная навигация для товаров
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Корневой элемент
+                    type: elementSelect
+                    output: '<root/>'
+                    template: |
+                        {% if pagesOptions.total > 1 %}
+                        <root/>
+                        {% endif %}
+
+                childItem:
+                    title: Элемент
+                    type: elementSelect
+                    isChildItem: true
+                    output: '<childItem/>'
+                    template: |
+                        {% for i in 1..pagesOptions.total %}
+                        <childItem class="{% if i == pagesOptions.current %} {{ activeClassName }}{% endif %}">
+                            <a href="{{ pageUrl(pagesOptions, i) }}{{ queryOptions.filterStr }}">{{ i }}</a>
+                        </childItem>
+                        {% endfor %}
+                        
+                activeClassName:
+                    title: CSS класс активности
+                    type: text
+                    value: active
+
+                deleteLeftSiblings:
+                    title: Удалить дочерние предыдущие
+                    type: checkbox
+
+                deleteRightSiblings:
+                    title: Удалить дочерние следующие
+                    type: checkbox
+            
         productPrice:
             title: Цена товара
             configuration:

@@ -449,6 +449,8 @@ class TwigVisualService {
             $this->cacheAdd(file_get_contents($templateFilePath), basename($templateFilePath), 'backup-copy-', false);
         }
         
+        $htmlContent = self::prepareTwigTags($htmlContent);
+        
         file_put_contents($templateFilePath, $htmlContent);
 
         if ($clearCache) {
@@ -1167,6 +1169,22 @@ class TwigVisualService {
     public static function unescapeUrls($content)
     {
         return str_replace(['%7B', '%7D', '%20'], ['{', '}', ' '], $content);
+    }
+
+    /**
+     * Replace HTML entities to characters in Twig tags
+     * @param $content
+     * @return string
+     */
+    public static function prepareTwigTags($content)
+    {
+        preg_match_all('/\{%[^{]+%\}/', $content, $matches);
+        if (!empty($matches) && !empty($matches[0])) {
+            foreach ($matches[0] as $match) {
+                $content = str_replace($match, html_entity_decode($match), $content);
+            }
+        }
+        return $content;
     }
 
     /**

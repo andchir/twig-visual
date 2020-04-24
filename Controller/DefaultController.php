@@ -307,6 +307,7 @@ class DefaultController extends AbstractController
                     'outerHTML'
                 );
                 $outerHTML = $this->service->beautify($outerHTML);
+                $outerHTML = TwigVisualService::prepareTwigTags($outerHTML);
                 
                 if (!empty($opts['caching'])) {
                     try {
