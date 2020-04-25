@@ -739,11 +739,7 @@ class TwigVisual {
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
             e.preventDefault();
-
-            buttonSubmit.setAttribute('disabled', 'disabled');
-            buttonCancel.setAttribute('disabled', 'disabled');
-
-            this.showLoading(true);
+            
             const data = {
                 templateName: this.options.templateName,
                 data: this.data
@@ -758,6 +754,14 @@ class TwigVisual {
             Array.from(componentsContainer.querySelectorAll('input[type="checkbox"]')).forEach((el) => {
                 data.data[el.name] = el.checked;
             });
+            if (!this.checkRequired(data.data, this.components)) {
+                return;
+            }
+
+            buttonSubmit.setAttribute('disabled', 'disabled');
+            buttonCancel.setAttribute('disabled', 'disabled');
+
+            this.showLoading(true);
             
             this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {
                 if (res.success) {
@@ -797,6 +801,18 @@ class TwigVisual {
                 this.selectionModeDestroy(true);
             }
         });
+    }
+
+    checkRequired(data, components) {
+        let result = true;
+        for (var cmp of components) {
+            if (cmp.required && !data[cmp.name]) {
+                result = false;
+                alert(`Поле "${cmp.title}" - обязательно.`);
+                break;
+            }
+        }
+        return result;
     }
 
     componentButtonMakeSelected(dataKey) {

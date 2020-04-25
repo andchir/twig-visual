@@ -240,8 +240,8 @@ class TwigVisualService {
             $sourceFilePath = $currentThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
             $targetFilePath = $newThemeDirPath . DIRECTORY_SEPARATOR . $defaultFile;
             if (!file_exists($sourceFilePath)) {
-                $sourceFilePath .= '.' . $this->config['templates_extension'];
-                $targetFilePath .= '.' . $this->config['templates_extension'];
+                $sourceFilePath .= '.' . $this->getConfigValue('templates_extension');
+                $targetFilePath .= '.' . $this->getConfigValue('templates_extension');
             }
             if (!is_dir(dirname($targetFilePath))) {
                 mkdir(dirname($targetFilePath));
@@ -573,6 +573,12 @@ class TwigVisualService {
         if (!isset($data['data'])) {
             return;
         }
+
+        $templatesExtension = $this->getConfigValue('templates_extension');
+        $nameSuffix = !empty($data['data']['nameSuffix']) ? '-' . $data['data']['nameSuffix'] : '';
+        if (!empty($data['data']['nameSuffix'])) {
+            unset($data['data']['nameSuffix']);
+        }
         
         // Prepare data
         foreach ($data['data'] as $key => &$v) {
@@ -604,9 +610,12 @@ class TwigVisualService {
             }
             if (isset($opts['templatePath'])) {
                 $opts['templatePath'] = self::replaceTemplateVariables($opts['templatePath'], $data['data']);
+                $opts['templatePath'] .= $nameSuffix;
             }
             if (isset($opts['output'])) {
                 $opts['output'] = self::replaceTemplateVariables($opts['output'], $data['data']);
+                $opts['output'] = str_replace('{{ nameSuffix }}', $nameSuffix, $opts['output']);
+                $opts['output'] = str_replace('.' . $templatesExtension, $nameSuffix . '.' . $templatesExtension, $opts['output']);
             }
         }
     }

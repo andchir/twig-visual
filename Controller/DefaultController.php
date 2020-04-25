@@ -57,8 +57,9 @@ class DefaultController extends AbstractController
         }
 
         $templateDirPath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName;
-        $mainPageTemplateFilePath = $templateDirPath . DIRECTORY_SEPARATOR . 'homepage.html.twig';
-
+        $mainPageTemplateFilePath = $templateDirPath . DIRECTORY_SEPARATOR . 'homepage';
+        $mainPageTemplateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
+        
         if (!$this->service->copyDefaultFiles($themeName)) {
             return $this->setError($translator->trans('Error copying files by default.'));
         }
@@ -100,7 +101,8 @@ class DefaultController extends AbstractController
             ]));
         }
 
-        $templateFilePath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName . DIRECTORY_SEPARATOR  . $templateName . '.html.twig';
+        $templateFilePath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName . DIRECTORY_SEPARATOR  . $templateName;
+        $templateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
         $pagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $fileName;
         if (TwigVisualService::getExtension($fileName) !== 'html') {
             return $this->setError($translator->trans('The main page file must be of type HTML.'));
@@ -322,7 +324,8 @@ class DefaultController extends AbstractController
                     TwigVisualService::elementWrapComment($elements[$key], $cacheKey);
                 }
                 if (!empty($opts['templatePath'])) {
-                    $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'] . '.html.twig';
+                    $tplFilePath = $templateDirPath . DIRECTORY_SEPARATOR .  $opts['templatePath'];
+                    $tplFilePath .= '.' . $this->service->getConfigValue('templates_extension');
 
                     if (!is_dir(dirname($tplFilePath))) {
                         mkdir(dirname($tplFilePath));

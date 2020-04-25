@@ -39,17 +39,17 @@ twig_visual:
                     type: elementSelect
                     required: true
                     template: '<root>{% if {{ fieldName }} is defined %}{{ {{ fieldName }} }}{% endif %}</root>'
-                    
+
                 fieldName:
                     title: Поле контента
                     type: pageField
                     join: key
                     separator: '.'
-                
+
                 key:
                     title: Ключ значения
                     type: text
-        
+
         includeCreate:
             title: Сделать встроенным
             configuration:
@@ -59,7 +59,7 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                    
+
                 includeName:
                     title: Название элемента
                     type: text
@@ -80,7 +80,7 @@ twig_visual:
                     title: Встраиваемый блок
                     type: include
                     required: true
-                    
+
         menu:
             title: Основное меню
             configuration:
@@ -90,11 +90,11 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                    output: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(0, 'menu_dropdown{{ nameSuffix }}', null, activeCategoriesIds, false) }}"
                     template: '<root/>'
                     templatePath: nav/menu_dropdown
                     caching: true
-    
+
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
@@ -107,14 +107,14 @@ twig_visual:
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         </itemFirst>
                         {%  endfor %}
-    
+
                 containerSecond:
                     title: Контейнер второго уровня
                     type: elementSelect
-                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child{{ nameSuffix }}', category, activeCategoriesIds, false) }}"
                     template: '<containerSecond/>'
                     templatePath: nav/menu_dropdown_child
-    
+
                 itemSecond:
                     title: Пункт меню второго уровня
                     type: elementSelect
@@ -126,14 +126,14 @@ twig_visual:
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         </itemSecond>
                         {%  endfor %}
-    
+
                 containerThird:
                     title: Контейнер третьего уровня
                     type: elementSelect
                     output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
                     template: '<containerThird/>'
                     templatePath: nav/menu_dropdown_child_child
-    
+
                 itemThird:
                     title: Пункт меню третьего уровня
                     type: elementSelect
@@ -146,18 +146,13 @@ twig_visual:
                         </itemThird>
                         {%  endfor %}
 
-                activeClassName:
-                    title: CSS класс активности
-                    type: text
-                    value: active
-                    
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
-                    
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
+                activeClassName: {title: CSS класс активности, type: text, value: active}
+
+                nameSuffix: {title: Суффикс имени, type: text}
+
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
 
         childMenu:
             title: Меню подкатегорий
@@ -172,7 +167,7 @@ twig_visual:
                     template: '{%% if categoriesMenu | length > 0 %%}<root/>{%% endif %%}'
                     templatePath: generic/child-categories-menu
                     caching: true
-                    
+
                 itemFirst:
                     title: Пункт меню первого уровня
                     type: elementSelect
@@ -185,15 +180,13 @@ twig_visual:
                             <a href="{{ catalogPath(category.uri) }}">{{ category.title }}</a>
                         </itemFirst>
                         {%  endfor %}
-                        
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
 
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
-                    
+                nameSuffix: {title: Суффикс имени, type: text}
+
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+
         breadcrumbs:
             title: Хлебные крошки
             configuration:
@@ -219,13 +212,11 @@ twig_visual:
                         </childItem>
                         {% endfor %}
 
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
+                nameSuffix: {title: Суффикс имени, type: text}
 
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
 
         catalogProducts:
             title: Товары каталога
@@ -235,7 +226,7 @@ twig_visual:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-                    
+
                 childItem:
                     title: Блок товара
                     type: elementSelect
@@ -258,14 +249,10 @@ twig_visual:
                             <span class="shk-price">{{ item.price }}</span>
                             <span class="shk-currency">{{ currency }}</span>
                         </childItemPrice>
-                        
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
 
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
 
         pagination:
             title: Постраничная навигация для товаров
@@ -292,20 +279,13 @@ twig_visual:
                             <a href="{{ pageUrl(pagesOptions, i) }}{{ queryOptions.filterStr }}">{{ i }}</a>
                         </childItem>
                         {% endfor %}
-                        
-                activeClassName:
-                    title: CSS класс активности
-                    type: text
-                    value: active
 
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
+                activeClassName: {title: CSS класс активности, type: text, value: active}
 
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
-            
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+
         productPrice:
             title: Цена товара
             configuration:
@@ -319,14 +299,14 @@ twig_visual:
                             <span class="shk-price">{{ currentPage.price }}</span>
                             <span class="shk-currency">{{ currency }}</span>
                         </root>
-        
+
         photogallery:
             title: Фотогалерея
             components:
                 root:
                     title: Корневой элемент
                     type: elementSelect
-        
+
         shoppingCart:
             title: Корзина покупок
             configuration:
@@ -336,16 +316,16 @@ twig_visual:
                     title: Корневой элемент
                     type: elementSelect
                     required: true
-                    output: "{{ shopCart('shop_cart', 'shop') }}"
+                    output: "{{ shopCart('shop_cart{{ nameSuffix }}', 'shop') }}"
                     template: '<root/>'
                     templatePath: shop_cart/shop_cart
                     caching: true
-                    
+
                 totalCount:
                     title: Общее количество
                     type: elementSelect
                     template: '<totalCount>{{ countTotal }}</totalCount>'
-                    
+
                 totalPrice:
                     title: Общяя цена
                     type: elementSelect
@@ -355,19 +335,19 @@ twig_visual:
                             <span class="big shk-price">{{ priceTotal | price }}</span>
                             <span class="shk-currency">{{ currencySelected }}</span>
                         </totalPrice>
-                        
+
                 linkCartEdit:
                     title: Ссылка на большую корзину
                     type: elementSelect
                     template: |
                         <linkCartEdit href="{{ pathLocalized('shop_cart_edit') }}"/>
-                        
+
                 linkCheckout:
                     title: Ссылка на оформление заказа
                     type: elementSelect
                     template: |
                         <linkCheckout href="{{ pathLocalized('page_checkout') }}"/>
-                    
+
                 childItem:
                     title: Элемент товара
                     type: elementSelect
@@ -377,7 +357,7 @@ twig_visual:
                         {% for item in items %}
                         <childItem/>
                         {% endfor %}
-                        
+
                 childItemTitle:
                     title: Название товара
                     type: elementSelect
@@ -385,15 +365,13 @@ twig_visual:
                         <childItemTitle>
                             <a href="/{{ item.uri }}">{{ item.title }}</a>
                         </childItemTitle>
-                        
-                deleteLeftSiblings:
-                    title: Удалить дочерние предыдущие
-                    type: checkbox
 
-                deleteRightSiblings:
-                    title: Удалить дочерние следующие
-                    type: checkbox
-                    
+                nameSuffix: {title: Суффикс имени, type: text}
+
+                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+
+                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+
         addToCart:
             title: Добавить в корзину
             configuration:
@@ -411,12 +389,12 @@ twig_visual:
                             <root/>
                         </form>
                     caching: true
-                    
+
                 buttonAddToCart:
                     title: Кнопка
                     type: elementSelect
                     template: '<buttonAddToCart type="submit"/>'
-                    
+
                 inputCount:
                     title: Поле кол-во
                     type: elementSelect
@@ -487,7 +465,7 @@ twig_visual:
                     title: Отступ слева
                     type: text
                     styleName: 'padding-left'
-            
+
         wrapTag:
             title: Создать блок
             configuration:
