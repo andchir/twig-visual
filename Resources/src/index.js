@@ -50,7 +50,6 @@ class TwigVisual {
 
     init() {
         this.container = this.createContainer();
-        this.parentElement = document.body;
 
         // Start button
         const buttonStart = this.container.querySelector('.twv-button-start-select');
@@ -280,9 +279,9 @@ class TwigVisual {
             this.createSelectionOptions(currentElementXpath);
         } else {
 
-            this.addOverlay();
+            this.highlightElement();
             currentElement.classList.add('twv-selected-success');
-
+            
             const index = this.components.findIndex((item) => {
                 return item.name === this.dataKey;
             });
@@ -398,6 +397,7 @@ class TwigVisual {
         if (!element) {
             return false;
         }
+        this.highlightElement();
         if (element.dataset.twvTitle) {
             element.setAttribute('title', element.dataset.twvTitle);
         } else {
@@ -406,15 +406,34 @@ class TwigVisual {
         element.classList.remove('twv-selected-success');
         return true;
     }
-    
-    addOverlay(element = null) {
-        if (document.querySelector('.twv-back-overlay')) {
-            return;
-        }
+
+    /**
+     * Add overlay for element
+     * @param element
+     * @param targetClassName
+     */
+    highlightElement(element = null, targetClassName = 'twv-selected-element') {
         if (!element) {
             element = this.parentElement;
         }
-        const backgroundOverlay = document.createElement('div');
+        if (!element || element.tagName === 'BODY' || document.querySelector('.twv-back-overlay')) {
+            return;
+        }
+        element.classList.add(targetClassName);
+        const compStyles = window.getComputedStyle(element);
+        const position = compStyles.getPropertyValue('position');
+        const backgroundColor = compStyles.getPropertyValue('background-color');
+        if (position === 'static') {
+            element.style.position = 'relative';
+        }
+        if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {
+            // element.style.backgroundColor = '#fff';
+        }
+        element.style.transform = 'none';
+        element.style.transition = 'none';
+        this.setToParents(element, {transform: 'none', transition: 'none'});
+        
+        const backgroundOverlay = document.createElement(element.tagName === 'LI' ? 'li' : 'div');
         backgroundOverlay.className = 'twv-back-overlay';
         this.insertBefore(backgroundOverlay, element);
     }
@@ -976,23 +995,8 @@ class TwigVisual {
             e.preventDefault();
             this.restoreStaticInit();
         });
-
-        const compStyles = window.getComputedStyle(elementSelected);
-        const position = compStyles.getPropertyValue('position');
-        const backgroundColor = compStyles.getPropertyValue('background-color');
-        if (position === 'static') {
-            elementSelected.style.position = 'relative';
-        }
-        if (['rgba(0, 0, 0, 0)', 'transparent'].indexOf(backgroundColor) > -1) {
-            // elementSelected.style.backgroundColor = '#fff';
-        }
-        this.addOverlay(elementSelected);
-
-        elementSelected.style.transform = 'none';
-        elementSelected.style.transition = 'none';
-        this.setToParents(elementSelected, {transform: 'none', transition: 'none'});
-
-        elementSelected.classList.add('twv-selected-element');
+        
+        this.highlightElement(elementSelected, 'twv-selected-element');
     }
 
     /**
@@ -1629,16 +1633,18 @@ class TwigVisual {
      * @param styles
      */
     setToParents(element, styles) {
-        if (!element) {
-            return;
-        }
-        if (element.parentNode === document.body) {
+        if (!element
+            || !element.parentNode
+            || element.tagName === 'BODY'
+            || element.parentNode.tagName === 'BODY') {
             return;
         }
         Object.keys(styles).forEach((key) => {
             element.parentNode.style[key] = styles[key];
         });
-        this.setToParents(element.parentNode, styles);
+        if (element.tagName !== 'BODY') {
+            this.setToParents(element.parentNode, styles);
+        }
     }
 
     /**
