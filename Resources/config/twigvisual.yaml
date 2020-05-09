@@ -30,64 +30,64 @@ twig_visual:
     templates_extension: html.twig
     ui:
         field:
-            title: Поле контента
+            title: Content field
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                     template: '<root>{% if {{ fieldName }} is defined %}{{ {{ fieldName }} }}{% endif %}</root>'
 
                 fieldName:
-                    title: Поле контента
+                    title: Content field
                     type: pageField
                     join: key
                     separator: '.'
 
                 key:
-                    title: Ключ значения
+                    title: Value key
                     type: text
 
         includeCreate:
-            title: Сделать встроенным
+            title: Make included
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
 
                 includeName:
-                    title: Название элемента
+                    title: Item name
                     type: text
                     required: true
 
         include:
-            title: Заменить на встраиваемый
+            title: Replace with included
             configuration:
                 updateIncludeSource: false
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
 
                 includeName:
-                    title: Встраиваемый блок
+                    title: Include name
                     type: include
                     required: true
 
         menu:
-            title: Основное меню
+            title: Main menu
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                     output: "{{ categoriesTree(0, 'menu_dropdown{{ nameSuffix }}', null, activeCategoriesIds, false) }}"
@@ -96,7 +96,7 @@ twig_visual:
                     caching: true
 
                 itemFirst:
-                    title: Пункт меню первого уровня
+                    title: First level menu item
                     type: elementSelect
                     isChildItem: true
                     required: true
@@ -109,14 +109,14 @@ twig_visual:
                         {%  endfor %}
 
                 containerSecond:
-                    title: Контейнер второго уровня
+                    title: Second level container
                     type: elementSelect
                     output: "{{ categoriesTree(category.id, 'menu_dropdown_child{{ nameSuffix }}', category, activeCategoriesIds, false) }}"
                     template: '<containerSecond/>'
                     templatePath: nav/menu_dropdown_child
 
                 itemSecond:
-                    title: Пункт меню второго уровня
+                    title: Second level menu item
                     type: elementSelect
                     isChildItem: true
                     output: '<itemSecond/>'
@@ -128,14 +128,14 @@ twig_visual:
                         {%  endfor %}
 
                 containerThird:
-                    title: Контейнер третьего уровня
+                    title: Third level container
                     type: elementSelect
                     output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
                     template: '<containerThird/>'
                     templatePath: nav/menu_dropdown_child_child
 
                 itemThird:
-                    title: Пункт меню третьего уровня
+                    title: Third level menu item
                     type: elementSelect
                     isChildItem: true
                     output: '<itemThird/>'
@@ -146,21 +146,21 @@ twig_visual:
                         </itemThird>
                         {%  endfor %}
 
-                activeClassName: {title: CSS класс активности, type: text, value: active}
+                activeClassName: {title: CSS activity class, type: text, value: active}
 
-                nameSuffix: {title: Суффикс имени, type: text}
+                nameSuffix: {title: Name suffix, type: text}
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         childMenu:
-            title: Меню подкатегорий
+            title: Subcategory menu
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                     output: "{% include 'generic/child-categories-menu.html.twig' %}"
@@ -169,7 +169,7 @@ twig_visual:
                     caching: true
 
                 itemFirst:
-                    title: Пункт меню первого уровня
+                    title: First level menu item
                     type: elementSelect
                     isChildItem: true
                     required: true
@@ -181,19 +181,19 @@ twig_visual:
                         </itemFirst>
                         {%  endfor %}
 
-                nameSuffix: {title: Суффикс имени, type: text}
+                nameSuffix: {title: Name suffix, type: text}
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         breadcrumbs:
-            title: Хлебные крошки
+            title: Bread crumbs
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     output: "{% include 'generic/breadcrumbs.html.twig' %}"
                     template: '<root/>'
@@ -201,7 +201,7 @@ twig_visual:
                     caching: true
 
                 childItem:
-                    title: Элемент
+                    title: Item
                     type: elementSelect
                     isChildItem: true
                     output: '<childItem/>'
@@ -212,23 +212,23 @@ twig_visual:
                         </childItem>
                         {% endfor %}
 
-                nameSuffix: {title: Суффикс имени, type: text}
+                nameSuffix: {title: Name suffix, type: text}
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         catalogProducts:
-            title: Товары каталога
+            title: Catalog products
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
 
                 childItem:
-                    title: Блок товара
+                    title: Product block
                     type: elementSelect
                     isChildItem: true
                     template: |
@@ -237,12 +237,12 @@ twig_visual:
                         {% endfor %}
 
                 childItemTitle:
-                    title: Название товара
+                    title: Product name
                     type: elementSelect
                     template: '<childItemTitle href="{{ catalogPath(currentUri, item.name) }}">{{ item.title }}</childItemTitle>'
 
                 childItemPrice:
-                    title: Цена товара
+                    title: Price of the product
                     type: elementSelect
                     template: |
                         <childItemPrice>
@@ -250,17 +250,17 @@ twig_visual:
                             <span class="shk-currency">{{ currency }}</span>
                         </childItemPrice>
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         pagination:
-            title: Постраничная навигация для товаров
+            title: Page navigation for products
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     output: '<root/>'
                     template: |
@@ -269,7 +269,7 @@ twig_visual:
                         {% endif %}
 
                 childItem:
-                    title: Элемент
+                    title: Item
                     type: elementSelect
                     isChildItem: true
                     output: '<childItem/>'
@@ -280,19 +280,19 @@ twig_visual:
                         </childItem>
                         {% endfor %}
 
-                activeClassName: {title: CSS класс активности, type: text, value: active}
+                activeClassName: {title: CSS activity class, type: text, value: active}
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         productPrice:
-            title: Цена товара
+            title: Price of the product
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     template: |
                         <root>
@@ -301,19 +301,19 @@ twig_visual:
                         </root>
 
         photogallery:
-            title: Фотогалерея
+            title: Photo gallery
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
 
         shoppingCart:
-            title: Корзина покупок
+            title: Shopping cart
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                     output: "{{ shopCart('shop_cart{{ nameSuffix }}', 'shop') }}"
@@ -322,12 +322,12 @@ twig_visual:
                     caching: true
 
                 totalCount:
-                    title: Общее количество
+                    title: Total amount
                     type: elementSelect
                     template: '<totalCount>{{ countTotal }}</totalCount>'
 
                 totalPrice:
-                    title: Общяя цена
+                    title: Total price
                     type: elementSelect
                     output: '<totalPrice/>'
                     template: |
@@ -337,19 +337,19 @@ twig_visual:
                         </totalPrice>
 
                 linkCartEdit:
-                    title: Ссылка на большую корзину
+                    title: Link to the full basket
                     type: elementSelect
                     template: |
                         <linkCartEdit href="{{ pathLocalized('shop_cart_edit') }}"/>
 
                 linkCheckout:
-                    title: Ссылка на оформление заказа
+                    title: Link to checkout
                     type: elementSelect
                     template: |
                         <linkCheckout href="{{ pathLocalized('page_checkout') }}"/>
 
                 childItem:
-                    title: Элемент товара
+                    title: Product item
                     type: elementSelect
                     isChildItem: true
                     output: '<childItem/>'
@@ -359,26 +359,26 @@ twig_visual:
                         {% endfor %}
 
                 childItemTitle:
-                    title: Название товара
+                    title: Product name
                     type: elementSelect
                     template: |
                         <childItemTitle>
                             <a href="/{{ item.uri }}">{{ item.title }}</a>
                         </childItemTitle>
 
-                nameSuffix: {title: Суффикс имени, type: text}
+                nameSuffix: {title: Name suffix, type: text}
 
-                deleteLeftSiblings: {title: Удалить дочерние предыдущие, type: checkbox}
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 
-                deleteRightSiblings: {title: Удалить дочерние следующие, type: checkbox}
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
 
         addToCart:
-            title: Добавить в корзину
+            title: Add to cart
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     output: '<root/>'
                     template: |
@@ -391,90 +391,113 @@ twig_visual:
                     caching: true
 
                 buttonAddToCart:
-                    title: Кнопка
+                    title: Button
                     type: elementSelect
                     template: '<buttonAddToCart type="submit"/>'
 
                 inputCount:
-                    title: Поле кол-во
+                    title: Quantity field
                     type: elementSelect
                     template: '<inputCount type="number" value="1" min="1" step="1" name="count"/>'
 
         productsList:
-            title: Список товаров
+            title: Product list
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
 
         comments:
-            title: Отзывы
+            title: Reviews
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
 
         editMargin:
-            title: Редактировать внешние отступы
+            title: Edit margin
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                 marginTop:
-                    title: Отступ сверху
+                    title: Indent on the top
                     type: text
                     styleName: 'margin-top'
                 marginRight:
-                    title: Отступ справа
+                    title: Indent on the right
                     type: text
                     styleName: 'margin-right'
                 marginBottom:
-                    title: Отступ снизу
+                    title: Indent from the bottom
                     type: text
                     styleName: 'margin-bottom'
                 marginLeft:
-                    title: Отступ слева
+                    title: Indent on the left
                     type: text
                     styleName: 'margin-left'
 
         editPadding:
-            title: Редактировать внутренние отступы
+            title: Edit padding
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                 paddingTop:
-                    title: Отступ сверху
+                    title: Indent on the top
                     type: text
                     styleName: 'padding-top'
                 paddingRight:
-                    title: Отступ справа
+                    title: Indent on the right
                     type: text
                     styleName: 'padding-right'
                 paddingBottom:
-                    title: Отступ снизу
+                    title: Indent from the bottom
                     type: text
                     styleName: 'padding-bottom'
                 paddingLeft:
-                    title: Отступ слева
+                    title: Indent on the left
                     type: text
                     styleName: 'padding-left'
 
         wrapTag:
-            title: Создать блок
+            title: Create block
             configuration:
                 saveBackupCopy: true
             components:
                 root:
-                    title: Корневой элемент
+                    title: Root element
                     type: elementSelect
                     required: true
                     output: '<root/>'
                     template: '<div><root/></div>'
-                    
+
+        languagesList:
+            title: List of languages
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                    template: "<root>{{ settingsList('SETTINGS_LANGUAGES', 'languages_list', false, true) }}</root>"
+                    caching: true
+
+        currenciesList:
+            title: List of currencies
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                    template: "<root>{{ settingsList('SETTINGS_CURRENCY', 'currency_list', true) }}</root>"
+                    caching: true

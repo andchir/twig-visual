@@ -1,0 +1,65 @@
+Please upload the template files (HTML, CSS, images) at "%themePath%".: Пожалуйста, загрузите файлы шаблона (HTML, CSS, картинки) в папку "%themePath%".
+The main page file must be of type HTML.: Файл главной страницы должен иметь тип HTML.
+Home page file not found.: Файл главной страницы не найден.
+Error copying files by default.: Ошибка при копировании файлов по умолчанию.
+Templates theme created successfully.: Шаблоны темы успешно созданы.
+File name and template name should not be empty.: Имя файла и имя шаблона не должны быть пустыми.
+Page HTML file not found.: HTML-файл не найден.
+Template created successfully.: Шаблон успешно создан.
+Template name can not be empty.: Имя шаблона не может быть пустым.
+XPath can not be empty.: Не может быть пустым.
+Please select a root item.: Пожалуйста, выберите корневой элемент.
+The item is already dynamic.: Элемент уже динамичный.
+Template not found.: Шаблон не найден.
+Backup copy not found.: Резервная копия не найдена.
+You cannot restore the source code of this item.: Вы не можете вернуть исходный код данного элемента.
+Cache file is not writable.: Файл кэша недоступен для записи.
+Theme directory is not writable.: Папка темы недоступна для записи.
+Content field: Поле контента
+Root element: Корневой элемент
+Value key: Ключ значения
+Make included: Сделать встроенным
+Item name: Название элемента
+Replace with included: Заменить на встраиваемый
+Include name: Имя встроенного блока
+Main menu: Основное меню
+First level menu item: Пункт меню первого уровня
+Second level container: Контейнер второго уровня
+Second level menu item: Пункт меню второго уровня
+Third level container: Контейнер третьего уровня
+Third level menu item: Пункт меню третьего уровня
+Subcategory menu: Меню подкатегорий
+Bread crumbs: Хлебные крошки
+Item: Элемент
+CSS activity class: CSS класс активности
+Name suffix: Суффикс имени
+Delete previous child: Удалить дочерние предыдущие
+Delete next child: Удалить дочерние следующие
+Catalog products: Товары каталога
+Product block: Блок товара
+Product name: Название товара
+Price of the product: Цена товара
+Page navigation for products: Постраничная навигация для товаров
+Photo gallery: Фотогалерея
+Shopping cart: Корзина покупок
+Total amount: Общее количество
+Total price: Общяя цена
+Link to the full basket: Ссылка на большую корзину
+Link to checkout: Ссылка на оформление заказа
+Product item: Элемент товара
+Add to cart: Добавить в корзину
+Button: Кнопка
+Quantity field: Поле кол-во
+Product list: Список товаров
+Reviews: Отзывы
+Edit margin: Редактировать внешние отступы
+Indent on the top: Отступ сверху
+Indent on the right: Отступ справа
+Indent from the bottom: Отступ снизу
+Indent on the left: Отступ слева
+Edit padding: Редактировать внутренние отступы
+Create block: Создать блок
+List of languages: Список языков 
+List of currencies: Список валют
+
+

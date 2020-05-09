@@ -14,6 +14,7 @@ use Symfony\Bridge\Twig\AppVariable;
 use Doctrine\Common\Persistence\ObjectManager;
 use Doctrine\Common\Persistence\ObjectRepository;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as TwigEnvironment;
 use XhtmlFormatter\Formatter;
 use IvoPetkov\HTML5DOMDocument;
@@ -25,6 +26,8 @@ class TwigVisualService {
     protected $twig;
     /** @var ParameterBagInterface */
     protected $params;
+    /** @var TranslatorInterface */
+    protected $translator;
     /** @var KernelInterface */
     protected $kernel;
     /** @var array */
@@ -37,6 +40,7 @@ class TwigVisualService {
     public function __construct(
         ParameterBagInterface $params,
         TwigEnvironment $twig,
+        TranslatorInterface $translator,
         KernelInterface $kernel,
         array $config = []
     )
@@ -44,6 +48,7 @@ class TwigVisualService {
         $this->kernel = $kernel;
         $this->params = $params;
         $this->twig = $twig;
+        $this->translator = $translator;
         
         if (empty($config) && $params->has('twigvisual_config')) {
             $this->config = $params->get('twigvisual_config');
@@ -71,6 +76,7 @@ class TwigVisualService {
 
     /**
      * @param $refererUrl
+     * @return TwigVisualService
      */
     public function setRefererUrl($refererUrl)
     {
@@ -87,14 +93,16 @@ class TwigVisualService {
     }
 
     /**
-     * @return string
+     * @param $templateName
+     * @param $templatContext
+     * @return array
      */
     public function getScriptOptions($templateName, $templatContext)
     {
         $uiConfig = $this->getConfigValue('ui');
         $uiOutput = [];
         foreach ($uiConfig as $key => $opts) {
-            if (!isset($opts['title']) || !isset($opts['title'])) {
+            if (!isset($opts['title']) || !isset($opts['components'])) {
                 continue;
             }
             $components = [];
@@ -104,24 +112,23 @@ class TwigVisualService {
                 }
                 $components[] = [
                     'name' => $k,
-                    'title' => $v['title'],
+                    'title' => $this->translator->trans($v['title']),
                     'type' => $v['type'],
                     'required' => !empty($v['required']),
                     'styleName' => $v['styleName'] ?? ''
                 ];
             }
             $uiOutput[$key] = [
-                'title' => $opts['title'],
+                'title' => $this->translator->trans($opts['title']),
                 'components' => $components
             ];
         }
-        $options = [
+        return [
             'templateName' => $templateName,
             'templates' => $this->getConfigValue('templates'),
             'uiOptions' => $uiOutput,
             'pageFields' => self::getDataKeys($templatContext)
         ];
-        return $options;
     }
 
     /**
@@ -282,10 +289,10 @@ class TwigVisualService {
     /**
      * @param string $templateCode
      * @return string
+     * @throws \Twig\Error\LoaderError
      */
     public function parseIncludes($templateCode)
     {
-        $templatesExtension = $this->getConfigValue('templates_extension');
         $themeDirPath = $this->getCurrentThemeDirPath();
         
         $pattern = "/\{% include '([^\']+)' %\}/";
@@ -337,8 +344,10 @@ class TwigVisualService {
     /**
      * @param string $templateName
      * @param string $xpathQuery
-     * @param string $textContent
+     * @param string $innerHTML
      * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function editTextContent($templateName, $xpathQuery, $innerHTML)
     {
@@ -359,6 +368,8 @@ class TwigVisualService {
      * @param string $xpathQuery
      * @param array $attributes
      * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function editAttributes($templateName, $xpathQuery, $attributes)
     {
@@ -380,6 +391,9 @@ class TwigVisualService {
      * Delete element
      * @param string $templateName
      * @param string $xpathQuery
+     * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function deleteTemplateElement($templateName, $xpathQuery)
     {
@@ -403,6 +417,7 @@ class TwigVisualService {
 
     /**
      * @param HTML5DOMElement $node
+     * @throws \Exception
      */
     public function deleteElement($node)
     {
@@ -427,6 +442,8 @@ class TwigVisualService {
      * @param string $templateFilePath
      * @param bool $clearCache
      * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function saveTemplateContent(HTML5DOMDocument $doc, $templateFilePath, $clearCache = true)
     {
@@ -467,6 +484,7 @@ class TwigVisualService {
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      * @throws \Twig\Error\SyntaxError
+     * @throws \Exception
      */
     public function getDocumentNode($templateName, $xpathQuery = null, $checkIsDinamic = false)
     {
@@ -483,6 +501,7 @@ class TwigVisualService {
 
         /** @var \DOMNodeList $entries */
         $entries = $xpath->evaluate($xpathQuery, $docTemplate);
+        
         if ($entries->count() === 0) {
             throw new \Exception('Element not found.');
         }
@@ -643,7 +662,6 @@ class TwigVisualService {
 
         foreach ($keys as $key) {
             $opts = &$uiBlockConfig['components'][$key];
-            $type = $opts['type'] ?? '';
 
             if (!isset($elements[$key]) || empty($opts['template'])) {
                 continue;
@@ -742,7 +760,7 @@ class TwigVisualService {
     }
 
     /**
-     * @param HTML5DOMElement $domElement
+     * @param HTML5DOMElement|\DOMNode $domElement
      * @return bool
      */
     public function isDinamic($domElement)
@@ -752,7 +770,7 @@ class TwigVisualService {
     }
 
     /**
-     * @param HTML5DOMElement $domElement
+     * @param HTML5DOMElement|\DOMElement $domElement
      * @return HTML5DOMElement
      */
     public static function findDinamicParent($domElement)
@@ -774,6 +792,7 @@ class TwigVisualService {
     /**
      * @param string|null $environment
      * @return bool
+     * @throws \Exception
      */
     public function systemCacheClear($environment = null)
     {
@@ -825,6 +844,7 @@ class TwigVisualService {
 
     /**
      * @return bool
+     * @throws \Exception
      */
     public function twigCacheClear()
     {
@@ -847,11 +867,12 @@ class TwigVisualService {
     }
 
     /**
-     * @param strin $outerHTML
-     * @param strin $key
+     * @param string $outerHTML
+     * @param string $key
      * @param string $keyPrefix
+     * @param bool $useUniqId
      * @return string
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function cacheAdd($outerHTML, $key, $keyPrefix = 'twv-', $useUniqId = true)
     {
@@ -887,6 +908,7 @@ class TwigVisualService {
 
     /**
      * @return array
+     * @throws \Twig\Error\LoaderError
      */
     public function cacheGet()
     {
@@ -978,7 +1000,7 @@ class TwigVisualService {
      */
     public function getRootDirPath()
     {
-        return realpath($this->params->get('kernel.root_dir') . '/../..');
+        return $this->params->get('kernel.project_dir');
     }
 
     /**
@@ -986,6 +1008,7 @@ class TwigVisualService {
      * @param string $content
      * @param string $tagName
      * @param string $cacheKey
+     * @return \DOMText|HTML5DOMElement|null
      */
     public static function replaceHTMLElement($element, $content, $tagName = '', $cacheKey = '')
     {
@@ -1414,6 +1437,7 @@ class TwigVisualService {
     /**
      * @param HTML5DOMElement $doc
      * @param string $xpathQuery
+     * @return \DOMNode|null
      */
     public static function findElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery)
     {

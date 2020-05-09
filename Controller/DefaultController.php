@@ -32,6 +32,7 @@ class DefaultController extends AbstractController
      * @Route("/create", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @return JsonResponse
+     * @throws \Twig\Error\LoaderError
      */
     public function createThemeAction(Request $request, TranslatorInterface $translator)
     {
@@ -80,6 +81,7 @@ class DefaultController extends AbstractController
      * @Route("/create_template", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @return JsonResponse
+     * @throws \Twig\Error\LoaderError
      */
     public function createTemplateAction(Request $request, TranslatorInterface $translator)
     {
@@ -130,6 +132,8 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function editTextContentAction(Request $request, TranslatorInterface $translator)
     {
@@ -139,7 +143,7 @@ class DefaultController extends AbstractController
         $textContent = $data['textContent'] ?? '';
         
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
@@ -158,6 +162,8 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function editLinkAction(Request $request, TranslatorInterface $translator)
     {
@@ -168,7 +174,7 @@ class DefaultController extends AbstractController
         $target = $data['target'] ?? '_self';
 
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
@@ -189,6 +195,8 @@ class DefaultController extends AbstractController
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function deleteElementAction(Request $request)
     {
@@ -197,7 +205,7 @@ class DefaultController extends AbstractController
         $xpath = $data['xpath'] ?? '';
 
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
@@ -218,6 +226,8 @@ class DefaultController extends AbstractController
      * @param TranslatorInterface $translator
      * @param string $actionName
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function insertAction(Request $request, TranslatorInterface $translator, $actionName)
     {
@@ -226,7 +236,7 @@ class DefaultController extends AbstractController
         $uiBlockConfig = $this->service->getConfigValue('ui', $actionName,  []);
 
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
         if (!isset($data['data']) || !isset($data['data']['source'])) {
             return $this->setError('Please select a root item.');
@@ -361,6 +371,7 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
+     * @throws \Twig\Error\LoaderError
      */
     public function includesListAction(Request $request)
     {
@@ -375,6 +386,7 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
+     * @throws \Twig\Error\LoaderError
      */
     public function htmlFilesListAction()
     {
@@ -398,6 +410,7 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @param TranslatorInterface $translator
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function batchAction(Request $request, TranslatorInterface $translator)
     {
@@ -485,6 +498,7 @@ class DefaultController extends AbstractController
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
+     * @throws \Twig\Error\LoaderError
      */
     public function restoreBackupAction(Request $request)
     {
@@ -492,7 +506,7 @@ class DefaultController extends AbstractController
         $templateName = $data['templateName'] ?? '';
 
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
 
         $themeDirPath = $this->service->getCurrentThemeDirPath();
@@ -523,6 +537,7 @@ class DefaultController extends AbstractController
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function moveElementAction(Request $request)
     {
@@ -575,6 +590,7 @@ class DefaultController extends AbstractController
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
      */
     public function restoreStaticAction(Request $request)
     {
@@ -583,7 +599,7 @@ class DefaultController extends AbstractController
         $xpath = $data['xpath'] ?? '';
 
         if (!$templateName) {
-            return $this->setError('Template can not be empty.');
+            return $this->setError('Template name can not be empty.');
         }
         if (!$xpath) {
             return $this->setError('XPath can not be empty.');
