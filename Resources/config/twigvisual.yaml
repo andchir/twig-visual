@@ -250,6 +250,26 @@ twig_visual:
                             <span class="shk-price">{{ item.price }}</span>
                             <span class="shk-currency">{{ currency }}</span>
                         </childItemPrice>
+                        
+                childItemImage:
+                    title: Photo of the product
+                    type: elementSelect
+                    template: |
+                        <childItemImage>
+                            <img src="{{ imageUrl(item.image, '/img/nofoto.png') | imagine_filter('thumb_small') }}" alt="{{ item.title }}"/>
+                        </childItemImage>
+                        
+                childItemAddToCartButton:
+                    title: Add to cart button
+                    type: elementSelect
+                    output: '<childItemAddToCartButton/>'
+                    template: |
+                        <form id="shk-form" action="{{ pathLocalized('shop_cart_action') }}" method="post">
+                            <input type="hidden" name="item_id" value="{{ item._id }}">
+                            <input type="hidden" name="category_id" value="{{ item.parentId }}">
+                            <input type="hidden" name="type" value="shop">
+                            <childItemAddToCartButton type="submit"/>
+                        </form>
 
                 deleteLeftSiblings: {title: Delete previous child, type: checkbox}
 

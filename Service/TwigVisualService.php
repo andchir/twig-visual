@@ -1207,7 +1207,7 @@ class TwigVisualService {
      */
     public static function unescapeUrls($content)
     {
-        return str_replace(['%7B', '%7D', '%20'], ['{', '}', ' '], $content);
+        return str_replace(['%7B', '%7D', '%20', '%7C'], ['{', '}', ' ', '|'], $content);
     }
 
     /**
