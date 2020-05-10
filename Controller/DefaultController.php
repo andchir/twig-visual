@@ -3,9 +3,11 @@
 namespace Andchir\TwigVisualBundle\Controller;
 
 use Andchir\TwigVisualBundle\Service\TwigVisualService;
+use App\Service\UtilsService;
 use IvoPetkov\HTML5DOMDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -174,10 +176,10 @@ class DefaultController extends AbstractController
         $target = $data['target'] ?? '_self';
 
         if (!$templateName) {
-            return $this->setError('Template name can not be empty.');
+            return $this->setError($translator->trans('Template name can not be empty.'));
         }
         if (!$xpath) {
-            return $this->setError('XPath can not be empty.');
+            return $this->setError($translator->trans('XPath can not be empty.'));
         }
         if (!$this->service->editAttributes($templateName, $xpath, [
             'href' => $href,
@@ -185,6 +187,61 @@ class DefaultController extends AbstractController
         ])) {
             return $this->setError($this->service->getErrorMessage());
         }
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
+     * @Route("/replace_image", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
+     */
+    public function replaceImageAction(Request $request, TranslatorInterface $translator)
+    {
+        $templateName = $request->get('templateName');
+        $xpath = $request->get('xpath');
+        /** @var UploadedFile $imageFile */
+        $imageFile = $request->files->get('imageFile');
+
+        if (!$templateName) {
+            return $this->setError($translator->trans('Template name can not be empty.'));
+        }
+        if (!$xpath) {
+            return $this->setError($translator->trans('XPath can not be empty.'));
+        }
+        if (!$imageFile) {
+            return $this->setError($translator->trans('Image file has not been uploaded.'));
+        }
+        if (!in_array(UtilsService::getExtension($imageFile->getClientOriginalName()), ['jpg','jpeg','png','gif'])) {
+            return $this->setError($translator->trans('File type is not allowed.'));
+        }
+        
+        $fileName = $imageFile->getClientOriginalName();
+        $ext = UtilsService::getExtension($fileName);
+        $baseUrl = $request->getBaseUrl();
+        $rootPath = $this->service->getParameter('kernel.project_dir');
+        $dirPath = $this->service->getConfigValue('file_upload_dir_path');
+        $dirUrl = $baseUrl . str_replace($rootPath . DIRECTORY_SEPARATOR . 'public', '', $dirPath);
+        if (file_exists($dirPath . DIRECTORY_SEPARATOR . $fileName)) {
+            $fileName = str_replace('.' . $ext, '_' . uniqid() . '.' . $ext, $fileName);
+        }
+        try {
+            $imageFile->move($dirPath, $fileName);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
+
+        if (!$this->service->editAttributes($templateName, $xpath, [
+            'src' => $dirUrl . DIRECTORY_SEPARATOR . $fileName
+        ])) {
+            return $this->setError($this->service->getErrorMessage());
+        }
+
         return $this->json([
             'success' => true
         ]);
@@ -411,6 +468,7 @@ class DefaultController extends AbstractController
      * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function batchAction(Request $request, TranslatorInterface $translator)
     {
@@ -538,6 +596,7 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function moveElementAction(Request $request)
     {
@@ -591,6 +650,7 @@ class DefaultController extends AbstractController
      * @param Request $request
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
     public function restoreStaticAction(Request $request)
     {

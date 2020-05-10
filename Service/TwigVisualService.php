@@ -167,8 +167,8 @@ class TwigVisualService {
         return $o . '
         {% if is_granted(\'ROLE_ADMIN\') %}
             <link href="{{ asset(\'bundles/twigvisual/css/twv-icomoon/style.css\') }}" rel="stylesheet">
-            <link href="{{ asset(\'bundles/twigvisual/css/twigvisual.css\') }}" rel="stylesheet">
-            <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.js\') }}"></script>
+            <link href="{{ asset(\'bundles/twigvisual/dist/twigvisual_styles.min.css\') }}" rel="stylesheet">
+            <script src="{{ asset(\'bundles/twigvisual/dist/twigvisual.min.js\') }}"></script>
             <script>
 				const twigVisual = new TwigVisual({{ twigVisualOptions(_self, _context) }});
 			</script>
@@ -1003,6 +1003,11 @@ class TwigVisualService {
     public function getRootDirPath()
     {
         return $this->params->get('kernel.project_dir');
+    }
+    
+    public function getParameter($key)
+    {
+        return $this->params->has($key) ? $this->params->get($key) : '';
     }
 
     /**

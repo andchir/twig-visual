@@ -1,4 +1,5 @@
 
+.twv-text-center { text-align: center; }
 .twv-small { font-size: 85%; }
 .twv-selected { box-shadow: 0 0 0 2px #007bff; cursor: pointer; }
 .twv-selected-success { box-shadow: 0 0 0 2px #28a745; }

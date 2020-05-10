@@ -28,6 +28,7 @@ class Configuration implements ConfigurationInterface
                     ->scalarPrototype()->end()
                 ->end()
                 ->scalarNode('templates_extension')->end()
+                ->scalarNode('file_upload_dir_path')->end()
                 ->arrayNode('templates')
                     ->scalarPrototype()->end()
                 ->end()

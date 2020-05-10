@@ -992,6 +992,12 @@ class TwigVisual {
             e.preventDefault();
             this.editLinkInit(elementSelected);
         });
+        
+        // Replace image
+        this.container.querySelector('.twv-button-replace-image').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.replaceImageInit(elementSelected);
+        });
 
         // Button delete element
         this.container.querySelector('.twv-button-delete-element').addEventListener('click', (e) => {
@@ -1098,7 +1104,7 @@ class TwigVisual {
      */
     editLinkInit(elementSelected) {
         if (elementSelected.tagName.toLowerCase() !== 'a') {
-            alert('The selected item must have tag A.');
+            alert(this.trans('The selected item must have tag {tagName}.', {tagName: 'A'}));
             return;
         }
         this.clearMessage();
@@ -1123,7 +1129,7 @@ class TwigVisual {
             <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                     <i class="twv-icon-done"></i>
-                    Сохранить
+                    ${this.trans('Save')}
                 </button>
                 <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
                     <i class="twv-icon-format_list_bulleted"></i>
@@ -1181,6 +1187,102 @@ class TwigVisual {
             elementSelected.contentEditable = false;
             componentsContainer.innerHTML = '';
             elementSelected.setAttribute('href', href);
+        });
+    }
+
+    /**
+     * Replace image
+     * @param elementSelected
+     */
+    replaceImageInit(elementSelected) {
+        if (elementSelected.tagName.toLowerCase() !== 'img') {
+            alert(this.trans('The selected item must have tag {tagName}.', {tagName: 'IMG'}));
+            return;
+        }
+        this.clearMessage();
+        const componentsContainer = this.container.querySelector('.twv-ui-components');
+        componentsContainer.innerHTML = '';
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <div class="twv-mb-3 twv-text-center"><img class="twv-image-preview" style="max-width: 80%;"></div>
+            <input type="file" style="display: none;" name="image_file">
+            <div class="twv-mb-3">
+                <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
+                    <i class="twv-icon-done"></i>
+                    ${this.trans('Save')}
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
+                    <i class="twv-icon-format_list_bulleted"></i>
+                </button>
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
+                    <i class="twv-icon-clearclose"></i>
+                </button>
+            </div>
+            `;
+        componentsContainer.appendChild(div);
+
+        const buttonSubmit = this.container.querySelector('.twv-button-submit');
+        const buttonCancel = this.container.querySelector('.twv-button-cancel');
+        const fileField = this.container.querySelector('input[type="file"]');
+        const imagePreviewEl = this.container.querySelector('.twv-image-preview');
+
+        imagePreviewEl.setAttribute('src', elementSelected.getAttribute('src'));
+
+        // Submit data
+        buttonSubmit.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('templateName', this.options.templateName);
+            formData.append('xpath', this.data.source);
+            formData.append('imageFile', fileField.files[0]);
+
+            this.showLoading(true);
+            this.request('/twigvisual/replace_image', formData, (res) => {
+                if (res.success) {
+                    this.windowReload();
+                } else {
+                    buttonSubmit.removeAttribute('disabled');
+                    buttonCancel.removeAttribute('disabled');
+                    this.showLoading(false);
+                }
+            }, (err) => {
+                this.addAlertMessage(err.error || err);
+                buttonSubmit.removeAttribute('disabled');
+                buttonCancel.removeAttribute('disabled');
+                this.showLoading(false);
+            }, 'POST');
+            
+
+        });
+        
+        // Cancel
+        buttonCancel.addEventListener('click', (e) => {
+            e.preventDefault();
+            elementSelected.contentEditable = false;
+            componentsContainer.innerHTML = '';
+        });
+
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreviewEl.setAttribute('src', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // File field
+        fileField.addEventListener('change', (e) => {
+            readURL(e.target);
+        });
+        fileField.click();
+
+        imagePreviewEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileField.click();
         });
     }
 

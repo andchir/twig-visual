@@ -33,6 +33,7 @@ module.exports = {
         'Theme name': 'Название темы',
         'HTML-file of the main page': 'HTML-файл главной страницы',
         'Template name': 'Название шаблона',
-        'HTML-file': 'HTML-файл'
+        'HTML-file': 'HTML-файл',
+        'The selected item must have tag {tagName}.': 'Выбранный элемент должен иметь тег {tagName}.'
     }
 };

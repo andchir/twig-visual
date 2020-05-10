@@ -28,6 +28,7 @@ twig_visual:
     cache_location:
         - var/cache/filecache
     templates_extension: html.twig
+    file_upload_dir_path: '%app.web_dir_path%/uploads'
     ui:
         field:
             title: Content field
