@@ -95,9 +95,10 @@ class TwigVisualService {
     /**
      * @param $templateName
      * @param $templatContext
+     * @param string $locale
      * @return array
      */
-    public function getScriptOptions($templateName, $templatContext)
+    public function getScriptOptions($templateName, $templatContext, $locale = 'en')
     {
         $uiConfig = $this->getConfigValue('ui');
         $uiOutput = [];
@@ -127,7 +128,8 @@ class TwigVisualService {
             'templateName' => $templateName,
             'templates' => $this->getConfigValue('templates'),
             'uiOptions' => $uiOutput,
-            'pageFields' => self::getDataKeys($templatContext)
+            'pageFields' => self::getDataKeys($templatContext),
+            'locale' => $locale
         ];
     }
 

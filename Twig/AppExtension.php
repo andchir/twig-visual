@@ -61,7 +61,8 @@ class AppExtension extends AbstractExtension
      */
     public function twigVisualOptionsFunction($templateName, $templatContext = [])
     {
-        $output = $this->service->getScriptOptions($templateName, $templatContext);
+        $locale = $this->requestStack->getCurrentRequest()->getLocale();
+        $output = $this->service->getScriptOptions($templateName, $templatContext, $locale);
         return json_encode($output, JSON_UNESCAPED_UNICODE);
     }
 }

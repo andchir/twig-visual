@@ -18,7 +18,8 @@ class TwigVisual {
             templateName: '',
             templates: [],
             pageFields: [],
-            uiOptions: {}
+            uiOptions: {},
+            locale: 'en'
         }, options);
         this.state = 'inactive';
 
