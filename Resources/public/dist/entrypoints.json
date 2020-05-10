@@ -1,0 +1,14 @@
+{
+  "entrypoints": {
+    "twigvisual.min": {
+      "js": [
+        "./twigvisual.min.js"
+      ]
+    },
+    "twigvisual_styles.min": {
+      "css": [
+        "./twigvisual_styles.min.css"
+      ]
+    }
+  }
+}

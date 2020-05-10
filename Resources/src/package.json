@@ -5,17 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:dev": "npx babel --presets=@babel/env --source-maps --watch \"index.js\" --out-file \"../../../../../public/bundles/twigvisual/dist/twigvisual.js\"",
-    "build": "npx babel --presets=@babel/env \"index.js\" --out-file \"../public/dist/twigvisual.js\""
+    "encore": "./node_modules/.bin/encore",
+    "build:dev": "./node_modules/.bin/encore dev --watch",
+    "build": "./node_modules/.bin/encore production"
   },
   "author": "Andchir",
   "license": "",
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.8.4",
-    "@babel/preset-env": "^7.8.4"
+    "@symfony/webpack-encore": "^0.29.1"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.8.3"
+    
   }
 }
