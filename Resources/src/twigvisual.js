@@ -21,10 +21,8 @@ class TwigVisual {
             uiOptions: {},
             locale: 'en'
         }, options);
+        this.translations = window.twv_translations || {};
         this.state = 'inactive';
-        
-        console.log(twv_translations);
-
         this.listenerOnMouseOver = this.onMouseOver.bind(this);
         this.listenerOnMouseOut = this.onMouseOut.bind(this);
         this.listenerOnMouseWheel = this.onMouseWheel.bind(this);
@@ -105,6 +103,19 @@ class TwigVisual {
             this.container.classList.add('twig-visual-container');
         }
     }
+    
+    trans(str, data = {}) {
+        let output;
+        if (!this.translations[this.options.locale]) {
+            output = str;
+        } else {
+            output = this.translations[this.options.locale][str] || str;
+        }
+        Object.keys(data).forEach((key) => {
+            output = output.replace(`{${key}}`, data[key]);
+        });
+        return output;
+    }
 
     selectModeToggle(parentEl, dataKey = 'source', hidePanel = true) {
         parentEl = parentEl || this.parentElement;
@@ -160,22 +171,22 @@ class TwigVisual {
                     <div class="twv-mb-3">
                         <label class="twv-display-block">
                             <input type="radio" name="insertMode" value="inside" checked="checked">
-                            Вставить
+                            ${this.trans('Insert')}
                         </label>
                         <label class="twv-display-block">
                             <input type="radio" name="insertMode" value="before">
-                            Вставить до
+                            ${this.trans('Insert before')}
                         </label>
                         <label class="twv-display-block">
                             <input type="radio" name="insertMode" value="after">
-                            Вставить после
+                            ${this.trans('Insert after')}
                         </label>
                     </div>
                     <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                         <i class="twv-icon-done"></i>
-                        Применить
+                        ${this.trans('Apply')}
                     </button>
-                    <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                    <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                         <i class="twv-icon-clearclose"></i>
                     </button>
                 `;
@@ -510,37 +521,37 @@ class TwigVisual {
         containerEl.innerHTML = `
         <div class="twv-panel-header">
             <div class="twv-panel-header-buttons">
-                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-undo" type="button" title="Отменить последнее действие">
+                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-undo" type="button" title="${this.trans('Undo the last action')}">
                     <i class="twv-icon-undo"></i>
                 </button>
-                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-execute-batch" type="button" title="Выполнить пакет операций" style="display: none;">
+                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-execute-batch" type="button" title="${this.trans('Execute batch of operations')}" style="display: none;">
                     <i class="twv-icon-format_list_bulleted"></i>
                     <span></span>
                 </button>
             </div>
-            <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left" type="button" title="Передвинуть влево">
+            <button class="twv-btn twv-btn-sm twv-mr-1 twv-button-panel-left" type="button" title="${this.trans('Move left')}">
                 <i class="twv-icon-arrow_back"></i>
             </button>
-            <button class="twv-btn twv-btn-sm twv-button-panel-right" type="button" title="Передвинуть вправо">
+            <button class="twv-btn twv-btn-sm twv-button-panel-right" type="button" title="${this.trans('Move right')}">
                 <i class="twv-icon-arrow_forward"></i>
             </button>
         </div>
         <div class="twv-mb-2">
             <button type="button" class="twv-btn twv-btn-block twv-button-new-theme">
                 <i class="twv-icon-add"></i>
-                Создать новую тему
+                ${this.trans('Create new theme')}
             </button>
         </div>
         <div class="twv-mb-2">
             <button type="button" class="twv-btn twv-btn-block twv-button-new-template">
                 <i class="twv-icon-add"></i>
-                Создать шаблон
+                ${this.trans('Create new template')}
             </button>
         </div>
         <div class="twv-mb-3">
             <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
                 <i class="twv-icon-center_focus_strong"></i>
-                Блок интерфейса
+                ${this.trans('Interface item')}
             </button>
         </div>
         <div class="twv-inner-wrapper">
@@ -747,9 +758,9 @@ class TwigVisual {
         div.innerHTML = `
             <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                 <i class="twv-icon-done"></i>
-                Применить
+                ${this.trans('Apply')}
             </button>
-            <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+            <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                 <i class="twv-icon-clearclose"></i>
             </button>
         `;
@@ -830,7 +841,7 @@ class TwigVisual {
         for (var cmp of components) {
             if (cmp.required && !data[cmp.name]) {
                 result = false;
-                alert(`Поле "${cmp.title}" - обязательно.`);
+                alert(this.trans('The "{title}" field is required.', {title: cmp.title}));
                 break;
             }
         }
@@ -882,10 +893,10 @@ class TwigVisual {
                 <div class="twv-input-group">
                     <span class="twv-input-group-text twv-flex-fill" title="${title}">
                         <i class="twv-icon-done twv-mr-2 twv-text-success"></i>
-                        Выбрано
+                        ${this.trans('Selected')}
                     </span>
                     <div class="twv-input-group-append">
-                        <button class="twv-btn twv-block-active-status-button-cancel" title="Отменить">
+                        <button class="twv-btn twv-block-active-status-button-cancel" title="${this.trans('Cancel')}">
                             <i class="twv-icon-clearclose"></i>
                         </button>
                     </div>
@@ -934,28 +945,28 @@ class TwigVisual {
             <div class="twv-text-overflow" title="${xpathEscaped}">${xpath}</div>
         </div>
         <div class="twv-mb-3 twv-nowrap">
-            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-text" title="Edit text content">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-text" title="${this.trans('Edit text content')}">
                 <i class="twv-icon-createmode_editedit"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-link" title="Edit link">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-link" title="${this.trans('Edit link')}">
                 <i class="twv-icon-linkinsert_link"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-replace-image" title="Replace image">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-replace-image" title="${this.trans('Replace image')}">
                 <i class="twv-icon-insert_photoimagephoto"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="Delete element">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-delete-element" title="${this.trans('Delete element')}">
                 <i class="twv-icon-delete_outline"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-move-element" title="Move element">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-move-element" title="${this.trans('Move element')}">
                 <i class="twv-icon-move"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-restore-static" title="Restore static">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-restore-static" title="${this.trans('Restore static')}">
                 <i class="twv-icon-cached"></i>
             </button>
         </div>
         <div class="twv-mb-3 twv-ui-element-select">
             <select class="twv-custom-select">
-                <option value="">- Тип блока интерфейса -</option>
+                <option value="">- ${this.trans('Interface item type')} -</option>
                 ${optionsHTML}
             </select>
         </div>
@@ -1017,12 +1028,12 @@ class TwigVisual {
             <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                     <i class="twv-icon-done"></i>
-                    Сохранить
+                    ${this.trans('Save')}
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
                     <i class="twv-icon-format_list_bulleted"></i>
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                     <i class="twv-icon-clearclose"></i>
                 </button>
             </div>
@@ -1099,14 +1110,14 @@ class TwigVisual {
         const div = document.createElement('div');
         div.innerHTML = `
             <div class="twv-mb-3">
-                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">Ссылка</label>
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">${this.trans('URL')}</label>
                 <input type="text" id="tww-field-element-link" class="twv-form-control" value="${href}">
             </div>
             <div class="twv-mb-3">
-                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">Target</label>
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">${this.trans('Open in')}</label>
                 <select id="tww-field-link-target" class="twv-custom-select">
-                    <option value="_self"${target != '_blank' ? ' selected="selected"' : ''}>_self</option>
-                    <option value="_blank"${target == '_blank' ? ' selected="selected"' : ''}>_blank</option>
+                    <option value="_self"${target != '_blank' ? ' selected="selected"' : ''}>${this.trans('the current tab')}</option>
+                    <option value="_blank"${target == '_blank' ? ' selected="selected"' : ''}>${this.trans('a new tab')}</option>
                 </select>
             </div>
             <div class="twv-mb-3">
@@ -1114,10 +1125,10 @@ class TwigVisual {
                     <i class="twv-icon-done"></i>
                     Сохранить
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
                     <i class="twv-icon-format_list_bulleted"></i>
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                     <i class="twv-icon-clearclose"></i>
                 </button>
             </div>
@@ -1189,12 +1200,12 @@ class TwigVisual {
             <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                     <i class="twv-icon-done"></i>
-                    Подтвердить
+                    ${this.trans('Confirm')}
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="Добавить в список операций">
+                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
                     <i class="twv-icon-format_list_bulleted"></i>
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                     <i class="twv-icon-clearclose"></i>
                 </button>
             </div>
@@ -1260,13 +1271,13 @@ class TwigVisual {
 
         const div = document.createElement('div');
         div.innerHTML = `
-            <div class="twv-mb-3">Вы уверены, что хотите вернуть исходное состояние элемента?</div>
+            <div class="twv-mb-3">${this.trans('Are you sure you want to return the item to its original state?')}</div>
             <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                     <i class="twv-icon-done"></i>
-                    Подтвердить
+                    ${this.trans('Confirm')}
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="Отменить">
+                <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                     <i class="twv-icon-clearclose"></i>
                 </button>
             </div>
@@ -1318,16 +1329,16 @@ class TwigVisual {
         const div = document.createElement('div');
         div.innerHTML = `
         <div class="twv-mb-3">
-            <label class="twv-display-block twv-mb-1" for="tww-field-theme-name">Название темы</label>
+            <label class="twv-display-block twv-mb-1" for="tww-field-theme-name">${this.trans('Theme name')}</label>
             <input type="text" id="tww-field-theme-name" class="twv-form-control">
         </div>
         <div class="twv-mb-3">
-            <label class="twv-display-block twv-mb-1" for="tww-field-theme-mainpage">HTML-файл главной страницы</label>
+            <label class="twv-display-block twv-mb-1" for="tww-field-theme-mainpage">${this.trans('HTML-file of the main page')}</label>
             <input type="text" id="tww-field-theme-mainpage" class="twv-form-control" value="index.html">
         </div>
         <div class="twv-mb-3">
-            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Создать</button>
-            <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">${this.trans('Create')}</button>
+            <button type="button" class="twv-btn twv-btn twv-button-cancel">${this.trans('Cancel')}</button>
         </div>
         `;
 
@@ -1399,18 +1410,18 @@ class TwigVisual {
         const div = document.createElement('div');
         div.innerHTML = `
         <div class="twv-mb-3">
-            <label class="twv-display-block twv-mb-1" for="tww-field-source-file">HTML-файл</label>
+            <label class="twv-display-block twv-mb-1" for="tww-field-source-file">${this.trans('HTML-file')}</label>
             <select id="tww-field-source-file" class="twv-custom-select"></select>
         </div>
         <div class="twv-mb-3">
-            <label class="twv-display-block twv-mb-1" for="tww-field-template-name">Название шаблона</label>
+            <label class="twv-display-block twv-mb-1" for="tww-field-template-name">${this.trans('Template name')}</label>
             <select id="tww-field-template-name" class="twv-custom-select">
                 ${optionsHTML}
             </select>
         </div>
         <div class="twv-mb-3">
-            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">Создать</button>
-            <button type="button" class="twv-btn twv-btn twv-button-cancel">Отменить</button>
+            <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">${this.trans('Create')}</button>
+            <button type="button" class="twv-btn twv-btn twv-button-cancel">${this.trans('Cancel')}</button>
         </div>
         `;
 
@@ -1681,7 +1692,7 @@ class TwigVisual {
      * @param element
      * @param nodeType
      * @param count
-     * @returns {AST.HtmlParser2.Node|(() => (Node | null))|ActiveX.IXMLDOMNode|*}
+     * @returns {Node | null}
      */
     getNodePreviousSiblingByType(element, nodeType, count) {
         if (element.previousSibling && element.previousSibling.nodeType !== nodeType && count > 0) {
