@@ -9,6 +9,7 @@ module.exports = {
         'Move right': 'Передвинуть вправо',
         'Apply': 'Применить',
         'Cancel': 'Отменить',
+        'Clean content': 'Очистить содержимое',
         'The "{title}" field is required.': 'Поле "{title}" обязательно.',
         'Insert': 'Вставить',
         'Insert before': 'Вставить до',

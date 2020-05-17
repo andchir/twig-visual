@@ -409,11 +409,11 @@ class TwigVisualService {
      * Delete element
      * @param string $templateName
      * @param string $xpathQuery
+     * @param bool $clean
      * @return bool
      * @throws \Psr\Cache\InvalidArgumentException
-     * @throws \Twig\Error\LoaderError
      */
-    public function deleteTemplateElement($templateName, $xpathQuery)
+    public function deleteTemplateElement($templateName, $xpathQuery, $clean = false)
     {
         try {
             $result = $this->getDocumentNode($templateName, $xpathQuery);
@@ -423,20 +423,23 @@ class TwigVisualService {
         }
         list($templateFilePath, $doc, $node) = $result;
         
-        try {
-            $this->deleteElement($node);
-        } catch (\Exception $e) {
-            $this->setErrorMessage($e->getMessage());
-            return false;
+        if ($clean) {
+            $node->innerHTML = '';
+        } else {
+            try {
+                $this->deleteElement($node);
+            } catch (\Exception $e) {
+                $this->setErrorMessage($e->getMessage());
+                return false;
+            }
         }
-
         try {
             $this->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
-        return false;
+        return true;
     }
 
     /**

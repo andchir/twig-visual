@@ -1330,7 +1330,11 @@ class TwigVisual {
 
         const div = document.createElement('div');
         div.innerHTML = `
-            <div class="twv-mb-3">Вы уверены, что хотите удалить выбранный элемент?</div>
+            <div class="twv-mb-2">Вы уверены, что хотите удалить выбранный элемент?</div>
+            <div class="twv-mb-3">
+                <input type="checkbox" id="tww-field-clean" name="clean" value="1">
+                <label class="twv-display-inline twv-small twv-ml-1" for="tww-field-clean">${this.trans('Clean content')}</label>
+            </div>
             <div class="twv-mb-3">
                 <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
                     <i class="twv-icon-done"></i>
@@ -1357,7 +1361,8 @@ class TwigVisual {
 
             this.request('/twigvisual/delete_element', {
                 templateName: this.options.templateName,
-                xpath: this.data.source
+                xpath: this.data.source,
+                clean: this.container.querySelector('input[name="clean"]').checked
             }, (res) => {
                 if (res.success) {
                     this.windowReload();

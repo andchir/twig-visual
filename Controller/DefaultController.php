@@ -267,6 +267,7 @@ class DefaultController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $templateName = $data['templateName'] ?? '';
         $xpath = $data['xpath'] ?? '';
+        $clean = $data['clean'] ?? false;
 
         if (!$templateName) {
             return $this->setError($translator->trans('Template name can not be empty.'));
@@ -275,7 +276,7 @@ class DefaultController extends AbstractController
             return $this->setError($translator->trans('XPath can not be empty.'));
         }
         $this->service->setRefererUrl($request->server->get('HTTP_REFERER'));
-        if (!$this->service->deleteTemplateElement($templateName, $xpath)) {
+        if (!$this->service->deleteTemplateElement($templateName, $xpath, $clean)) {
             return $this->setError($this->service->getErrorMessage());
         }
         return $this->json([
