@@ -108,15 +108,16 @@ class TwigVisualService {
             }
             $components = [];
             foreach ($opts['components'] as $k => $v) {
-                if ($k === 'root' || !isset($v['title']) || !isset($v['type'])) {
+                if ($k === 'root' || !isset($v['type'])) {
                     continue;
                 }
                 $components[] = [
                     'name' => $k,
-                    'title' => $this->translator->trans($v['title']),
+                    'title' => !empty($v['title']) ? $this->translator->trans($v['title']) : '',
                     'type' => $v['type'],
                     'required' => !empty($v['required']),
-                    'styleName' => $v['styleName'] ?? ''
+                    'styleName' => $v['styleName'] ?? '',
+                    'options' => $v['options'] ?? []
                 ];
             }
             $uiOutput[$key] = [
@@ -443,15 +444,14 @@ class TwigVisualService {
      * @param HTML5DOMDocument $doc
      * @param string $templateFilePath
      * @param bool $clearCache
-     * @return bool
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
+     * @throws \Exception
      */
     public function saveTemplateContent(HTML5DOMDocument $doc, $templateFilePath, $clearCache = true)
     {
         if (!is_writable($templateFilePath)) {
-            $this->setErrorMessage('Template is not writable.');
-            return false;
+            throw new \Exception($this->translator->trans('Template is not writable.'));
         }
         $htmlContent = $doc->saveHTML();
         $htmlContent = self::unescapeUrls($htmlContent);
@@ -475,7 +475,6 @@ class TwigVisualService {
         if ($clearCache) {
             $this->twigCacheClear();
         }
-        return true;
     }
 
     /**
@@ -1025,7 +1024,7 @@ class TwigVisualService {
         }
         $isHTML = strpos(trim($content), '<') === 0;
         if ($isHTML) {
-            $result = new HTML5DOMElement($tagName);//new \DOMElement($tagName);
+            $result = new HTML5DOMElement($tagName);
             $element->parentNode->insertBefore($result, $element);
             $element->parentNode->removeChild($element);
         } else {
@@ -1388,7 +1387,7 @@ class TwigVisualService {
     /**
      * @param mixed $domElement
      * @param int $tagName
-     * @return |null
+     * @return HTML5DOMElement|\DOMElement|\DOMText|null
      */
     public static function findChildByTagName($domElement, $tagName)
     {

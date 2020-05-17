@@ -378,15 +378,14 @@ class DefaultController extends AbstractController
                 $outerHTML = $this->service->beautify($outerHTML);
                 $outerHTML = TwigVisualService::prepareTwigTags($outerHTML);
                 
-                if (!empty($opts['caching'])) {
+                if (!empty($opts['saveBackupCopy'])) {
                     try {
                         $cacheKey = $this->service->cacheAdd(
                             $opts['sourceHTML'],
                             $templateName . '-' . $actionName . '-' . $key
                         );
                     } catch (\Exception $e) {
-                        $this->setError($e->getMessage());
-                        return false;
+                        return $this->setError($e->getMessage());
                     }
                     TwigVisualService::elementWrapComment($elements[$key], $cacheKey);
                 }
@@ -412,9 +411,11 @@ class DefaultController extends AbstractController
         }
         
         // var_dump($doc->saveHTML()); exit;
-
-        if (!($result = $this->service->saveTemplateContent($doc, $templateFilePath))) {
-            return $this->setError($this->service->getErrorMessage());
+        
+        try {
+            $this->service->saveTemplateContent($doc, $templateFilePath);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
         }
         
         return $this->json([

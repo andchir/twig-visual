@@ -682,6 +682,29 @@ class TwigVisual {
                     div.appendChild(d);
                     
                     break;
+                case 'radio':
+                    
+                    let html = '';
+                    if (cmp.title) {
+                        html += `<div class="twv-mb-2">${cmp.title}</div>`;
+                    }
+                    if (cmp.options) {
+                        cmp.options.forEach((option, index) => {
+                            html += `
+                            <label class="twv-display-block">
+                                <input type="radio" name="${cmp.name}" value="${option.value}">
+                                ${this.trans(option.title)}
+                             </label>
+                            `;
+                        });
+                    }
+
+                    d.innerHTML = html;
+                    d.className = 'twv-mb-3';
+                    div.appendChild(d);
+                    d.querySelector('input').checked = true;
+                    
+                    break;
                 case 'pageField':
 
                     optionsHTML = '';
@@ -1212,9 +1235,6 @@ class TwigVisual {
                     <i class="twv-icon-done"></i>
                     ${this.trans('Save')}
                 </button>
-                <button type="button" class="twv-btn twv-btn twv-mr-1 twv-button-add-list" title="${this.trans('Add to operations list')}">
-                    <i class="twv-icon-format_list_bulleted"></i>
-                </button>
                 <button type="button" class="twv-btn twv-btn twv-button-cancel" title="${this.trans('Cancel')}">
                     <i class="twv-icon-clearclose"></i>
                 </button>
@@ -1253,8 +1273,6 @@ class TwigVisual {
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
             }, 'POST');
-            
-
         });
         
         // Cancel
