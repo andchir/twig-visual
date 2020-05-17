@@ -810,6 +810,9 @@ class TwigVisual {
             Array.from(componentsContainer.querySelectorAll('input[type="checkbox"]')).forEach((el) => {
                 data.data[el.name] = el.checked;
             });
+            Array.from(componentsContainer.querySelectorAll('input[type="radio"]:checked')).forEach((el) => {
+                data.data[el.name] = el.value;
+            });
             if (!this.checkRequired(data.data, this.components)) {
                 return;
             }
@@ -1218,9 +1221,19 @@ class TwigVisual {
      * @param elementSelected
      */
     replaceImageInit(elementSelected) {
+        let currentImageUrl = '';
+        let attributeName = 'src';
         if (elementSelected.tagName.toLowerCase() !== 'img') {
-            alert(this.trans('The selected item must have tag {tagName}.', {tagName: 'IMG'}));
-            return;
+            const compStyles = window.getComputedStyle(elementSelected);
+            if (compStyles['background-image'] === 'none') {
+                alert(this.trans('The selected item must have tag {tagName} or have a background image.', {tagName: 'IMG'}));
+                return;
+            }
+            const found = compStyles['background-image'].match(/url\(\"([^\"]+)\"\)/);
+            currentImageUrl = found ? found[1] : '';
+            attributeName = 'style';
+        } else {
+            currentImageUrl = elementSelected.getAttribute('src');
         }
         this.clearMessage();
         const componentsContainer = this.container.querySelector('.twv-ui-components');
@@ -1247,7 +1260,7 @@ class TwigVisual {
         const fileField = this.container.querySelector('input[type="file"]');
         const imagePreviewEl = this.container.querySelector('.twv-image-preview');
 
-        imagePreviewEl.setAttribute('src', elementSelected.getAttribute('src'));
+        imagePreviewEl.setAttribute('src', currentImageUrl);
 
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
@@ -1257,6 +1270,7 @@ class TwigVisual {
             formData.append('templateName', this.options.templateName);
             formData.append('xpath', this.data.source);
             formData.append('imageFile', fileField.files[0]);
+            formData.append('attributeName', attributeName);
 
             this.showLoading(true);
             this.request('/twigvisual/replace_image', formData, (res) => {

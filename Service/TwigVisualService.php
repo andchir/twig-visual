@@ -21,6 +21,9 @@ use IvoPetkov\HTML5DOMDocument;
 
 class TwigVisualService {
 
+    const INSERT_MODE_INSIDE = 'inside';
+    const INSERT_MODE_AFTER = 'after';
+    const INSERT_MODE_BEFORE = 'before';
     const INCLUDES_DIRNAME = 'generic';
     /** @var TwigEnvironment */
     protected $twig;
@@ -363,7 +366,13 @@ class TwigVisualService {
         list($templateFilePath, $doc, $node) = $result;
         $node->innerHTML = $innerHTML;
 
-        return $this->saveTemplateContent($doc, $templateFilePath);
+        try {
+            $this->saveTemplateContent($doc, $templateFilePath);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -387,7 +396,13 @@ class TwigVisualService {
             $node->setAttribute($key, $value);
         }
 
-        return $this->saveTemplateContent($doc, $templateFilePath);
+        try {
+            $this->saveTemplateContent($doc, $templateFilePath);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -414,8 +429,14 @@ class TwigVisualService {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
-        
-        return $this->saveTemplateContent($doc, $templateFilePath);
+
+        try {
+            $this->saveTemplateContent($doc, $templateFilePath);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        return false;
     }
 
     /**
@@ -493,24 +514,17 @@ class TwigVisualService {
         $templateCode = $templateData['source_code'];
         
         $docTemplate = new HTML5DOMDocument();
-
         $docTemplate->loadHTML($templateCode);
+        
         if (!$xpathQuery) {
             return [$templateData['file_path'], $docTemplate, null];
         }
-        $xpath = new \DOMXPath($docTemplate);
-
-        /** @var \DOMNodeList $entries */
-        $entries = $xpath->evaluate($xpathQuery, $docTemplate);
-        
-        if ($entries->count() === 0) {
+        if (!($node = self::findElementByXPath($docTemplate, $xpathQuery))) {
             throw new \Exception('Element not found.');
         }
-        $node = $entries->item(0);
         if ($checkIsDinamic && $this->isDinamic($node)) {
             throw new \Exception('The item is already dynamic.');
         }
-
         return [$templateData['file_path'], $docTemplate, $node];
     }
 
@@ -601,7 +615,7 @@ class TwigVisualService {
         }
         
         // Prepare data
-        foreach ($data['data'] as $key => &$v) {
+        foreach ($data['data'] as $key => $v) {
             $opts = $uiBlockConfig['components'][$key] ?? [];
             if (!empty($opts['join'])) {
                 $keysArr = explode(',', $opts['join']);
@@ -657,7 +671,7 @@ class TwigVisualService {
             }
         }
         unset($key);
-
+        
         $keys = array_keys($uiBlockConfig['components']);
         $keys = array_reverse($keys);
 
@@ -768,6 +782,57 @@ class TwigVisualService {
     {
         $dinamicParent = self::findDinamicParent($domElement);
         return !empty($dinamicParent);
+    }
+
+    /**
+     * @param string $templateName
+     * @param string $xpath
+     * @param string $xpathTarget
+     * @param string $insertMode
+     * @return bool
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    public function moveElement($templateName, $xpath, $xpathTarget, $insertMode)
+    {
+        try {
+            $result = $this->getDocumentNode($templateName, null, true);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        list($templateFilePath, $doc) = $result;
+
+        $node = TwigVisualService::findElementByXPath($doc, $xpath);
+        if ($this->isDinamic($node)) {
+            $this->setErrorMessage('The item is already dynamic.');
+            return false;
+        }
+
+        $nodeTarget = TwigVisualService::findElementByXPath($doc, $xpathTarget);
+        if ($this->isDinamic($nodeTarget)) {
+            $this->setErrorMessage('The item is already dynamic.');
+            return false;
+        }
+
+        switch ($insertMode) {
+            case TwigVisualService::INSERT_MODE_INSIDE:
+                $nodeTarget->appendChild($node);
+                break;
+            case TwigVisualService::INSERT_MODE_BEFORE:
+                $nodeTarget->parentNode->insertBefore($node, $nodeTarget);
+                break;
+            case TwigVisualService::INSERT_MODE_AFTER:
+                $nodeTarget->parentNode->insertBefore($node, $nodeTarget->nextSibling);
+                break;
+        }
+
+        try {
+            $this->saveTemplateContent($doc, $templateFilePath);
+        } catch (\Exception $e) {
+            $this->setErrorMessage($e->getMessage());
+            return false;
+        }
+        return true;
     }
 
     /**
