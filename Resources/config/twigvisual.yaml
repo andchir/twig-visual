@@ -9,8 +9,15 @@ twig_visual:
         - security/login
         - security/password_reset
         - security/register
+        - base
         - flash_messages
         - catalog/languages_list
+        - catalog/currency_list
+        - catalog/filters
+        - nav/breadcrumbs
+        - nav/pagination
+        - nav/pagination_simple
+        - nav/default
     templates:
         - homepage
         - text-content_category
@@ -503,14 +510,14 @@ twig_visual:
             title: List of languages
             configuration:
                 saveBackupCopy: true
+                isInsertMode: true
             components:
                 root:
                     title: Root element
                     type: elementSelect
                     required: true
-                    output: "{{ settingsList('SETTINGS_LANGUAGES', 'languages_list', false, true) }}"
-                    template: '<root/>'
-                    saveBackupCopy: true
+                    output: "<div>{{ settingsList('SETTINGS_LANGUAGES', 'languages_list', false, true) }}</div>"
+
                 insertMode:
                     type: radio
                     options:
@@ -522,19 +529,17 @@ twig_visual:
             title: List of currencies
             configuration:
                 saveBackupCopy: true
+                isInsertMode: true
             components:
                 root:
                     title: Root element
                     type: elementSelect
                     required: true
-                    output: "{{ settingsList('SETTINGS_CURRENCY', 'currency_list', true) }}"
-                    template: '<root/>'
-                    saveBackupCopy: true
+                    output: "<div>{{ settingsList('SETTINGS_CURRENCY', 'currency_list', true) }}</div>"
+
                 insertMode:
                     type: radio
                     options:
                         - {title: 'Insert', value: 'inside'}
                         - {title: 'Insert before', value: 'before'}
                         - {title: 'Insert after', value: 'after'}
-                    
-                    

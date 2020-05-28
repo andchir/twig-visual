@@ -285,7 +285,7 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/insert/{actionName}", methods={"POST"})
+     * @Route("/create_component/{actionName}", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @param TranslatorInterface $translator
@@ -424,6 +424,46 @@ class DefaultController extends AbstractController
             return $this->setError($e->getMessage());
         }
         
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
+     * @Route("/move_element/{actionName}", defaults={"actionName": ""}, methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @param $actionName
+     * @return JsonResponse
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    public function moveElementAction(Request $request, TranslatorInterface $translator, $actionName)
+    {
+        $data = json_decode($request->getContent(), true);
+        $templateName = $data['templateName'] ?? '';
+        $xpath = $data['xpath'] ?? '';
+        $xpathTarget = $data['xpathTarget'] ?? ($data['data']['source'] ?? '');
+        $insertMode = $data['insertMode'] ?? ($data['data']['insertMode'] ?? TwigVisualService::INSERT_MODE_AFTER);
+        $insertContent = '';
+
+        // Insert ready made code
+        if (empty($xpath) && !empty($actionName)) {
+            $uiBlockConfig = $this->service->getConfigValue('ui', $actionName,  []);
+            $insertContent = $uiBlockConfig['components']['root']['output'] ?? '';
+
+            // Update configuration
+            if (!empty($uiBlockConfig['configuration']) && is_array($uiBlockConfig['configuration'])) {
+                foreach ($uiBlockConfig['configuration'] as $key => $val) {
+                    $this->service->setConfigValue($key, $val);
+                }
+            }
+        }
+
+        if (!($result = $this->service->moveElement($templateName, $xpath, $xpathTarget, $insertMode, $insertContent))) {
+            return $this->setError($translator->trans($this->service->getErrorMessage()));
+        }
+
         return $this->json([
             'success' => true
         ]);
@@ -594,31 +634,6 @@ class DefaultController extends AbstractController
         unset($cacheContentArray[$recordId]);
         
         $this->service->cacheUpdate($cacheContentArray);
-        
-        return $this->json([
-            'success' => true
-        ]);
-    }
-
-    /**
-     * @Route("/move_element", methods={"POST"})
-     * @IsGranted("ROLE_ADMIN")
-     * @param Request $request
-     * @param TranslatorInterface $translator
-     * @return JsonResponse
-     * @throws \Psr\Cache\InvalidArgumentException
-     */
-    public function moveElementAction(Request $request, TranslatorInterface $translator)
-    {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
-        $xpathTarget = $data['xpathTarget'] ?? '';
-        $insertMode = $data['insertMode'] ?? TwigVisualService::INSERT_MODE_AFTER;
-
-        if (!($result = $this->service->moveElement($templateName, $xpath, $xpathTarget, $insertMode))) {
-            return $this->setError($translator->trans($this->service->getErrorMessage()));
-        }
         
         return $this->json([
             'success' => true

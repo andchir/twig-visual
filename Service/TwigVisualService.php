@@ -125,6 +125,7 @@ class TwigVisualService {
             }
             $uiOutput[$key] = [
                 'title' => $this->translator->trans($opts['title']),
+                'isInsertMode' => !empty($opts['configuration']) && !empty($opts['configuration']['isInsertMode']),
                 'components' => $components
             ];
         }
@@ -792,10 +793,11 @@ class TwigVisualService {
      * @param string $xpath
      * @param string $xpathTarget
      * @param string $insertMode
+     * @param string $insertContent
      * @return bool
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function moveElement($templateName, $xpath, $xpathTarget, $insertMode)
+    public function moveElement($templateName, $xpath, $xpathTarget, $insertMode, $insertContent = '')
     {
         try {
             $result = $this->getDocumentNode($templateName, null, true);
@@ -805,10 +807,14 @@ class TwigVisualService {
         }
         list($templateFilePath, $doc) = $result;
 
-        $node = TwigVisualService::findElementByXPath($doc, $xpath);
-        if ($this->isDinamic($node)) {
-            $this->setErrorMessage('The item is already dynamic.');
-            return false;
+        if ($xpath) {
+            $node = TwigVisualService::findElementByXPath($doc, $xpath);
+            if ($this->isDinamic($node)) {
+                $this->setErrorMessage('The item is already dynamic.');
+                return false;
+            }
+        } else {
+            $node = self::createHTMLElementWithContent($insertContent, $doc);
         }
 
         $nodeTarget = TwigVisualService::findElementByXPath($doc, $xpathTarget);
@@ -827,6 +833,20 @@ class TwigVisualService {
             case TwigVisualService::INSERT_MODE_AFTER:
                 $nodeTarget->parentNode->insertBefore($node, $nodeTarget->nextSibling);
                 break;
+        }
+
+        // Cache content for text node
+        if ($node instanceof \DOMText) {
+            try {
+                $cacheKey = $this->cacheAdd(
+                    '<div></div>',
+                    $templateName . '-content'
+                );
+            } catch (\Exception $e) {
+                $this->setErrorMessage($e->getMessage());
+                return false;
+            }
+            TwigVisualService::elementWrapComment($node, $cacheKey);
         }
 
         try {
@@ -1090,8 +1110,7 @@ class TwigVisualService {
         if (!$element->parentNode) {
             return $result;
         }
-        $isHTML = strpos(trim($content), '<') === 0;
-        if ($isHTML) {
+        if (self::getTagName($content)) {
             $result = new HTML5DOMElement($tagName);
             $element->parentNode->insertBefore($result, $element);
             $element->parentNode->removeChild($element);
@@ -1101,6 +1120,59 @@ class TwigVisualService {
             $element->parentNode->removeChild($element);
         }
         return $result;
+    }
+
+    /**
+     * Create element with content
+     * @param $content
+     * @param DOMDocument|null $ownerDocument
+     * @return \DOMText|HTML5DOMElement
+     */
+    public static function createHTMLElementWithContent($content, $ownerDocument = null)
+    {
+        $tagName = self::getTagName($content);
+        if ($tagName) {
+            $result = new HTML5DOMElement($tagName);
+            if ($ownerDocument) {
+                $body = $ownerDocument->getElementsByTagName('body')->item(0);
+                $body->appendChild($result);
+                $result->innerHTML = $content;
+                $result = self::unwrapHtmlElement($result);
+            }
+        } else {
+            $result = new \DOMText($content);
+        }
+        return $result;
+    }
+
+    /**
+     * @param HTML5DOMElement $element
+     */
+    public static function unwrapHtmlElement($element)
+    {
+        if (!$element->firstChild || !$element->parentNode) {
+            return $element;
+        }
+        $childNode = $element->firstChild;
+        $element->parentNode->insertBefore($childNode, $element);
+        $element->parentNode->removeChild($element);
+        return $childNode;
+    }
+
+    /**
+     * Get tag name from HTML string
+     * @param $content
+     * @param string $defaultValue
+     * @return mixed|string
+     */
+    public static function getTagName($content, $defaultValue = '')
+    {
+        $tagName = $defaultValue;
+        preg_match("~<([^<>\s]+).+~", trim($content), $matches);
+        if (!empty($matches) && !empty($matches[1])) {
+            $tagName = $matches[1];
+        }
+        return $tagName;
     }
 
     /**
@@ -1189,7 +1261,7 @@ class TwigVisualService {
     }
 
     /**
-     * @param \DOMElement|\DOMNode $element
+     * @param \DOMElement|\DOMNode|\DOMText $element
      * @param string $commentOpen
      * @param string $commentClose
      */

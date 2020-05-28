@@ -623,160 +623,12 @@ class TwigVisual {
             }
         });
 
-        let div = document.createElement('div');
-        let optionsHTML = '';
-        div.className = 'twv-pt-1 twv-mb-3';
         const opt = this.options.uiOptions[typeValue];
         this.components = opt.components;
-        this.components.forEach((cmp) => {
-            
-            const d = document.createElement('div');
-            d.className = '';
-            
-            switch (cmp.type) {
-                case 'elementSelect':
-                    
-                    d.innerHTML = `<div class="twv-mb-2">
-                        <button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block twv-text-overflow">${cmp.title}</button>
-                    </div>
-                    `;
 
-                    d.querySelector('button').addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (this.state === 'active') {
-                            return;
-                        }
-                        e.target.setAttribute('disabled', 'disabled');
-                        this.selectModeToggle(parentElement, cmp.name, false);
-                    });
-                    div.appendChild(d);
-                    
-                    break;
-                case 'text':
-                    
-                    let value = '';
-                    if (cmp.styleName) {
-                        const compStyles = window.getComputedStyle(this.parentElement);
-                        if (compStyles[cmp.styleName]) {
-                            value = compStyles[cmp.styleName];
-                        }
-                    }
-                    
-                    d.innerHTML = `
-                    <div class="twv-mb-2">
-                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">
-                    </div>
-                    `;
-                    div.appendChild(d);
-                    
-                    break;
-                case 'checkbox':
-
-                    d.innerHTML = `
-                    <div class="twv-mb-2">
-                        <input type="checkbox" id="tww-field-option-${cmp.name}" name="${cmp.name}" value="1">
-                        <label class="twv-display-inline twv-small twv-ml-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                    </div>
-                    `;
-                    div.appendChild(d);
-                    
-                    break;
-                case 'radio':
-                    
-                    let html = '';
-                    if (cmp.title) {
-                        html += `<div class="twv-mb-2">${cmp.title}</div>`;
-                    }
-                    if (cmp.options) {
-                        cmp.options.forEach((option, index) => {
-                            html += `
-                            <label class="twv-display-block">
-                                <input type="radio" name="${cmp.name}" value="${option.value}">
-                                ${this.trans(option.title)}
-                             </label>
-                            `;
-                        });
-                    }
-
-                    d.innerHTML = html;
-                    d.className = 'twv-mb-3';
-                    div.appendChild(d);
-                    d.querySelector('input').checked = true;
-                    
-                    break;
-                case 'pageField':
-
-                    optionsHTML = '';
-                    this.options.pageFields.forEach((pageField) => {
-                        optionsHTML += `<option value="${pageField.name}" data-type="${pageField.type}">${pageField.name} - ${pageField.type}</option>`;
-                    });
-                    
-                    d.innerHTML = `
-                    <div class="twv-mb-3">
-                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="fieldName">
-                            ${optionsHTML}
-                        </select>
-                    </div>
-                    `;
-                    div.appendChild(d);
-                    
-                    const onFieldSelectChange = (value, type) => {
-                        const keyFieldEl = componentsContainer.querySelector('input[name="key"]');
-                        if (keyFieldEl) {
-                            const textFieldBlockEl = keyFieldEl.parentNode;
-                            textFieldBlockEl.style.display = ['object', 'array'].indexOf(type) > -1 ? 'block' : 'none';
-                            if (['object', 'array'].indexOf(type) === -1) {
-                                keyFieldEl.value = '';
-                            }
-                        }
-                    };
-
-                    d.querySelector('select').addEventListener('change', (e) => {
-                        const selectEl = e.target;
-                        const selectedOption = selectEl.options[selectEl.selectedIndex];
-                        onFieldSelectChange(selectEl.value, selectedOption.dataset.type);
-                    });
-
-                    setTimeout(() => {
-                        onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
-                    }, 1);
-                    
-                    break;
-                case 'include':
-
-                    optionsHTML = '';
-                    this.showLoading(true);
-                    this.request(`/twigvisual/includes`, {}, (res) => {
-                        if (res.templates) {
-                            res.templates.forEach((templateName) => {
-                                optionsHTML += `<option value="${templateName}">${templateName}</option>`;
-                            });
-                            d.querySelector('select').innerHTML = optionsHTML;
-                        }
-                        this.showLoading(false);
-                    }, (err) => {
-                        this.addAlertMessage(err.error || err);
-                        this.showLoading(false);
-                    });
-
-                    d.innerHTML = `
-                    <div class="twv-mb-3">
-                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="${cmp.name}">
-                            ${optionsHTML}
-                        </select>
-                    </div>
-                    `;
-                    div.appendChild(d);
-                    
-                    break;
-            }
-        });
-        componentsContainer.appendChild(div);
+        this.createComponentsControls(componentsContainer);
         
-        div = document.createElement('div');
+        const div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
             <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">
@@ -817,12 +669,17 @@ class TwigVisual {
                 return;
             }
 
+            const isInsertMode = opt.isInsertMode || false;
+            const requestUrl = isInsertMode
+                ? `/twigvisual/move_element/${typeValue}`
+                : `/twigvisual/create_component/${typeValue}`;
+
             buttonSubmit.setAttribute('disabled', 'disabled');
             buttonCancel.setAttribute('disabled', 'disabled');
 
             this.showLoading(true);
-            
-            this.request(`/twigvisual/insert/${typeValue}`, data, (res) => {
+
+            this.request(requestUrl, data, (res) => {
                 if (res.success) {
                     this.windowReload();
                 } else {
@@ -860,6 +717,165 @@ class TwigVisual {
                 this.selectionModeDestroy(true);
             }
         });
+    }
+
+    /**
+     * Create controls for the components
+     * @param {HTMLElement} componentsContainer
+     */
+    createComponentsControls(componentsContainer) {
+
+        const div = document.createElement('div');
+        div.className = 'twv-pt-1 twv-mb-3';
+        let optionsHTML;
+
+        this.components.forEach((cmp) => {
+
+            const d = document.createElement('div');
+            d.className = '';
+
+            switch (cmp.type) {
+                case 'elementSelect':
+
+                    d.innerHTML = `<div class="twv-mb-2">
+                        <button data-twv-key="${cmp.name}" class="twv-btn twv-btn-block twv-text-overflow">${cmp.title}</button>
+                    </div>
+                    `;
+
+                    d.querySelector('button').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (this.state === 'active') {
+                            return;
+                        }
+                        e.target.setAttribute('disabled', 'disabled');
+                        this.selectModeToggle(parentElement, cmp.name, false);
+                    });
+                    div.appendChild(d);
+
+                    break;
+                case 'text':
+
+                    let value = '';
+                    if (cmp.styleName) {
+                        const compStyles = window.getComputedStyle(this.parentElement);
+                        if (compStyles[cmp.styleName]) {
+                            value = compStyles[cmp.styleName];
+                        }
+                    }
+
+                    d.innerHTML = `
+                    <div class="twv-mb-2">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    break;
+                case 'checkbox':
+
+                    d.innerHTML = `
+                    <div class="twv-mb-2">
+                        <input type="checkbox" id="tww-field-option-${cmp.name}" name="${cmp.name}" value="1">
+                        <label class="twv-display-inline twv-small twv-ml-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    break;
+                case 'radio':
+
+                    let html = '';
+                    if (cmp.title) {
+                        html += `<div class="twv-mb-2">${cmp.title}</div>`;
+                    }
+                    if (cmp.options) {
+                        cmp.options.forEach((option, index) => {
+                            html += `
+                            <label class="twv-display-block">
+                                <input type="radio" name="${cmp.name}" value="${option.value}">
+                                ${this.trans(option.title)}
+                             </label>
+                            `;
+                        });
+                    }
+
+                    d.innerHTML = html;
+                    d.className = 'twv-mb-3';
+                    div.appendChild(d);
+                    d.querySelector('input').checked = true;
+
+                    break;
+                case 'pageField':
+
+                    optionsHTML = '';
+                    this.options.pageFields.forEach((pageField) => {
+                        optionsHTML += `<option value="${pageField.name}" data-type="${pageField.type}">${pageField.name} - ${pageField.type}</option>`;
+                    });
+
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="fieldName">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    const onFieldSelectChange = (value, type) => {
+                        const keyFieldEl = componentsContainer.querySelector('input[name="key"]');
+                        if (keyFieldEl) {
+                            const textFieldBlockEl = keyFieldEl.parentNode;
+                            textFieldBlockEl.style.display = ['object', 'array'].indexOf(type) > -1 ? 'block' : 'none';
+                            if (['object', 'array'].indexOf(type) === -1) {
+                                keyFieldEl.value = '';
+                            }
+                        }
+                    };
+
+                    d.querySelector('select').addEventListener('change', (e) => {
+                        const selectEl = e.target;
+                        const selectedOption = selectEl.options[selectEl.selectedIndex];
+                        onFieldSelectChange(selectEl.value, selectedOption.dataset.type);
+                    });
+
+                    setTimeout(() => {
+                        onFieldSelectChange(d.querySelector('select').value, d.querySelector('select').querySelector('option').dataset.type);
+                    }, 1);
+
+                    break;
+                case 'include':
+
+                    optionsHTML = '';
+                    this.showLoading(true);
+                    this.request(`/twigvisual/includes`, {}, (res) => {
+                        if (res.templates) {
+                            res.templates.forEach((templateName) => {
+                                optionsHTML += `<option value="${templateName}">${templateName}</option>`;
+                            });
+                            d.querySelector('select').innerHTML = optionsHTML;
+                        }
+                        this.showLoading(false);
+                    }, (err) => {
+                        this.addAlertMessage(err.error || err);
+                        this.showLoading(false);
+                    });
+
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="${cmp.name}">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    break;
+            }
+        });
+        componentsContainer.appendChild(div);
     }
 
     checkRequired(data, components) {
