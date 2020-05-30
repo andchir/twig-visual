@@ -97,7 +97,6 @@ class TwigVisualServiceTest extends WebTestCase {
         self::bootKernel();
         // Gets the special container that allows fetching private services
         $container = self::$container;
-        
 
         /** @var TwigVisualService $twigVisualService */
         $twigVisualService = $container->get('twigvisual');
