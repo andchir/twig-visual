@@ -981,6 +981,7 @@ class TwigVisualService {
     /**
      * @param $cacheContentArray
      * @throws \Twig\Error\LoaderError
+     * @throws \Exception
      */
     public function cacheUpdate($cacheContentArray)
     {

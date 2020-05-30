@@ -2,7 +2,8 @@
     "name": "andchir/twig-visual",
     "description": "",
     "type": "library",
-    "license": "",
+    "license": "MIT",
+    "keywords": ["twig", "visual editor", "edit template"],
     "authors": [
         {
             "name": "andchir",
@@ -12,5 +13,19 @@
     "require": {
         "ivopetkov/html5-dom-document-php": "^2.2",
         "machy8/xhtml-formatter": "^1.0"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Andchir\\TwigVisualBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Andchir\\TwigVisualBundle\\Tests\\": "tests/"
+        }
     }
 }

@@ -6,7 +6,7 @@ services:
 
     Andchir\TwigVisualBundle\:
         resource: '../../*'
-        exclude: '{DependencyInjection,Form,Document,Resources}'
+        exclude: '{DependencyInjection,Form,Document,Resources,Tests}'
 
     Andchir\TwigVisualBundle\Controller\:
         resource: '../../Controller'
@@ -14,6 +14,6 @@ services:
 
     twigvisual:
         class: Andchir\TwigVisualBundle\Service\TwigVisualService
-        arguments: ['@service_container']
-        tags: ['controller.service_arguments']
         public: true
+        arguments: ['@parameter_bag', '@twig', '@translator', '@kernel']
+        
