@@ -985,8 +985,7 @@ class TwigVisualService {
      */
     public function cacheUpdate($cacheContentArray)
     {
-        $themeDirPath = $this->getCurrentThemeDirPath();
-        $cacheFilePath = $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
+        $cacheFilePath = $this->getDataFilePath();
         if (file_exists($cacheFilePath) && !is_writable($cacheFilePath)) {
             throw new \Exception('Cache file is not writable.');
         }
@@ -997,13 +996,23 @@ class TwigVisualService {
     }
 
     /**
+     * @param string $themeName
+     * @return string
+     * @throws \Twig\Error\LoaderError
+     */
+    public function getDataFilePath($themeName = '')
+    {
+        $themeDirPath = $this->getCurrentThemeDirPath($themeName);
+        return $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
+    }
+
+    /**
      * @return array
      * @throws \Twig\Error\LoaderError
      */
     public function cacheGet()
     {
-        $themeDirPath = $this->getCurrentThemeDirPath();
-        $cacheFilePath = $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
+        $cacheFilePath = $this->getDataFilePath();
         if (!file_exists($cacheFilePath)) {
             return [];
         }
@@ -1077,12 +1086,22 @@ class TwigVisualService {
     }
 
     /**
+     * @param string $themeName
      * @return string
      * @throws \Twig\Error\LoaderError
      */
-    public function getCurrentThemeDirPath()
+    public function getCurrentThemeDirPath($themeName = '')
     {
-        return dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
+        $currentThemeName = $this->getCurrentThemeName();
+        $currentThemeDirPath = dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
+        if ($themeName && $themeName != $currentThemeName) {
+            return str_replace(
+                DIRECTORY_SEPARATOR . $currentThemeName,
+                DIRECTORY_SEPARATOR . $themeName,
+                $currentThemeDirPath
+            );
+        }
+        return $currentThemeDirPath;
     }
 
     /**

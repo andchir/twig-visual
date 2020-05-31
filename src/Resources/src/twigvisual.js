@@ -748,7 +748,7 @@ class TwigVisual {
                             return;
                         }
                         e.target.setAttribute('disabled', 'disabled');
-                        this.selectModeToggle(parentElement, cmp.name, false);
+                        this.selectModeToggle(this.parentElement, cmp.name, false);
                     });
                     div.appendChild(d);
 

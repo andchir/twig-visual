@@ -29,6 +29,7 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->scalarNode('templates_extension')->end()
                 ->scalarNode('file_upload_dir_path')->end()
+                ->scalarNode('editor_user_role')->end()
                 ->arrayNode('templates')
                     ->scalarPrototype()->end()
                 ->end()

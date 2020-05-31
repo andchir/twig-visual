@@ -24,10 +24,13 @@ class DefaultController extends AbstractController
 {
     /** @var TwigVisualService */
     protected $service;
+    /** @var TranslatorInterface */
+    protected $translator;
 
-    public function __construct(TwigVisualService $service)
+    public function __construct(TwigVisualService $service, TranslatorInterface $translator)
     {
         $this->service = $service;
+        $this->translator = $translator;
     }
 
     /**
@@ -36,27 +39,32 @@ class DefaultController extends AbstractController
      * @return JsonResponse
      * @throws \Twig\Error\LoaderError
      */
-    public function createThemeAction(Request $request, TranslatorInterface $translator)
+    public function createThemeAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $themeName = $data['theme'] ?? '';
-        $mainpage = $data['mainpage'] ?? '';
+        try {
+            $data = $this->getRequestData($request, false, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        
+        $themeName = $data['theme'];
+        $mainpage = $data['mainpage'];
 
         $templatesDirPath = $this->service->getTemplatesDirPath();
         $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($themeName);
         
         if (!is_dir($publicTemplateDirPath)) {
-            return $this->setError($translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
+            return $this->setError($this->translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
                 '%themePath%' => str_replace($this->service->getRootDirPath(), '', $publicTemplateDirPath)
             ]));
         }
 
         $mainPagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $mainpage;
         if (TwigVisualService::getExtension($mainpage) !== 'html') {
-            return $this->setError($translator->trans('The main page file must be of type HTML.'));
+            return $this->setError($this->translator->trans('The main page file must be of type HTML.'));
         }
         if (!$mainpage || !file_exists($mainPagePublicFilePath)) {
-            return $this->setError($translator->trans('Home page file not found.'));
+            return $this->setError($this->translator->trans('Home page file not found.'));
         }
 
         $templateDirPath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName;
@@ -64,18 +72,25 @@ class DefaultController extends AbstractController
         $mainPageTemplateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
         
         if (!$this->service->copyDefaultFiles($themeName)) {
-            return $this->setError($translator->trans('Error copying files by default.'));
+            return $this->setError($this->translator->trans('Error copying files by default.'));
         }
         if (!is_dir($templateDirPath)) {
             mkdir($templateDirPath);
         }
 
+        // Create data file
+        $cacheFilePath = $this->service->getDataFilePath($themeName);
+        if (file_exists($cacheFilePath) && is_writable($cacheFilePath)) {
+            unlink($cacheFilePath);
+        }
+        file_put_contents($cacheFilePath, '');
+        
         $templateContent = $this->service->prepareTemplateContent($mainPagePublicFilePath, $themeName);
         file_put_contents($mainPageTemplateFilePath, $templateContent);
         
         return $this->json([
             'success' => true,
-            'message' => $translator->trans('Templates theme created successfully.')
+            'message' => $this->translator->trans('Templates theme created successfully.')
         ]);
     }
 
@@ -85,22 +100,25 @@ class DefaultController extends AbstractController
      * @return JsonResponse
      * @throws \Twig\Error\LoaderError
      */
-    public function createTemplateAction(Request $request, TranslatorInterface $translator)
+    public function createTemplateAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $fileName = $data['fileName'] ?? '';
-        $templateName = $data['templateName'] ?? '';
-
-        if (!$fileName || !$templateName) {
-            return $this->setError($translator->trans('File name and template name should not be empty.'));
+        try {
+            $data = $this->getRequestData($request, false, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
         }
+        $templateName = $data['templateName'];
+        $fileName = $data['fileName'] ?? '';
 
         $themeName = $this->service->getCurrentThemeName();
         $templatesDirPath = $this->service->getTemplatesDirPath();
         $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($themeName);
 
+        if (!$templateName) {
+            return $this->setError($this->translator->trans('Template name can not be empty.'));
+        }
         if (!is_dir($publicTemplateDirPath)) {
-            return $this->setError($translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
+            return $this->setError($this->translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
                 '%themePath%' => str_replace($this->service->getRootDirPath(), '', $publicTemplateDirPath)
             ]));
         }
@@ -109,10 +127,10 @@ class DefaultController extends AbstractController
         $templateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
         $pagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $fileName;
         if (TwigVisualService::getExtension($fileName) !== 'html') {
-            return $this->setError($translator->trans('The main page file must be of type HTML.'));
+            return $this->setError($this->translator->trans('The main page file must be of type HTML.'));
         }
         if (!$fileName || !file_exists($pagePublicFilePath)) {
-            return $this->setError($translator->trans('Page HTML file not found.'));
+            return $this->setError($this->translator->trans('Page HTML file not found.'));
         }
 
         if (!is_dir(dirname($templateFilePath))) {
@@ -124,7 +142,7 @@ class DefaultController extends AbstractController
         
         return $this->json([
             'success' => true,
-            'message' => $translator->trans('Template created successfully.')
+            'message' => $this->translator->trans('Template created successfully.')
         ]);
     }
 
@@ -132,24 +150,21 @@ class DefaultController extends AbstractController
      * @Route("/edit_content", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function editTextContentAction(Request $request, TranslatorInterface $translator)
+    public function editTextContentAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
+        try {
+            $data = $this->getRequestData($request);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
         $textContent = $data['textContent'] ?? '';
         
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
-        }
-        if (!$xpath) {
-            return $this->setError($translator->trans('XPath can not be empty.'));
-        }
         if (!$this->service->editTextContent($templateName, $xpath, $textContent)) {
             return $this->setError($this->service->getErrorMessage());
         }
@@ -162,25 +177,22 @@ class DefaultController extends AbstractController
      * @Route("/edit_link", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function editLinkAction(Request $request, TranslatorInterface $translator)
+    public function editLinkAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
+        try {
+            $data = $this->getRequestData($request);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
         $href = $data['href'] ?? '';
         $target = $data['target'] ?? '_self';
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
-        }
-        if (!$xpath) {
-            return $this->setError($translator->trans('XPath can not be empty.'));
-        }
+        
         if (!$this->service->editAttributes($templateName, $xpath, [
             'href' => $href,
             'target' => $target
@@ -196,30 +208,28 @@ class DefaultController extends AbstractController
      * @Route("/replace_image", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function replaceImageAction(Request $request, TranslatorInterface $translator)
+    public function replaceImageAction(Request $request)
     {
-        $templateName = $request->get('templateName');
-        $xpath = $request->get('xpath');
+        try {
+            $data = $this->getRequestData($request, true, true, true);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
         $attributeName = $request->get('attributeName', 'src');
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('imageFile');
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
-        }
-        if (!$xpath) {
-            return $this->setError($translator->trans('XPath can not be empty.'));
-        }
+        
         if (!$imageFile) {
-            return $this->setError($translator->trans('Image file has not been uploaded.'));
+            return $this->setError($this->translator->trans('Image file has not been uploaded.'));
         }
         if (!in_array(UtilsService::getExtension($imageFile->getClientOriginalName()), ['jpg','jpeg','png','gif'])) {
-            return $this->setError($translator->trans('File type is not allowed.'));
+            return $this->setError($this->translator->trans('File type is not allowed.'));
         }
         
         $fileName = $imageFile->getClientOriginalName();
@@ -245,7 +255,7 @@ class DefaultController extends AbstractController
         if (!$this->service->editAttributes($templateName, $xpath, [
             $attributeName => $value
         ])) {
-            return $this->setError($translator->trans($this->service->getErrorMessage()));
+            return $this->setError($this->translator->trans($this->service->getErrorMessage()));
         }
 
         return $this->json([
@@ -257,24 +267,21 @@ class DefaultController extends AbstractController
      * @Route("/delete_element", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function deleteElementAction(Request $request, TranslatorInterface $translator)
+    public function deleteElementAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
+        try {
+            $data = $this->getRequestData($request);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
         $clean = $data['clean'] ?? false;
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
-        }
-        if (!$xpath) {
-            return $this->setError($translator->trans('XPath can not be empty.'));
-        }
+        
         $this->service->setRefererUrl($request->server->get('HTTP_REFERER'));
         if (!$this->service->deleteTemplateElement($templateName, $xpath, $clean)) {
             return $this->setError($this->service->getErrorMessage());
@@ -288,23 +295,23 @@ class DefaultController extends AbstractController
      * @Route("/create_component/{actionName}", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @param string $actionName
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function insertAction(Request $request, TranslatorInterface $translator, $actionName)
+    public function insertAction(Request $request, $actionName)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $uiBlockConfig = $this->service->getConfigValue('ui', $actionName,  []);
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
+        try {
+            $data = $this->getRequestData($request, true, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
         }
+        $templateName = $data['templateName'];
+        $uiBlockConfig = $this->service->getConfigValue('ui', $actionName,  []);
+        
         if (!isset($data['data']) || !isset($data['data']['source'])) {
-            return $this->setError($translator->trans('Please select a root item.'));
+            return $this->setError($this->translator->trans('Please select a root item.'));
         }
         
         // Update configuration
@@ -433,16 +440,20 @@ class DefaultController extends AbstractController
      * @Route("/move_element/{actionName}", defaults={"actionName": ""}, methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @param $actionName
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Twig\Error\LoaderError
      */
-    public function moveElementAction(Request $request, TranslatorInterface $translator, $actionName)
+    public function moveElementAction(Request $request, $actionName)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
+        try {
+            $data = $this->getRequestData($request, true, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
         $xpathTarget = $data['xpathTarget'] ?? ($data['data']['source'] ?? '');
         $insertMode = $data['insertMode'] ?? ($data['data']['insertMode'] ?? TwigVisualService::INSERT_MODE_AFTER);
         $insertContent = '';
@@ -461,7 +472,7 @@ class DefaultController extends AbstractController
         }
 
         if (!($result = $this->service->moveElement($templateName, $xpath, $xpathTarget, $insertMode, $insertContent))) {
-            return $this->setError($translator->trans($this->service->getErrorMessage()));
+            return $this->setError($this->translator->trans($this->service->getErrorMessage()));
         }
 
         return $this->json([
@@ -473,7 +484,6 @@ class DefaultController extends AbstractController
      * @Route("/includes", methods={"GET"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Twig\Error\LoaderError
      */
@@ -488,7 +498,6 @@ class DefaultController extends AbstractController
      * @Route("/html_files", methods={"GET"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Twig\Error\LoaderError
      */
@@ -512,15 +521,18 @@ class DefaultController extends AbstractController
      * @Route("/batch", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function batchAction(Request $request, TranslatorInterface $translator)
+    public function batchAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
+        try {
+            $data = $this->getRequestData($request, true, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
+        }
+        $templateName = $data['templateName'];
         $actions = $data['actions'] ?? [];
 
         try {
@@ -539,7 +551,7 @@ class DefaultController extends AbstractController
             }
             $node = TwigVisualService::findElementByXPath($doc, $action['xpath']);
             if ($this->service->isDinamic($node)) {
-                $errors[] = $translator->trans('The item is already dynamic.');
+                $errors[] = $this->translator->trans('The item is already dynamic.');
             } else {
                 $elements[] = $node;
             }
@@ -604,30 +616,29 @@ class DefaultController extends AbstractController
      * @Route("/restore_backup", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Twig\Error\LoaderError
      */
-    public function restoreBackupAction(Request $request, TranslatorInterface $translator)
+    public function restoreBackupAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
+        try {
+            $data = $this->getRequestData($request, true, false);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
         }
+        $templateName = $data['templateName'];
 
         $themeDirPath = $this->service->getCurrentThemeDirPath();
         $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . $templateName;
         
         if (!file_exists($templatePath)) {
-            return $this->setError($translator->trans('Template not found.'));
+            return $this->setError($this->translator->trans('Template not found.'));
         }
 
         $recordId = 'backup-copy-' . $templateName;
         $cacheContentArray = $this->service->cacheGet();
         if (!isset($cacheContentArray[$recordId])) {
-            return $this->setError($translator->trans('Backup copy not found.'));
+            return $this->setError($this->translator->trans('Backup copy not found.'));
         }
         
         file_put_contents($templatePath, $cacheContentArray[$recordId]);
@@ -644,23 +655,19 @@ class DefaultController extends AbstractController
      * @Route("/restore_static", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
-     * @param TranslatorInterface $translator
      * @return JsonResponse
      * @throws \Psr\Cache\InvalidArgumentException
      * @throws \Twig\Error\LoaderError
      */
-    public function restoreStaticAction(Request $request, TranslatorInterface $translator)
+    public function restoreStaticAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-        $templateName = $data['templateName'] ?? '';
-        $xpath = $data['xpath'] ?? '';
-
-        if (!$templateName) {
-            return $this->setError($translator->trans('Template name can not be empty.'));
+        try {
+            $data = $this->getRequestData($request);
+        } catch (\Exception $e) {
+            return $this->setError($this->translator->trans($e->getMessage()));
         }
-        if (!$xpath) {
-            return $this->setError($translator->trans('XPath can not be empty.'));
-        }
+        $templateName = $data['templateName'];
+        $xpath = $data['xpath'];
 
         try {
             $result = $this->service->getDocumentNode($templateName, null, true);
@@ -673,7 +680,7 @@ class DefaultController extends AbstractController
         $parentDinamic = TwigVisualService::findDinamicParent($node);
         
         if ($node !== $parentDinamic) {
-            return $this->setError($translator->trans('You cannot restore the source code of this item.'));
+            return $this->setError($this->translator->trans('You cannot restore the source code of this item.'));
         }
 
         $commentOpen = TwigVisualService::getPreviousSiblingByType($node, XML_COMMENT_NODE);
@@ -682,7 +689,7 @@ class DefaultController extends AbstractController
         
         $cacheDataArray = $this->service->cacheGet();
         if (!isset($cacheDataArray[$commentValue])) {
-            return $this->setError($translator->trans('You cannot restore the source code of this item.'));
+            return $this->setError($this->translator->trans('You cannot restore the source code of this item.'));
         }
 
         $node->outerHTML = $cacheDataArray[$commentValue];
@@ -695,9 +702,42 @@ class DefaultController extends AbstractController
             return $this->setError($e->getMessage());
         }
         
+        unset($cacheDataArray[$commentValue]);
+        $this->service->cacheUpdate($cacheDataArray);
+        
         return $this->json([
             'success' => true
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param bool $checkTemplate
+     * @param bool $checkXPath
+     * @param bool $isFormData
+     * @return mixed
+     * @throws \Exception
+     * @throws \Twig\Error\LoaderError
+     */
+    public function getRequestData(Request $request, $checkTemplate = true, $checkXPath = true, $isFormData = false)
+    {
+        $data = json_decode($request->getContent(), true);
+        $data['templateName'] = $isFormData ? $request->get('templateName') : ($data['templateName'] ?? '');
+        $data['xpath'] =$isFormData ? $request->get('xpath') : ($data['xpath'] ?? '');
+
+        if (!$this->isGranted($this->service->getConfigValue('editor_user_role'))) {
+            throw new \Exception('Your user has read-only permission.');
+        }
+        if ($checkTemplate && !file_exists($this->service->getDataFilePath())) {
+            throw new \Exception('File "twigvisual-data.yaml" not found. You cannot edit templates for this template theme. But you can create a new theme.');
+        }
+        if ($checkTemplate && !$data['templateName']) {
+            throw new \Exception('Template name can not be empty.');
+        }
+        if ($checkXPath && !$data['xpath']) {
+            throw new \Exception('XPath can not be empty.');
+        }
+        return $data;
     }
     
     /**

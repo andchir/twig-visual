@@ -7,7 +7,7 @@ File name and template name should not be empty.: Имя файла и имя ш
 Page HTML file not found.: HTML-файл не найден.
 Template created successfully.: Шаблон успешно создан.
 Template name can not be empty.: Имя шаблона не может быть пустым.
-XPath can not be empty.: Не может быть пустым.
+XPath can not be empty.: XPath не может быть пустым.
 Please select a root item.: Пожалуйста, выберите корневой элемент.
 The item is already dynamic.: Элемент уже динамичный.
 Template not found.: Шаблон не найден.
@@ -64,4 +64,4 @@ List of languages: Список языков
 List of currencies: Список валют
 Image file has not been uploaded.: Файл картинки не был загружен.
 File type is not allowed.: Тип файла не разрешен для загрузки.
-
+File "twigvisual-data.yaml" not found. You cannot edit templates for this template theme. But you can create a new theme.: Файл "twigvisual-data.yaml" не найден. Вы не можете редактировать шаблоны этой темы. Но Вы можете создать ноую тему.
