@@ -16,10 +16,66 @@ Video: [https://www.youtube.com/watch?v=kcR5Ip6dQHA](https://www.youtube.com/wat
 Configuration example:
 ```yaml
 twig_visual:
-    cache_location:
-        - var/cache/filecache
+    default_copy: []
+    templates:
+        - homepage
+    cache_location: []
     templates_extension: html.twig
+    file_upload_dir_path: '%kernel.project_dir%/public/uploads'
+    editor_user_role: 'ROLE_ADMIN_WRITE'
     ui:
+        field:
+            title: Content field
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                    template: '<root>{%% if {{ fieldName }} is defined %%}{{ {{ fieldName }} }}{%% endif %%}</root>'
+
+                fieldName:
+                    title: Content field
+                    type: pageField
+                    join: key
+                    separator: '.'
+
+                key:
+                    title: Value key
+                    type: text
+
+        includeCreate:
+            title: Make included
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+
+                includeName:
+                    title: Item name
+                    type: text
+                    required: true
+
+        include:
+            title: Replace with included
+            configuration:
+                updateIncludeSource: false
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+
+                includeName:
+                    title: Include name
+                    type: include
+                    required: true
+
         menu:
             title: Main menu
             configuration:
@@ -29,11 +85,11 @@ twig_visual:
                     title: Root element
                     type: elementSelect
                     required: true
-                    output: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(0, 'menu_dropdown{{ nameSuffix }}', null, activeCategoriesIds, false) }}"
                     template: '<root/>'
                     templatePath: nav/menu_dropdown
                     saveBackupCopy: true
-    
+
                 itemFirst:
                     title: First level menu item
                     type: elementSelect
@@ -41,62 +97,121 @@ twig_visual:
                     required: true
                     output: '<itemFirst/>'
                     template: |
-                        {% for category in children %}
+                        {%% for category in children %%}
                         <itemFirst class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         </itemFirst>
-                        {%  endfor %}
-    
+                        {%%  endfor %%}
+
                 containerSecond:
                     title: Second level container
                     type: elementSelect
-                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
+                    output: "{{ categoriesTree(category.id, 'menu_dropdown_child{{ nameSuffix }}', category, activeCategoriesIds, false) }}"
                     template: '<containerSecond/>'
                     templatePath: nav/menu_dropdown_child
-    
+
                 itemSecond:
                     title: Second level menu item
                     type: elementSelect
                     isChildItem: true
                     output: '<itemSecond/>'
                     template: |
-                        {% for category in children %}
+                        {%% for category in children %%}
                         <itemSecond class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         </itemSecond>
-                        {%  endfor %}
-    
+                        {%%  endfor %%}
+
                 containerThird:
                     title: Third level container
                     type: elementSelect
                     output: "{{ categoriesTree(category.id, 'menu_dropdown_child', category, activeCategoriesIds, false) }}"
                     template: '<containerThird/>'
                     templatePath: nav/menu_dropdown_child_child
-    
+
                 itemThird:
                     title: Third level menu item
                     type: elementSelect
                     isChildItem: true
                     output: '<itemThird/>'
                     template: |
-                        {% for category in children %}
+                        {%% for category in children %%}
                         <itemThird class="{%% if category.id in activeCategoriesIds %%}{{ activeClassName }}{%% endif %%}">
                             <a href="{{ catalogPath(category.uri, '', category) }}">{{ category.title }}</a>
                         </itemThird>
-                        {%  endfor %}
+                        {%%  endfor %%}
 
-                activeClassName:
-                    title: CSS activity class
+                activeClassName: {title: CSS activity class, type: text, value: active}
+
+                nameSuffix: {title: Name suffix, type: text}
+
+                deleteLeftSiblings: {title: Delete previous child, type: checkbox}
+
+                deleteRightSiblings: {title: Delete next child, type: checkbox}
+
+        editMargin:
+            title: Edit margin
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                marginTop:
+                    title: Indent on the top
                     type: text
-                    value: active
-                    
-                deleteLeftSiblings:
-                    title: Delete previous child
-                    type: checkbox
-                    
-                deleteRightSiblings:
-                    title: Delete next child
-                    type: checkbox
+                    styleName: 'margin-top'
+                marginRight:
+                    title: Indent on the right
+                    type: text
+                    styleName: 'margin-right'
+                marginBottom:
+                    title: Indent from the bottom
+                    type: text
+                    styleName: 'margin-bottom'
+                marginLeft:
+                    title: Indent on the left
+                    type: text
+                    styleName: 'margin-left'
+
+        editPadding:
+            title: Edit padding
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                paddingTop:
+                    title: Indent on the top
+                    type: text
+                    styleName: 'padding-top'
+                paddingRight:
+                    title: Indent on the right
+                    type: text
+                    styleName: 'padding-right'
+                paddingBottom:
+                    title: Indent from the bottom
+                    type: text
+                    styleName: 'padding-bottom'
+                paddingLeft:
+                    title: Indent on the left
+                    type: text
+                    styleName: 'padding-left'
+
+        wrapTag:
+            title: Create block
+            configuration:
+                saveBackupCopy: true
+            components:
+                root:
+                    title: Root element
+                    type: elementSelect
+                    required: true
+                    output: '<root/>'
+                    template: '<div><root/></div>'
 ```
 
 Add to base template before ``</head>`` tag:
