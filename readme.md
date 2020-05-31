@@ -32,7 +32,7 @@ twig_visual:
                     output: "{{ categoriesTree(0, 'menu_dropdown', null, activeCategoriesIds, false) }}"
                     template: '<root/>'
                     templatePath: nav/menu_dropdown
-                    caching: true
+                    saveBackupCopy: true
     
                 itemFirst:
                     title: First level menu item
