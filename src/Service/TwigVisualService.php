@@ -373,7 +373,7 @@ class TwigVisualService {
             $this->setErrorMessage($e->getMessage());
             return false;
         }
-        return false;
+        return true;
     }
 
     /**
