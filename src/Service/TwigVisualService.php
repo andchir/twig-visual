@@ -118,6 +118,7 @@ class TwigVisualService {
                     'name' => $k,
                     'title' => !empty($v['title']) ? $this->translator->trans($v['title']) : '',
                     'type' => $v['type'],
+                    'value' => $v['value'] ?? '',
                     'required' => !empty($v['required']),
                     'styleName' => $v['styleName'] ?? '',
                     'options' => $v['options'] ?? []

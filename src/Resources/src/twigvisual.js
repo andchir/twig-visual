@@ -1,6 +1,6 @@
 /**
  * TwigVisual
- * @version 1.0.0
+ * @version 1.0.1
  * @author Andchir<andchir@gmail.com>
  */
 class TwigVisual {
@@ -754,19 +754,20 @@ class TwigVisual {
 
                     break;
                 case 'text':
+                case 'number':
 
-                    let value = '';
+                    let value = cmp.value || '';
                     if (cmp.styleName) {
                         const compStyles = window.getComputedStyle(this.parentElement);
                         if (compStyles[cmp.styleName]) {
-                            value = compStyles[cmp.styleName];
+                            value = value ? value + ' ' + compStyles[cmp.styleName] : compStyles[cmp.styleName];
                         }
                     }
 
                     d.innerHTML = `
                     <div class="twv-mb-2">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <input type="text" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">
+                        <input type="${cmp.type}" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">
                     </div>
                     `;
                     div.appendChild(d);
