@@ -656,6 +656,9 @@ class TwigVisual {
             Array.from(componentsContainer.querySelectorAll('input[type="text"]')).forEach((el) => {
                 data.data[el.name] = el.value;
             });
+            Array.from(componentsContainer.querySelectorAll('input[type="number"]')).forEach((el) => {
+                data.data[el.name] = el.value;
+            });
             Array.from(componentsContainer.querySelectorAll('select')).forEach((el) => {
                 data.data[el.name] = el.value;
             });

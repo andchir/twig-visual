@@ -671,7 +671,7 @@ class TwigVisualService {
         $staticOptions = [];
         foreach ($uiBlockConfig['components'] as $key => $opts) {
             $type = $opts['type'] ?? '';
-            if (in_array($type, ['static', 'text']) && isset($opts['value'])) {
+            if (in_array($type, ['static', 'text', 'number']) && isset($opts['value'])) {
                 $staticOptions[$key] = $opts['value'];
             }
         }
