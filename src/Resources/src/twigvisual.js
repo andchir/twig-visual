@@ -71,7 +71,7 @@ class TwigVisual {
             this.selectionModeDestroy(true);
             this.addNewThemeInit();
         });
-        
+
         this.container.querySelector('.twv-button-new-template').addEventListener('click', (e) => {
             e.preventDefault();
             if (this.state === 'active') {
@@ -95,7 +95,7 @@ class TwigVisual {
                 }
             }
         });
-        
+
         // Panel position recovery
         const panelClassName = this.getCookie('twv-panel-class-name');
         if (panelClassName) {
@@ -103,7 +103,7 @@ class TwigVisual {
             this.container.classList.add('twig-visual-container');
         }
     }
-    
+
     trans(str, data = {}) {
         let output;
         if (!this.translations[this.options.locale]) {
@@ -146,7 +146,7 @@ class TwigVisual {
             }
             const buttonStart = this.container.querySelector('.twv-button-start-select');
             buttonStart.removeAttribute('disabled');
-            
+
             this.state = 'inactive';
             this.onAfterSelect();
         }
@@ -155,7 +155,7 @@ class TwigVisual {
     onAfterSelect() {
         switch (this.dataKey) {
             case 'moveTarget':
-                
+
                 const innerContainerEl = this.container.querySelector('.twv-inner');
                 const buttonStart = this.container.querySelector('.twv-button-start-select');
                 this.makeButtonSelected(buttonStart, true, () => {
@@ -198,14 +198,14 @@ class TwigVisual {
                 // Submit data
                 buttonSubmit.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
+
                     const insertMode = innerContainerEl.querySelector('input[name="insertMode"]:checked').value;
                     this.showLoading(true);
 
                     this.request('/twigvisual/move_element', {
                         templateName: this.options.templateName,
-                        xpath: this.data.source,
-                        xpathTarget: this.data.moveTarget,
+                        xpath: this.data.source.xpath,
+                        xpathTarget: this.data.moveTarget.xpath,
                         insertMode
                     }, (res) => {
                         if (res.success) {
@@ -225,7 +225,7 @@ class TwigVisual {
                     innerContainerEl.innerHTML = '';
                     this.selectionModeDestroy(true);
                 });
-                
+
                 break;
         }
     }
@@ -264,7 +264,7 @@ class TwigVisual {
 
         this.selectModeApply(e.target);
     }
-    
+
     selectModeApply(element = null) {
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
@@ -275,11 +275,14 @@ class TwigVisual {
         this.removeOverlay();
 
         const currentElementXpath = this.getXPathForElement(currentElement);
-        this.data[this.dataKey] = currentElementXpath;
+        this.data[this.dataKey] = {
+            xpath: currentElementXpath,
+            className: currentElement.className
+        };
 
         // Clear selection
         if (this.data[this.dataKey]) {
-            const xpath = this.data[this.dataKey];
+            const xpath = this.data[this.dataKey].xpath;
             this.removeSelectionInnerByXPath(xpath);
         }
 
@@ -295,7 +298,7 @@ class TwigVisual {
 
             this.highlightElement();
             currentElement.classList.add('twv-selected-success');
-            
+
             const index = this.components.findIndex((item) => {
                 return item.name === this.dataKey;
             });
@@ -446,7 +449,7 @@ class TwigVisual {
         element.style.transform = 'none';
         element.style.transition = 'none';
         this.setToParents(element, {transform: 'none', transition: 'none'});
-        
+
         const backgroundOverlay = document.createElement(element.tagName === 'LI' ? 'li' : 'div');
         backgroundOverlay.className = 'twv-back-overlay';
         this.insertBefore(backgroundOverlay, element);
@@ -569,7 +572,7 @@ class TwigVisual {
             e.preventDefault();
             this.panelMove('right');
         });
-        
+
         containerEl.querySelector('.twv-button-execute-batch').addEventListener('click', (e) => {
             e.preventDefault();
             this.executeActionBatch();
@@ -627,7 +630,7 @@ class TwigVisual {
         this.components = opt.components;
 
         this.createComponentsControls(componentsContainer);
-        
+
         const div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         div.innerHTML = `
@@ -647,7 +650,7 @@ class TwigVisual {
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
             e.preventDefault();
-            
+
             const data = {
                 templateName: this.options.templateName,
                 data: this.data
@@ -905,7 +908,7 @@ class TwigVisual {
         });
         if (buttons.length === 1) {
             this.makeButtonSelected(buttons[0], true, () => {
-                const xpath = this.data[dataKey] || null;
+                const xpath = this.data[dataKey] ? this.data[dataKey].xpath : null;
                 if (this.removeSelectionInnerByXPath(xpath)) {
                     delete this.data[dataKey];
                     return true;
@@ -1019,14 +1022,14 @@ class TwigVisual {
         <div class="twv-mb-3 twv-ui-components"></div>
         `;
         this.container.querySelector('.twv-inner').appendChild(div);
-        
+
         const selectEl = this.container.querySelector('.twv-ui-element-select > select');
 
         // Select UI element type
         selectEl.addEventListener('change', (e) => {
             this.onBlockUiTypeChange(elementSelected, e.target.value);
         });
-        
+
         // Button edit text
         this.container.querySelector('.twv-button-edit-text').addEventListener('click', (e) => {
             e.preventDefault();
@@ -1038,7 +1041,7 @@ class TwigVisual {
             e.preventDefault();
             this.editLinkInit(elementSelected);
         });
-        
+
         // Replace image
         this.container.querySelector('.twv-button-replace-image').addEventListener('click', (e) => {
             e.preventDefault();
@@ -1050,7 +1053,7 @@ class TwigVisual {
             e.preventDefault();
             this.deleteElementInit(elementSelected);
         });
-        
+
         this.container.querySelector('.twv-button-move-element').addEventListener('click', (e) => {
             e.preventDefault();
             e.target.setAttribute('disabled', 'disabled');
@@ -1061,7 +1064,7 @@ class TwigVisual {
             e.preventDefault();
             this.restoreStaticInit();
         });
-        
+
         this.highlightElement(elementSelected, 'twv-selected-element');
     }
 
@@ -1107,10 +1110,10 @@ class TwigVisual {
             buttonCancel.setAttribute('disabled', 'disabled');
 
             this.showLoading(true);
-            
+
             this.request('/twigvisual/edit_content', {
                 templateName: this.options.templateName,
-                xpath: this.data.source,
+                xpath: this.data.source.xpath,
                 textContent: elementSelected.innerHTML
             }, (res) => {
                 if (res.success) {
@@ -1132,7 +1135,7 @@ class TwigVisual {
         this.container.querySelector('.twv-button-add-list')
             .addEventListener('click', (e) => {
                 e.preventDefault();
-                this.addToActionBatch('edit_content', this.data.source, {value: elementSelected.innerHTML});
+                this.addToActionBatch('edit_content', this.data.source.xpath, {value: elementSelected.innerHTML});
             });
 
         // Cancel
@@ -1198,7 +1201,7 @@ class TwigVisual {
 
             this.request('/twigvisual/edit_link', {
                 templateName: this.options.templateName,
-                xpath: this.data.source,
+                xpath: this.data.source.xpath,
                 href: div.querySelector('input[type="text"]').value,
                 target: div.querySelector('select').value
             }, (res) => {
@@ -1221,7 +1224,7 @@ class TwigVisual {
         this.container.querySelector('.twv-button-add-list')
             .addEventListener('click', (e) => {
                 e.preventDefault();
-                this.addToActionBatch('edit_link', this.data.source, {
+                this.addToActionBatch('edit_link', this.data.source.xpath, {
                     href: div.querySelector('input[type="text"]').value,
                     target: div.querySelector('select').value
                 });
@@ -1288,7 +1291,7 @@ class TwigVisual {
 
             const formData = new FormData();
             formData.append('templateName', this.options.templateName);
-            formData.append('xpath', this.data.source);
+            formData.append('xpath', this.data.source.xpath);
             formData.append('imageFile', fileField.files[0]);
             formData.append('attributeName', attributeName);
 
@@ -1308,7 +1311,7 @@ class TwigVisual {
                 this.showLoading(false);
             }, 'POST');
         });
-        
+
         // Cancel
         buttonCancel.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1381,7 +1384,7 @@ class TwigVisual {
 
             this.request('/twigvisual/delete_element', {
                 templateName: this.options.templateName,
-                xpath: this.data.source,
+                xpath: this.data.source.xpath,
                 clean: this.container.querySelector('input[name="clean"]').checked
             }, (res) => {
                 if (res.success) {
@@ -1404,19 +1407,19 @@ class TwigVisual {
             e.preventDefault();
             componentsContainer.innerHTML = '';
         });
-        
+
         // Add to action list
         this.container.querySelector('.twv-button-add-list')
             .addEventListener('click', (e) => {
                 e.preventDefault();
-                this.addToActionBatch('delete', this.data.source);
+                this.addToActionBatch('delete', this.data.source.xpath);
             });
     }
 
     moveElementInit() {
         const componentsContainer = this.container.querySelector('.twv-ui-components');
         componentsContainer.innerHTML = '';
-        
+
         this.selectionModeDestroy(true, false);
         setTimeout(() => {
             this.selectModeToggle(document.body, 'moveTarget');
@@ -1454,7 +1457,7 @@ class TwigVisual {
 
             this.request('/twigvisual/restore_static', {
                 templateName: this.options.templateName,
-                xpath: this.data.source
+                xpath: this.data.source.xpath
             }, (res) => {
                 if (res.success) {
                     this.windowReload();
@@ -1634,11 +1637,11 @@ class TwigVisual {
             options
         });
         this.selectionModeDestroy(true);
-        
+
         const buttonEl = this.container.querySelector('.twv-button-execute-batch');
         buttonEl.querySelector('span').textContent = `${this.actions.length}`;
         buttonEl.style.display = 'inline-block';
-        
+
         this.actions.forEach((action) => {
             const element = this.getElementByXPath(action.xpath);
             if (element) {
@@ -1683,7 +1686,7 @@ class TwigVisual {
             this.showLoading(false);
         }, 'POST');
     }
-    
+
     showLoading(enabled = true) {
         this.loading = enabled;
         if (enabled) {
@@ -1718,7 +1721,7 @@ class TwigVisual {
         });
         this.timer = setTimeout(this.clearMessage.bind(this), 4000);
     }
-    
+
     clearMessage() {
         const innerContainerEl = this.container.querySelector('.twv-inner');
         if (innerContainerEl.querySelector('.twv-alert')) {
@@ -1794,12 +1797,12 @@ class TwigVisual {
             request.send();
         }
     }
-    
+
     windowReload() {
         let locationHref = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
         window.location.href = locationHref;
     }
-    
+
     /**
      * Set styles to parents
      * @param element
@@ -1847,7 +1850,7 @@ class TwigVisual {
     }
 
     /**
-     * 
+     *
      * @param element
      * @param nodeType
      * @param count

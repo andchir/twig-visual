@@ -78,6 +78,14 @@ class TwigVisualService {
     }
 
     /**
+     * @return bool
+     */
+    public function getIsError()
+    {
+        return $this->isError;
+    }
+
+    /**
      * @param $refererUrl
      * @return TwigVisualService
      */
@@ -575,19 +583,17 @@ class TwigVisualService {
     public function getUiElements($doc, $data, &$uiBlockConfig)
     {
         $elements = [];
-        foreach ($data['data'] as $key => $xpathQuery) {
+        foreach ($data['data'] as $key => $xpathData) {
             if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
                 continue;
             }
             if ($uiBlockConfig['components'][$key]['type'] == 'elementSelect') {
-                $xpath = new \DOMXPath($doc);
-                /** @var \DOMNodeList $entries */
-                $entries = $xpath->evaluate($xpathQuery, $doc);
-                if ($entries->count() === 0) {
-                    $elements[$key] = null;
-                    continue;
+                $node = TwigVisualService::findElementByXPath($doc, $xpathData['xpath'], $xpathData['className']);
+                if (!$node) {
+                    $this->setErrorMessage("Element \"{$uiBlockConfig['components'][$key]['title']}\" not found in template.");
+                    break;
                 }
-                $elements[$key] = $entries->item(0);
+                $elements[$key] = $node;
                 $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
                 
                 if (!empty($uiBlockConfig['components'][$key]['isChildItem'])) {
@@ -1602,15 +1608,30 @@ class TwigVisualService {
     }
 
     /**
-     * @param HTML5DOMElement $doc
+     * @param HTML5DOMDocument $doc
      * @param string $xpathQuery
+     * @param string $className
      * @return \DOMNode|null
      */
-    public static function findElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery)
+    public static function findElementByXPath(\IvoPetkov\HTML5DOMDocument $doc, $xpathQuery, $className = '')
     {
         $xpath = new \DOMXPath($doc);
         /** @var \DOMNodeList $entries */
         $entries = $xpath->evaluate($xpathQuery, $doc);
+        if ($entries->count() === 0 && $className) {
+            $className = self::getSubstringSeparated($className, ' ');
+            $itemXpath = self::getSubstringSeparated($xpathQuery, '/', true);
+            $parentXpath = self::getSubstringSeparated($xpathQuery, '/', false, true);
+            $itemSelector = '//' . $itemXpath . "[starts-with(@class,'{$className}')]";
+            while ($parentXpath) {
+                $entries = $xpath->evaluate($parentXpath . $itemSelector, $doc);
+                if ($entries->count() > 0) {
+                    $parentXpath = '';
+                } else {
+                    $parentXpath = self::getSubstringSeparated($parentXpath, '/', false, true);
+                }
+            }
+        }
         return $entries->count() > 0 ? $entries->item(0) : null;
     }
     
@@ -1680,5 +1701,25 @@ class TwigVisualService {
     {
         if (array() === $arr) return false;
         return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    /**
+     * @param string $string
+     * @param string $separator
+     * @param bool $last
+     * @param bool $notLast
+     * @return mixed
+     */
+    public static function getSubstringSeparated($string, $separator = ' ', $last = false, $notLast = false)
+    {
+        if (!$string || strpos($string, $separator) === false) {
+            return $string;
+        }
+        $tmp = explode($separator, $string);
+        if ($notLast) {
+            array_pop($tmp);
+            return implode($separator, $tmp);
+        }
+        return $last ? $tmp[count($tmp) - 1] : $tmp[0];
     }
 }

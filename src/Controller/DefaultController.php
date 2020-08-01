@@ -17,7 +17,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Class DefaultController
  * @package Andchir\TwigVisualBundle\Controller
- * 
+ *
  * @Route("/twigvisual")
  */
 class DefaultController extends AbstractController
@@ -322,7 +322,7 @@ class DefaultController extends AbstractController
         }
         
         try {
-            $result = $this->service->getDocumentNode($templateName, $data['data']['source'], true);
+            $result = $this->service->getDocumentNode($templateName, $data['data']['source']['xpath'], true);
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
         }
@@ -332,6 +332,9 @@ class DefaultController extends AbstractController
         
         // Step #1
         $elements = $this->service->getUiElements($doc, $data, $uiBlockConfig);
+        if ($this->service->getIsError()) {
+            return $this->setError($this->service->getErrorMessage());
+        }
         $elements['root'] = $node;
         $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
@@ -417,14 +420,14 @@ class DefaultController extends AbstractController
                     try {
                         $elements[$key]->outerHTML = $outerHTML;
                     } catch (\Exception $e) {
-                        
+                    
                     }
                 }
             }
         }
-        
-        // var_dump($doc->saveHTML()); exit;
-        
+
+        // var_dump($uiBlockConfig['components']); exit;
+
         try {
             $this->service->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
