@@ -11,8 +11,8 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bridge\Twig\AppVariable;
-use Doctrine\Common\Persistence\ObjectManager;
-use Doctrine\Common\Persistence\ObjectRepository;
+use Doctrine\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment as TwigEnvironment;
@@ -203,27 +203,33 @@ class TwigVisualService {
         $templateContent = file_get_contents($templatePublicFilePath);
 
         // Styles
-        preg_match_all('/(?:"|\')(?:[^"\']+)\.css(?:"|\')/', $templateContent, $matches);
+        preg_match_all('/(?:"|\')(?:[^"\']+)\.css/', $templateContent, $matches);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $input) {
-                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr($input, 1);
+                if (preg_match("/^(\"|')(http|https):\/\/./", $input)) {
+                    continue;
+                }
+                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr(str_replace(['../', './'], '', $input), 1);
                 $templateContent = str_replace($input, $inputOutput, $templateContent);
             }
             unset($matches);
         }
         
         // Scripts
-        preg_match_all('/(?:"|\')(?:[^"\']+)\.js(?:"|\')/', $templateContent, $matches);
+        preg_match_all('/(?:"|\')(?:[^"\']+)\.js/', $templateContent, $matches);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $input) {
-                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr($input, 1);
+                if (preg_match("/^(\"|')(http|https):\/\/./", $input)) {
+                    continue;
+                }
+                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr(str_replace(['../', './'], '', $input), 1);
                 $templateContent = str_replace($input, $inputOutput, $templateContent);
             }
             unset($matches);
         }
 
         // Images
-        preg_match_all('/(?:"|\')(?:[^"\']+)\.(?:jpg|jpeg|png|gif|webp|ico)(?:"|\')/', $templateContent, $matches);
+        preg_match_all('/(?:"|\')(?:[^"\']+)\.(?:jpg|jpeg|png|gif|webp|ico)/', $templateContent, $matches);
         preg_match_all('/(?:\()(?:[^\)]+)\.(?:jpg|jpeg|png|gif|webp|ico)(?:\))/', $templateContent, $matches2);
         if (empty($matches[0])) {
             $matches = [[]];
@@ -234,7 +240,7 @@ class TwigVisualService {
         $matches[0] = array_merge($matches[0], $matches2[0]);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $input) {
-                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr($input, 1);
+                $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr(str_replace(['../', './'], '', $input), 1);
                 $templateContent = str_replace($input, $inputOutput, $templateContent);
             }
         }
