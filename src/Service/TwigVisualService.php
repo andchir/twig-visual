@@ -1667,24 +1667,12 @@ class TwigVisualService {
                 }
             }
             else if ($key === 'app' && $val instanceof AppVariable) {
+                $output[] = ['name' => 'app.user', 'type' => 'object'];
+                $output[] = ['name' => 'app.request', 'type' => 'object'];
+                $output[] = ['name' => 'app.session', 'type' => 'object'];
+                $output[] = ['name' => 'app.flashes', 'type' => 'object'];
                 $output[] = [
-                    'name' => $key . '.user',
-                    'type' => method_exists($val, 'getUser') ? gettype($val->getUser()) : 'null'
-                ];
-                $output[] = [
-                    'name' => $key . '.request',
-                    'type' => method_exists($val, 'getRequest') ? gettype($val->getRequest()) : 'null'
-                ];
-                $output[] = [
-                    'name' => $key . '.session',
-                    'type' => method_exists($val, 'getSession') ? gettype($val->getSession()) : 'null'
-                ];
-                $output[] = [
-                    'name' => $key . '.flashes',
-                    'type' => method_exists($val, 'getFlashes') ? gettype($val->getFlashes()) : 'null'
-                ];
-                $output[] = [
-                    'name' => $key . '.environment',
+                    'name' => 'app.environment',
                     'type' => method_exists($val, 'getEnvironment') ? gettype($val->getEnvironment()) : 'null'
                 ];
             }
