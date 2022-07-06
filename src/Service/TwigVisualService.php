@@ -240,6 +240,9 @@ class TwigVisualService {
         $matches[0] = array_merge($matches[0], $matches2[0]);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $input) {
+                if (strpos($input, ':url(') !== false) {
+                    continue;
+                }
                 $inputOutput = substr($input, 0, 1) . $templateAssetsBaseUrl . substr(str_replace(['../', './'], '', $input), 1);
                 $templateContent = str_replace($input, $inputOutput, $templateContent);
             }

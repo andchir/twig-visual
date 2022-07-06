@@ -7,11 +7,13 @@ use App\Service\UtilsService;
 use IvoPetkov\HTML5DOMDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -26,11 +28,18 @@ class DefaultController extends AbstractController
     protected $service;
     /** @var TranslatorInterface */
     protected $translator;
+    /** @var ParameterBagInterface */
+    protected $params;
 
-    public function __construct(TwigVisualService $service, TranslatorInterface $translator)
+    public function __construct(
+        TwigVisualService $service,
+        TranslatorInterface $translator,
+        ParameterBagInterface $params
+    )
     {
         $this->service = $service;
         $this->translator = $translator;
+        $this->params = $params;
     }
 
     /**
@@ -374,6 +383,35 @@ class DefaultController extends AbstractController
 
                 $this->service->elementWrapComment($elements['root'], $commentKey);
 
+                break;
+            case 'translatedText':
+
+                $rootPath = $this->service->getParameter('kernel.project_dir');
+                $localeFallback = 'en';
+                $textDefault = $data['data']['text_en'] ?? '';
+
+                if ($textDefault) {
+                    foreach ($data['data'] as $key => $value) {
+                        if (strpos($key, 'text_') === false) {
+                            continue;
+                        }
+                        list($keyName, $langName) = explode('_', $key);
+                        if ($langName == $localeFallback) {
+                            continue;
+                        }
+                        $langFilePath = $rootPath . "/translations/messages.{$langName}.yaml";
+                        $langData = file_exists($langFilePath) ? Yaml::parseFile($langFilePath) : [];
+                        $langData[$textDefault] = $value;
+
+                        if (file_exists($langFilePath) && !is_writable($langFilePath)) {
+                            return $this->setError($this->translator->trans('File is not writable: %fileName%', [
+                                '%fileName%' => "messages.{$langName}.yaml"
+                            ]));
+                        }
+
+                        file_put_contents($langFilePath, Yaml::dump($langData, 2, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK));
+                    }
+                }
                 break;
         }
         
