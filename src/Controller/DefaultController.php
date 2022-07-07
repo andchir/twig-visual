@@ -429,7 +429,9 @@ class DefaultController extends AbstractController
                     $uiBlockConfig['components'],
                     'outerHTML'
                 );
-                $outerHTML = $this->service->beautify($outerHTML);
+                if (TwigVisualService::isMultiline($uiBlockConfig['components']['root']['template'])) {
+                    $outerHTML = $this->service->beautify($outerHTML);
+                }
                 $outerHTML = TwigVisualService::prepareTwigTags($outerHTML);
                 
                 if (!empty($opts['saveBackupCopy'])) {

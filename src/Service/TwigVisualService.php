@@ -1719,4 +1719,13 @@ class TwigVisualService {
         }
         return $last ? $tmp[count($tmp) - 1] : $tmp[0];
     }
+
+    /**
+     * @param string $string
+     * @return bool
+     */
+    public static function isMultiline($string)
+    {
+        return strpos($string, '\n') !== false;
+    }
 }
