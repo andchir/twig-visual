@@ -229,8 +229,8 @@ class TwigVisualService {
         }
 
         // Images
-        preg_match_all('/(?:"|\')(?:[^"\']+)\.(?:jpg|jpeg|png|gif|webp|ico)/', $templateContent, $matches);
-        preg_match_all('/(?:\()(?:[^\)]+)\.(?:jpg|jpeg|png|gif|webp|ico)(?:\))/', $templateContent, $matches2);
+        preg_match_all('/(?:"|\')(?:[^"\']+)\.(?:jpg|jpeg|png|gif|svg|webp|ico)/', $templateContent, $matches);
+        preg_match_all('/(?:\()(?:[^\)]+)\.(?:jpg|jpeg|png|gif|svg|webp|ico)(?:\))/', $templateContent, $matches2);
         if (empty($matches[0])) {
             $matches = [[]];
         }
