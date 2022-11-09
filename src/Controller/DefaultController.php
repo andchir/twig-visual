@@ -330,8 +330,13 @@ class DefaultController extends AbstractController
             }
         }
         
+        $xPath = isset($data['data']['source']) && is_string($data['data']['source']) ? $data['data']['source'] : ($data['data']['source']['xpath'] ?? '');
+        if (!$xPath) {
+            return $this->setError('XPath is empty.');
+        }
+
         try {
-            $result = $this->service->getDocumentNode($templateName, $data['data']['source']['xpath'], true);
+            $result = $this->service->getDocumentNode($templateName, $xPath, true);
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());
         }

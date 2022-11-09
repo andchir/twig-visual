@@ -19,7 +19,8 @@ class TwigVisual {
             templates: [],
             pageFields: [],
             uiOptions: {},
-            locale: 'en'
+            locale: 'en',
+            urlGetCollections: '/admin/content_types'
         }, options);
         this.translations = window.twv_translations || {};
         this.state = 'inactive';
@@ -872,7 +873,35 @@ class TwigVisual {
                     d.innerHTML = `
                     <div class="twv-mb-3">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="${cmp.name}">
+                        <select id="tww-field-option-${cmp.name}" class="twv-custom-select" name="${cmp.name}">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    break;
+                case 'dbCollectionName':
+
+                    optionsHTML = '';
+                    this.showLoading(true);
+                    this.request(this.options.urlGetCollections, {}, (res) => {
+                        if (res.items) {
+                            res.items.forEach((item) => {
+                                optionsHTML += `<option value="${item.collection}">${item.title}</option>`;
+                            });
+                            d.querySelector('select').innerHTML = optionsHTML;
+                        }
+                        this.showLoading(false);
+                    }, (err) => {
+                        this.addAlertMessage(err.error || err);
+                        this.showLoading(false);
+                    });
+
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.name}" class="twv-custom-select" name="${cmp.name}">
                             ${optionsHTML}
                         </select>
                     </div>
