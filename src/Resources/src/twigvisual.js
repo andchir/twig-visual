@@ -526,7 +526,7 @@ class TwigVisual {
         containerEl.innerHTML = `
         <div class="twv-panel-header">
             <div class="twv-panel-header-buttons">
-                <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-undo" type="button" title="${this.trans('Undo the last action')}">
+                <button class="twv-btn twv-btn-sm twv-button-undo" type="button" title="${this.trans('Undo the last action')}">
                     <i class="twv-icon-undo"></i>
                 </button>
                 <button class="twv-btn twv-btn-sm twv-ml-1 twv-button-execute-batch" type="button" title="${this.trans('Execute batch of operations')}" style="display: none;">
@@ -541,26 +541,26 @@ class TwigVisual {
                 <i class="twv-icon-arrow_forward"></i>
             </button>
         </div>
-        <div class="twv-mb-2">
+        <div class="twv-px-3 twv-mb-2">
             <button type="button" class="twv-btn twv-btn-block twv-button-new-theme">
                 <i class="twv-icon-add"></i>
                 ${this.trans('Create new theme')}
             </button>
         </div>
-        <div class="twv-mb-2">
+        <div class="twv-px-3 twv-mb-2">
             <button type="button" class="twv-btn twv-btn-block twv-button-new-template">
                 <i class="twv-icon-add"></i>
                 ${this.trans('Create new template')}
             </button>
         </div>
-        <div class="twv-mb-3">
+        <div class="twv-px-3 twv-mb-3">
             <button type="button" class="twv-btn twv-btn-primary twv-btn-block twv-button-start-select">
                 <i class="twv-icon-center_focus_strong"></i>
                 ${this.trans('Interface item')}
             </button>
         </div>
         <div class="twv-inner-wrapper">
-            <div class="twv-inner"></div>
+            <div class="twv-px-3 twv-inner"></div>
         </div>
         `;
         document.body.appendChild(containerEl);
