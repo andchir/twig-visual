@@ -21,7 +21,8 @@ class TwigVisual {
             uiOptions: {},
             locale: 'en',
             urlGetCollections: '/admin/content_types',
-            urlGetCollectionFields: '/admin/content_types/by_name/'
+            urlGetCollectionFields: '/admin/content_types/by_name/',
+            urlCreateContent: '/admin/products/'
         }, options);
         this.translations = window.twv_translations || {};
         this.state = 'inactive';
@@ -687,20 +688,40 @@ class TwigVisual {
 
             this.showLoading(true);
 
-            this.request(requestUrl, data, (res) => {
-                if (res.success) {
-                    this.windowReload();
-                } else {
+            const makeRequest = (requestData) => {
+                this.request(requestUrl, requestData, (res) => {
+                    if (res.success) {
+                        this.windowReload();
+                    } else {
+                        buttonSubmit.removeAttribute('disabled');
+                        buttonCancel.removeAttribute('disabled');
+                        this.showLoading(false);
+                    }
+                }, (err) => {
+                    this.addAlertMessage(err.error || err);
                     buttonSubmit.removeAttribute('disabled');
                     buttonCancel.removeAttribute('disabled');
                     this.showLoading(false);
-                }
-            }, (err) => {
-                this.addAlertMessage(err.error || err);
-                buttonSubmit.removeAttribute('disabled');
-                buttonCancel.removeAttribute('disabled');
-                this.showLoading(false);
-            }, 'POST');
+                }, 'POST');
+            };
+
+            if (typeValue === 'includeContent' && !data.data.contentId && data.data.title && data.data.parentId) {
+                this.createContent(data.data.parentId, data.data.title, this.parentElement.innerHTML.trim(), data.data.contentFieldName, (res) => {
+                    if (res.success) {
+                        data.data.contentId = res.result._id || res.result.id;
+                        makeRequest(data);
+                    } else {
+                        if (res.error) {
+                            this.addAlertMessage(res.error);
+                        }
+                        buttonSubmit.removeAttribute('disabled');
+                        buttonCancel.removeAttribute('disabled');
+                        this.showLoading(false);
+                    }
+                });
+            } else {
+                makeRequest(data);
+            }
         });
 
         // Cancel
@@ -725,6 +746,27 @@ class TwigVisual {
                 this.selectionModeDestroy(true);
             }
         });
+    }
+
+    createContent(parentId, title, textContent, contentFieldName, callBackFunc) {
+        const url = this.options.urlCreateContent + parentId;
+        const data = {
+            parentId,
+            title,
+            name: title.trim().toLowerCase().replace(' ', '-').substring(0, 25),
+            isActive: true,
+            clearCache: true
+        };
+        data[contentFieldName] = textContent;
+        this.request(url, data, (res) => {
+            if (typeof callBackFunc === 'function') {
+                callBackFunc({success: true, result: res});
+            }
+        }, (err) => {
+            if (typeof callBackFunc === 'function') {
+                callBackFunc({success: false, error: err.error || ''});
+            }
+        }, 'POST');
     }
 
     /**
@@ -1784,6 +1826,7 @@ class TwigVisual {
         <div class="twv-alert twv-alert-${type}">${message}</div>
         `;
         innerContainerEl.appendChild(div);
+        innerContainerEl.scrollTop = innerContainerEl.scrollHeight;
 
         div.addEventListener('mouseenter', () => {
             clearTimeout(this.timer);
@@ -1861,7 +1904,8 @@ class TwigVisual {
         request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         if (!(data instanceof FormData)) {
             data = JSON.stringify(data);
-            request.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+            request.setRequestHeader('Accept', 'application/json');
+            request.setRequestHeader('Content-Type', 'application/json');
         }
         if (method === 'POST') {
             request.send(data);

@@ -1427,12 +1427,12 @@ class TwigVisualService {
             }
         }
         if ($includeTextContent && $sourceElement->textContent) {
-            $textNode = self::findChildByType($targetElement, XML_TEXT_NODE);
-            if ($textNode) {
-                $textNode->nodeValue = $sourceElement->textContent;
-            } else {
+//            $textNode = self::findChildByType($targetElement, XML_TEXT_NODE);
+//            if ($textNode) {
+//                $textNode->nodeValue = $sourceElement->textContent;
+//            } else {
                 $targetElement->textContent = $sourceElement->textContent;
-            }
+//            }
         }
     }
 
