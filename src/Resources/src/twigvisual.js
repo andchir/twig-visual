@@ -20,7 +20,8 @@ class TwigVisual {
             pageFields: [],
             uiOptions: {},
             locale: 'en',
-            urlGetCollections: '/admin/content_types'
+            urlGetCollections: '/admin/content_types',
+            urlGetCollectionFields: '/admin/content_types/by_name/'
         }, options);
         this.translations = window.twv_translations || {};
         this.state = 'inactive';
@@ -770,6 +771,10 @@ class TwigVisual {
                             value = value ? value + ' ' + compStyles[cmp.styleName] : compStyles[cmp.styleName];
                         }
                     }
+                    if (!value && cmp.name === 'title') {
+                        const headerEls = this.parentElement.querySelectorAll('h1,h2,h3,h4,h5,h6');
+                        value = headerEls.length > 0 ? headerEls[0].innerText : '';
+                    }
 
                     d.innerHTML = `
                     <div class="twv-mb-2">
@@ -884,20 +889,58 @@ class TwigVisual {
                 case 'dbCollectionName':
 
                     optionsHTML = '';
+                    const updateFieldsList = () => {
+                        const targetFieldsSelectEl = document.getElementById('tww-field-option-contentFieldName');
+                        const collectionName = d.querySelector('select').value;
+                        targetFieldsSelectEl.innerHTML = '';
+                        this.request(this.options.urlGetCollectionFields + collectionName, {}, (res) => {
+                            if (res.fields) {
+                                let optsHTML = '';
+                                let fieldAutoSelect = '';
+                                res.fields.forEach((item) => {
+                                    optsHTML += `<option value="${item.name}">${item.title}</option>`;
+                                    if (['description', 'content'].indexOf(item.name) > -1) {
+                                        fieldAutoSelect = item.name;
+                                    }
+                                });
+                                targetFieldsSelectEl.innerHTML = optsHTML;
+                                targetFieldsSelectEl.value = fieldAutoSelect ? fieldAutoSelect : res.fields[0].name;
+                            }
+                            this.showLoading(false);
+                        });
+                    };
+
                     this.showLoading(true);
                     this.request(this.options.urlGetCollections, {}, (res) => {
                         if (res.items) {
                             res.items.forEach((item) => {
-                                optionsHTML += `<option value="${item.collection}">${item.title}</option>`;
+                                optionsHTML += `<option value="${item.name}">${item.title}</option>`;
                             });
                             d.querySelector('select').innerHTML = optionsHTML;
                         }
+                        updateFieldsList();
                         this.showLoading(false);
                     }, (err) => {
                         this.addAlertMessage(err.error || err);
                         this.showLoading(false);
                     });
 
+                    d.innerHTML = `
+                    <div class="twv-mb-3">
+                        <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
+                        <select id="tww-field-option-${cmp.name}" class="twv-custom-select" name="${cmp.name}">
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                    `;
+                    div.appendChild(d);
+
+                    d.querySelector('select').addEventListener('change', updateFieldsList.bind(this));
+
+                    break;
+                case 'dbCollectionField':
+
+                    optionsHTML = '';
                     d.innerHTML = `
                     <div class="twv-mb-3">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>

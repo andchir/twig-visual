@@ -15,7 +15,9 @@ Backup copy not found.: Резервная копия не найдена.
 You cannot restore the source code of this item.: Вы не можете вернуть исходный код данного элемента.
 Cache file is not writable.: Файл кэша недоступен для записи.
 Theme directory is not writable.: Папка темы недоступна для записи.
+Content of the page: Контент страницы
 Content field: Поле контента
+Content title: Заголовок контента
 Root element: Корневой элемент
 Value key: Ключ значения
 Make included: Сделать встроенным
@@ -33,6 +35,7 @@ Bread crumbs: Хлебные крошки
 Item: Элемент
 CSS activity class: CSS класс активности
 Name suffix: Суффикс имени
+DB collection name: Название коллекции БД
 Delete previous child: Удалить дочерние предыдущие
 Delete next child: Удалить дочерние следующие
 Catalog products: Товары каталога
