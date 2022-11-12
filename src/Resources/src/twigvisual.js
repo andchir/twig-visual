@@ -753,7 +753,7 @@ class TwigVisual {
         const data = {
             parentId,
             title,
-            name: title.trim().toLowerCase().replace(' ', '-').substring(0, 25),
+            name: title.trim().toLowerCase().replace(/\s/g, '-').substring(0, 25),
             isActive: true,
             clearCache: true
         };
