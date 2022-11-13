@@ -705,8 +705,8 @@ class TwigVisual {
                 }, 'POST');
             };
 
-            if (typeValue === 'includeContent' && !data.data.contentId && data.data.title && data.data.parentId) {
-                this.createContent(data.data.parentId, data.data.title, this.parentElement.innerHTML.trim(), data.data.contentFieldName, (res) => {
+            if (typeValue === 'includeContent' && !data.data.contentId && data.data.contentTitle && data.data.parentId) {
+                this.createPage(data.data.parentId, data.data.contentTitle, data, (res) => {
                     if (res.success) {
                         data.data.contentId = res.result._id || res.result.id;
                         makeRequest(data);
@@ -748,17 +748,40 @@ class TwigVisual {
         });
     }
 
-    createContent(parentId, title, textContent, contentFieldName, callBackFunc) {
+    createPage(parentId, title, data, callBackFunc) {
         const url = this.options.urlCreateContent + parentId;
-        const data = {
+        const dataIndex = this.components.findIndex((item) => {
+            return item.type === 'dbCollectionFieldsLIst';
+        });
+        if (dataIndex === -1) {
+            if (typeof callBackFunc === 'function') {
+                callBackFunc({success: false});
+            }
+            return;
+        }
+        const optionName = this.components[dataIndex].name;
+        const pageData = {
             parentId,
             title,
             name: title.trim().toLowerCase().replace(/\s/g, '-').substring(0, 25),
             isActive: true,
             clearCache: true
         };
-        data[contentFieldName] = textContent;
-        this.request(url, data, (res) => {
+        this.removeOverlay();
+        Object.keys(data.data).forEach((key) => {
+            if (key.indexOf(optionName) === 0) {
+                const xpath = data.data[key]['xpath'];
+                const tmp = key.split('_');
+                const element = this.getElementByXPath(xpath);
+                if (!element || tmp[1] === 'title') {
+                    return;
+                }
+                pageData[tmp[1]] = element.innerHTML;
+            }
+        });
+        this.highlightElement();
+
+        this.request(url, pageData, (res) => {
             if (typeof callBackFunc === 'function') {
                 callBackFunc({success: true, result: res});
             }
@@ -813,7 +836,7 @@ class TwigVisual {
                             value = value ? value + ' ' + compStyles[cmp.styleName] : compStyles[cmp.styleName];
                         }
                     }
-                    if (!value && cmp.name === 'title') {
+                    if (!value && cmp.name === 'contentTitle') {
                         const headerEls = this.parentElement.querySelectorAll('h1,h2,h3,h4,h5,h6');
                         value = headerEls.length > 0 ? headerEls[0].innerText : '';
                     }
