@@ -931,27 +931,6 @@ class TwigVisual {
                 case 'dbCollectionName':
 
                     optionsHTML = '';
-                    const updateFieldsList = () => {
-                        const targetFieldsSelectEl = document.getElementById('tww-field-option-contentFieldName');
-                        const collectionName = d.querySelector('select').value;
-                        targetFieldsSelectEl.innerHTML = '';
-                        this.request(this.options.urlGetCollectionFields + collectionName, {}, (res) => {
-                            if (res.fields) {
-                                let optsHTML = '';
-                                let fieldAutoSelect = '';
-                                res.fields.forEach((item) => {
-                                    optsHTML += `<option value="${item.name}">${item.title}</option>`;
-                                    if (['description', 'content'].indexOf(item.name) > -1) {
-                                        fieldAutoSelect = item.name;
-                                    }
-                                });
-                                targetFieldsSelectEl.innerHTML = optsHTML;
-                                targetFieldsSelectEl.value = fieldAutoSelect ? fieldAutoSelect : res.fields[0].name;
-                            }
-                            this.showLoading(false);
-                        });
-                    };
-
                     this.showLoading(true);
                     this.request(this.options.urlGetCollections, {}, (res) => {
                         if (res.items) {
@@ -960,8 +939,7 @@ class TwigVisual {
                             });
                             d.querySelector('select').innerHTML = optionsHTML;
                         }
-                        updateFieldsList();
-                        this.showLoading(false);
+                        this.updateCollectionFieldsList(d.querySelector('select').value);
                     }, (err) => {
                         this.addAlertMessage(err.error || err);
                         this.showLoading(false);
@@ -977,7 +955,10 @@ class TwigVisual {
                     `;
                     div.appendChild(d);
 
-                    d.querySelector('select').addEventListener('change', updateFieldsList.bind(this));
+                    d.querySelector('select').addEventListener('change', () => {
+                        this.showLoading(true);
+                        this.updateCollectionFieldsList(d.querySelector('select').value);
+                    });
 
                     break;
                 case 'dbCollectionField':
@@ -986,7 +967,7 @@ class TwigVisual {
                     d.innerHTML = `
                     <div class="twv-mb-3">
                         <label class="twv-display-block twv-mb-1" for="tww-field-option-${cmp.name}">${cmp.title}</label>
-                        <select id="tww-field-option-${cmp.name}" class="twv-custom-select" name="${cmp.name}">
+                        <select id="tww-field-option-${cmp.type}" class="twv-custom-select" name="${cmp.name}">
                             ${optionsHTML}
                         </select>
                     </div>
@@ -994,9 +975,64 @@ class TwigVisual {
                     div.appendChild(d);
 
                     break;
+                case 'dbCollectionFieldsLIst':
+
+                    d.innerHTML = `<div class="twv-mb-3" id="tww-field-option-${cmp.type}" data-name="${cmp.name}"></div>`;
+                    div.appendChild(d);
+
+                    break;
             }
         });
         componentsContainer.appendChild(div);
+    }
+
+    updateCollectionFieldsButtonsList(targetContainerEl, fields) {
+        const targetName = targetContainerEl.dataset.name || 'child_item';
+        targetContainerEl.innerHTML = '';
+        fields.forEach((field) => {
+            const d = document.createElement('div');
+                d.innerHTML = `<div class="twv-mb-2">
+                <button data-twv-key="${targetName}_${field.name}" class="twv-btn twv-btn-block twv-text-overflow">${field.title}</button>
+            </div>
+            `;
+            d.querySelector('button').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.state === 'active') {
+                    return;
+                }
+                e.target.setAttribute('disabled', 'disabled');
+                this.selectModeToggle(this.parentElement, `${targetName}_${field.name}`, false);
+            });
+            targetContainerEl.appendChild(d);
+        });
+    }
+
+    updateCollectionFieldsList(collectionName) {
+        const targetContainerEl = document.getElementById('tww-field-option-dbCollectionFieldsLIst');
+        const targetFieldsSelectEl = document.getElementById('tww-field-option-dbCollectionField');
+        this.request(this.options.urlGetCollectionFields + collectionName, {}, (res) => {
+            if (targetContainerEl) {
+                this.updateCollectionFieldsButtonsList(targetContainerEl, res.fields);
+            }
+            if (!targetFieldsSelectEl) {
+                this.showLoading(false);
+                return;
+            }
+            targetFieldsSelectEl.innerHTML = '';
+            if (res.fields) {
+                let optsHTML = '';
+                let fieldAutoSelect = '';
+                res.fields.forEach((item) => {
+                    optsHTML += `<option value="${item.name}">${item.title}</option>`;
+                    if (['description', 'content'].indexOf(item.name) > -1) {
+                        fieldAutoSelect = item.name;
+                    }
+                });
+                targetFieldsSelectEl.innerHTML = optsHTML;
+                targetFieldsSelectEl.value = fieldAutoSelect ? fieldAutoSelect : res.fields[0].name;
+            }
+            this.showLoading(false);
+        });
     }
 
     checkRequired(data, components) {
@@ -1133,6 +1169,7 @@ class TwigVisual {
                 ${optionsHTML}
             </select>
         </div>
+        <hr class="twv-hr">
         <div class="twv-mb-3 twv-ui-components"></div>
         `;
         this.container.querySelector('.twv-inner').appendChild(div);

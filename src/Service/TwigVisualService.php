@@ -593,29 +593,115 @@ class TwigVisualService {
     {
         $elements = [];
         foreach ($data['data'] as $key => $xpathData) {
-            if (in_array($key, ['root', 'source']) || !isset($uiBlockConfig['components'][$key])) {
+            if (in_array($key, ['root', 'source'])) {
                 continue;
             }
-            if ($uiBlockConfig['components'][$key]['type'] == 'elementSelect') {
-                $node = TwigVisualService::findElementByXPath($doc, $xpathData['xpath'], $xpathData['className']);
-                if (!$node) {
-                    $this->setErrorMessage("Element \"{$uiBlockConfig['components'][$key]['title']}\" not found in template.");
-                    break;
+            $cmpKey = $key;
+            $elKey = $key;
+            $tmp = explode('_', $cmpKey);
+            if (!isset($uiBlockConfig['components'][$cmpKey]) && isset($uiBlockConfig['components'][$tmp[0]])) {
+                $cmpKey = $tmp[0];
+                $elKey = $tmp[1] ?? $tmp[0];
+            }
+            if (!isset($uiBlockConfig['components'][$cmpKey])
+                || !isset($xpathData['xpath'])
+                || !in_array($uiBlockConfig['components'][$cmpKey]['type'], ['elementSelect', 'dbCollectionFieldsLIst'])) {
+                continue;
+            }
+            $node = TwigVisualService::findElementByXPath($doc, $xpathData['xpath'], $xpathData['className']);
+            if (!$node) {
+                $this->setErrorMessage("Element \"{$uiBlockConfig['components'][$cmpKey]['title']}\" not found in template.");
+                break;
+            }
+            $elements[$key] = $node;
+            if (!isset($uiBlockConfig['components'][$key])) {
+                $uiBlockConfig['components'][$key] = [
+                    'type' => 'elementSelect',
+                    'output' => "<{$key}/>",
+                    'template' => "<{$key}>{{ {$elKey} | raw }}</{$key}>"
+                ];
+            }
+            $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
+
+            if (!empty($uiBlockConfig['components'][$key]['isChildItem'])) {
+                if (!empty($data['data']['deleteLeftSiblings'])) {
+                    self::deleteLeftSiblings($elements[$key]);
                 }
-                $elements[$key] = $node;
-                $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
-                
-                if (!empty($uiBlockConfig['components'][$key]['isChildItem'])) {
-                    if (!empty($data['data']['deleteLeftSiblings'])) {
-                        self::deleteLeftSiblings($elements[$key]);
-                    }
-                    if (!empty($data['data']['deleteRightSiblings'])) {
-                        self::deleteRightSiblings($elements[$key]);
-                    }
+                if (!empty($data['data']['deleteRightSiblings'])) {
+                    self::deleteRightSiblings($elements[$key]);
                 }
             }
         }
         return $elements;
+    }
+
+    /**
+     * @param string $actionName
+     * @param array $data
+     * @param array $elements
+     * @return void
+     * @throws \Twig\Error\LoaderError
+     */
+    public function actionPreProcessing($actionName, $data, $elements)
+    {
+        switch ($actionName) {
+            case 'include':
+            case 'includeCreate':
+
+                $includeTemplateName = $data['data']['includeName'] ?? '';
+                if (!$includeTemplateName) {
+                    break;
+                }
+                $templatesExtension = $this->getConfigValue('templates_extension');
+                $themeDirPath = $this->getCurrentThemeDirPath();
+                $includes = $this->getIncludesList(true);
+                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
+                $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
+
+                if ($actionName == 'includeCreate') {
+                    if (!is_dir(dirname($templatePath))) {
+                        mkdir(dirname($templatePath));
+                    }
+                    file_put_contents($templatePath, '');
+                } else if (!in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
+                    break;
+                }
+                $commentKey = 'twv-include-' . TwigVisualService::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR;
+                $commentKey .= $includeTemplateName . '.' . $templatesExtension;
+
+                $this->elementWrapComment($elements['root'], $commentKey);
+
+                break;
+            case 'translatedText':
+
+                $rootPath = $this->getParameter('kernel.project_dir');
+                $localeFallback = 'en';
+                $textDefault = $data['data']['text_en'] ?? '';
+
+                if ($textDefault) {
+                    foreach ($data['data'] as $key => $value) {
+                        if (strpos($key, 'text_') === false) {
+                            continue;
+                        }
+                        list($keyName, $langName) = explode('_', $key);
+                        if ($langName == $localeFallback) {
+                            continue;
+                        }
+                        $langFilePath = $rootPath . "/translations/messages.{$langName}.yaml";
+                        $langData = file_exists($langFilePath) ? Yaml::parseFile($langFilePath) : [];
+                        $langData[$textDefault] = $value;
+
+                        if (file_exists($langFilePath) && !is_writable($langFilePath)) {
+                            throw new \Exception($this->translator->trans('File is not writable: %fileName%', [
+                                '%fileName%' => "messages.{$langName}.yaml"
+                            ]));
+                        }
+
+                        file_put_contents($langFilePath, Yaml::dump($langData, 2, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK));
+                    }
+                }
+                break;
+        }
     }
 
     /**
@@ -1727,5 +1813,9 @@ class TwigVisualService {
     public static function isMultiline($string)
     {
         return strpos($string, '\n') !== false;
+    }
+
+    public static function isHTML($string){
+        return ($string != strip_tags($string));
     }
 }

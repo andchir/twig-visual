@@ -360,64 +360,10 @@ class DefaultController extends AbstractController
         if (!$this->service->prepareOptionsByTemplates($uiBlockConfig, $elements, $templateName)) {
             return $this->setError($this->service->getErrorMessage());
         }
-
-        switch ($actionName) {
-            case 'include':
-            case 'includeCreate':
-                
-                $includeTemplateName = $data['data']['includeName'] ?? '';
-                if (!$includeTemplateName) {
-                    break;
-                }
-                $templatesExtension = $this->service->getConfigValue('templates_extension');
-                $themeDirPath = $this->service->getCurrentThemeDirPath();
-                $includes = $this->service->getIncludesList(true);
-                $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
-                $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
-                
-                if ($actionName == 'includeCreate') {
-                    if (!is_dir(dirname($templatePath))) {
-                        mkdir(dirname($templatePath));
-                    }
-                    file_put_contents($templatePath, '');
-                } else if (!in_array($includeTemplateName, $includes) || !file_exists($templatePath)) {
-                    break;
-                }
-                $commentKey = 'twv-include-' . TwigVisualService::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR;
-                $commentKey .= $includeTemplateName . '.' . $templatesExtension;
-
-                $this->service->elementWrapComment($elements['root'], $commentKey);
-
-                break;
-            case 'translatedText':
-
-                $rootPath = $this->service->getParameter('kernel.project_dir');
-                $localeFallback = 'en';
-                $textDefault = $data['data']['text_en'] ?? '';
-
-                if ($textDefault) {
-                    foreach ($data['data'] as $key => $value) {
-                        if (strpos($key, 'text_') === false) {
-                            continue;
-                        }
-                        list($keyName, $langName) = explode('_', $key);
-                        if ($langName == $localeFallback) {
-                            continue;
-                        }
-                        $langFilePath = $rootPath . "/translations/messages.{$langName}.yaml";
-                        $langData = file_exists($langFilePath) ? Yaml::parseFile($langFilePath) : [];
-                        $langData[$textDefault] = $value;
-
-                        if (file_exists($langFilePath) && !is_writable($langFilePath)) {
-                            return $this->setError($this->translator->trans('File is not writable: %fileName%', [
-                                '%fileName%' => "messages.{$langName}.yaml"
-                            ]));
-                        }
-
-                        file_put_contents($langFilePath, Yaml::dump($langData, 2, 4, Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK));
-                    }
-                }
-                break;
+        try {
+            $this->service->actionPreProcessing($actionName, $data, $elements);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
         }
         
         // Step #4
