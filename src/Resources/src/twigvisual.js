@@ -1673,6 +1673,13 @@ class TwigVisual {
             <input type="text" id="tww-field-theme-mainpage" class="twv-form-control" value="index.html">
         </div>
         <div class="twv-mb-3">
+            <label class="twv-btn twv-btn-secondary twv-btn-block twv-button-upload">
+                <input type="file" accept=".zip" class="twv-display-none" name="file">
+                <i class="twv-icon-file_upload"></i>
+                ${this.trans('Upload ZIP file')}
+            </label>
+        </div>
+        <div class="twv-mb-3">
             <button type="button" class="twv-btn twv-btn-primary twv-mr-1 twv-button-submit">${this.trans('Create')}</button>
             <button type="button" class="twv-btn twv-btn twv-button-cancel">${this.trans('Cancel')}</button>
         </div>
@@ -1715,6 +1722,30 @@ class TwigVisual {
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
             innerContainerEl.innerHTML = '';
+        });
+
+        innerContainerEl.querySelector('.twv-button-upload > input').addEventListener('change', (e) => {
+            const fieldMainpageEl = document.getElementById('tww-field-theme-mainpage');
+            const buttonEl = innerContainerEl.querySelector('.twv-button-upload');
+            const files = e.target.files;
+            if (files && files.length === 0) {
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', files[0]);
+            formData.append('mainpage', fieldMainpageEl.value);
+
+            this.showLoading(true);
+            this.request('/twigvisual/upload_theme', formData, (res) => {
+                if (res.success) {
+                    this.windowReload();
+                } else {
+                    this.showLoading(false);
+                }
+            }, (err) => {
+                this.addAlertMessage(err.error || err);
+                this.showLoading(false);
+            }, 'POST');
         });
     }
 

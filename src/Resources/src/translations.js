@@ -36,6 +36,7 @@ module.exports = {
         'Template name': 'Название шаблона',
         'HTML-file': 'HTML-файл',
         'The selected item must have tag {tagName}.': 'Выбранный элемент должен иметь тег {tagName}.',
-        'The selected item must have tag {tagName} or have a background image.': 'Выбранный элемент должен иметь тег {tagName} или фоновую картинку.'
+        'The selected item must have tag {tagName} or have a background image.': 'Выбранный элемент должен иметь тег {tagName} или фоновую картинку.',
+        'Upload ZIP file': 'Загрузить ZIP файл'
     }
 };

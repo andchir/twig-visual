@@ -12,6 +12,7 @@
 .twv-text-success { color: #28a745; }
 .twv-display-block { display: block; }
 .twv-display-inline { display: inline; }
+.twv-display-none { display: none; }
 .twv-float-right { float: right; }
 .twv-nowrap { white-space: nowrap; }
 .twv-hr { padding: 0; border-top: 0; border-bottom: 1px solid rgba(0,0,0,0.5); margin: 0 0 15px 0; }
