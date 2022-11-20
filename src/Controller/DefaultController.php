@@ -150,7 +150,7 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/edit_link", methods={"POST"})
+     * @Route("/edit_attribute", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
      * @return JsonResponse
@@ -166,13 +166,17 @@ class DefaultController extends AbstractController
         }
         $templateName = $data['templateName'];
         $xpath = $data['xpath'];
-        $href = $data['href'] ?? '';
+        $attributeName = $data['attribute'] ?? '';
+        $value = $data['value'] ?? '';
         $target = $data['target'] ?? '_self';
-        
-        if (!$this->service->editAttributes($templateName, $xpath, [
-            'href' => $href,
-            'target' => $target
-        ])) {
+
+        $attributes = [
+            $attributeName => $value
+        ];
+        if ($attributeName === 'href') {
+            $attributes['target'] = $target;
+        }
+        if (!$this->service->editAttributes($templateName, $xpath, $attributes)) {
             return $this->setError($this->service->getErrorMessage());
         }
         return $this->json([
