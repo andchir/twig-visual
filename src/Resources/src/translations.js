@@ -1,5 +1,6 @@
 module.exports = {
     ru: {
+        'Attribute': 'Атрибут',
         'Create new theme': 'Создать новую тему',
         'Create new template': 'Создать шаблон',
         'Interface item': 'Элемент интерфейса',
@@ -17,6 +18,7 @@ module.exports = {
         'Selected': 'Выбрано',
         'Edit text content': 'Редактировать контент',
         'Edit link': 'Редактировать ссылку',
+        'Edit attribute': 'Редактировать атрибут',
         'Replace image': 'Заменить картинку',
         'Delete element': 'Удалить элемент',
         'Move element': 'Переместить элемент',
@@ -37,6 +39,7 @@ module.exports = {
         'HTML-file': 'HTML-файл',
         'The selected item must have tag {tagName}.': 'Выбранный элемент должен иметь тег {tagName}.',
         'The selected item must have tag {tagName} or have a background image.': 'Выбранный элемент должен иметь тег {tagName} или фоновую картинку.',
-        'Upload ZIP file': 'Загрузить ZIP файл'
+        'Upload ZIP file': 'Загрузить ZIP файл',
+        'Value': 'Значение'
     }
 };

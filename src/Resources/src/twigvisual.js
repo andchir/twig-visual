@@ -371,9 +371,11 @@ class TwigVisual {
         let currentElement = this.currentElements.length > 0
             ? this.currentElements[this.currentElements.length - 1]
             : e.target;
+
         if (e.deltaY < 0) {
             currentElement.classList.remove('twv-selected');
             currentElement.style.boxShadow = '';
+            this.getPreviousSiblings(this.currentElements, currentElement);
             this.currentElements.push(currentElement.parentNode);
 
             this.updateXPathInfo(currentElement.parentNode);
@@ -393,6 +395,20 @@ class TwigVisual {
         }
     }
 
+    getPreviousSiblings(array, currentElement) {
+        if (currentElement.previousElementSibling) {
+            array.push(currentElement.previousElementSibling);
+            this.getPreviousSiblings(array, currentElement.previousElementSibling);
+        }
+    }
+
+    getNextSiblings(array, currentElement) {
+        if (currentElement.nextElementSibling) {
+            array.push(currentElement.nextElementSibling);
+            this.getPreviousSiblings(array, currentElement.nextElementSibling);
+        }
+    }
+
     /**
      * Remove selection of inner elements
      */
@@ -401,8 +417,6 @@ class TwigVisual {
         selectedElements.forEach((element) => {
             if (element.dataset.twvTitle) {
                 element.setAttribute('title', element.dataset.twvTitle);
-            } else {
-                element.removeAttribute('title');
             }
             element.classList.remove('twv-selected-success');
         });
@@ -421,8 +435,6 @@ class TwigVisual {
         this.highlightElement();
         if (element.dataset.twvTitle) {
             element.setAttribute('title', element.dataset.twvTitle);
-        } else {
-            element.removeAttribute('title');
         }
         element.classList.remove('twv-selected-success');
         return true;
@@ -1171,7 +1183,7 @@ class TwigVisual {
             <button type="button" class="twv-btn twv-mr-1 twv-button-edit-text" title="${this.trans('Edit text content')}">
                 <i class="twv-icon-createmode_editedit"></i>
             </button>
-            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-link" title="${this.trans('Edit link')}">
+            <button type="button" class="twv-btn twv-mr-1 twv-button-edit-attribute" title="${this.trans('Edit attribute')}">
                 <i class="twv-icon-linkinsert_link"></i>
             </button>
             <button type="button" class="twv-btn twv-mr-1 twv-button-replace-image" title="${this.trans('Replace image')}">
@@ -1211,10 +1223,10 @@ class TwigVisual {
             this.editTextContentInit(elementSelected);
         });
 
-        // Button edit link
-        this.container.querySelector('.twv-button-edit-link').addEventListener('click', (e) => {
+        // Button edit attribute
+        this.container.querySelector('.twv-button-edit-attribute').addEventListener('click', (e) => {
             e.preventDefault();
-            this.editLinkInit(elementSelected);
+            this.editAttributeInit(elementSelected);
         });
 
         // Replace image
@@ -1323,25 +1335,44 @@ class TwigVisual {
     }
 
     /**
-     * Edit link
+     * Edit attribute
      * @param {HTMLElement} elementSelected
      */
-    editLinkInit(elementSelected) {
-        if (elementSelected.tagName.toLowerCase() !== 'a') {
-            alert(this.trans('The selected item must have tag {tagName}.', {tagName: 'A'}));
-            return;
-        }
+    editAttributeInit(elementSelected) {
         this.clearMessage();
         const componentsContainer = this.container.querySelector('.twv-ui-components');
-        const href = elementSelected.getAttribute('href');
-        const target = elementSelected.getAttribute('target');
+        const href = elementSelected.getAttribute('href') || '';
+        const target = elementSelected.getAttribute('target') || '_self';
         componentsContainer.innerHTML = '';
+
+        const updateAttributeValue = (attributeName) => {
+            const attributeValueFieldEl = document.getElementById('tww-field-element-attr-value');
+            let value;
+            if (attributeName === 'title' && !elementSelected.getAttribute('title') && elementSelected.dataset.twvTitle) {
+                value = elementSelected.dataset.twvTitle;
+            } else {
+                value = elementSelected.getAttribute(attributeName);
+                if (attributeName === 'class') {
+                    value = value.replace('twv-selected-element', '').trim();
+                }
+            }
+            document.getElementById('tww-field-link-target').parentNode.style.display = attributeName === 'href' ? 'block' : 'none';
+            attributeValueFieldEl.value = value || '';
+        };
 
         const div = document.createElement('div');
         div.innerHTML = `
             <div class="twv-mb-3">
-                <label class="twv-display-block twv-mb-1" for="tww-field-element-link">${this.trans('URL')}</label>
-                <input type="text" id="tww-field-element-link" class="twv-form-control" value="${href}">
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-attr-name">${this.trans('Attribute')}</label>
+                <select id="tww-field-element-attr-name" class="twv-custom-select">
+                    <option value="href">Href</option>
+                    <option value="title">Title</option>
+                    <option value="class">Class</option>
+                </select>
+            </div>
+            <div class="twv-mb-3">
+                <label class="twv-display-block twv-mb-1" for="tww-field-element-attr-value">${this.trans('Value')}</label>
+                <input type="text" id="tww-field-element-attr-value" class="twv-form-control" value="${href}">
             </div>
             <div class="twv-mb-3">
                 <label class="twv-display-block twv-mb-1" for="tww-field-element-link">${this.trans('Open in')}</label>
@@ -1367,18 +1398,29 @@ class TwigVisual {
 
         const buttonSubmit = this.container.querySelector('.twv-button-submit');
         const buttonCancel = this.container.querySelector('.twv-button-cancel');
+        const attributeNameFieldEl = document.getElementById('tww-field-element-attr-name');
+        const attributeValueFieldEl = document.getElementById('tww-field-element-attr-value');
 
         // Submit data
         buttonSubmit.addEventListener('click', (e) => {
             e.preventDefault();
 
+            const attributeName = attributeNameFieldEl.value;
+            const attributeValue = attributeValueFieldEl.value;
+
+            if (attributeName === 'href' && elementSelected.tagName.toLowerCase() !== 'a') {
+                alert(this.trans('The selected item must have tag {tagName}.', {tagName: 'A'}));
+                return;
+            }
+
             this.showLoading(true);
 
-            this.request('/twigvisual/edit_link', {
+            this.request('/twigvisual/edit_attribute', {
                 templateName: this.options.templateName,
                 xpath: this.data.source.xpath,
-                href: div.querySelector('input[type="text"]').value,
-                target: div.querySelector('select').value
+                attribute: attributeName,
+                value: attributeValue,
+                target: div.querySelector('#tww-field-link-target').value
             }, (res) => {
                 if (res.success) {
                     this.windowReload();
@@ -1393,6 +1435,10 @@ class TwigVisual {
                 buttonCancel.removeAttribute('disabled');
                 this.showLoading(false);
             }, 'POST');
+        });
+
+        document.getElementById('tww-field-element-attr-name').addEventListener('change', (e) => {
+            updateAttributeValue(e.target.value);
         });
 
         // Add to action list
@@ -1704,14 +1750,7 @@ class TwigVisual {
                 theme: fieldThemeEl.value,
                 mainpage: fieldMainpageEl.value
             }, (res) => {
-                buttonEl.removeAttribute('disabled');
-                this.showLoading(false);
-                if (res && res.success) {
-                    innerContainerEl.innerHTML = '';
-                }
-                if (res.message) {
-                    this.addAlertMessage(res.message, 'success');
-                }
+                this.switchTheme(fieldThemeEl.value);
             }, (err) => {
                 this.addAlertMessage(err.error || err);
                 buttonEl.removeAttribute('disabled');
