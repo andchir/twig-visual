@@ -707,8 +707,9 @@ class TwigVisualService {
     /**
      * @param array $uiBlockConfig
      * @param array $data
+     * @param array $elements
      */
-    public function prepareOptionsByValues(&$uiBlockConfig, $data)
+    public function prepareOptionsByValues(&$uiBlockConfig, $data, $elements = [])
     {
         if (!isset($data['data'])) {
             return;
@@ -737,7 +738,19 @@ class TwigVisualService {
                 }
             }
         }
-        
+
+        // Get all attributes
+        $attributes = [];
+        if (!empty($elements)) {
+            foreach ($elements as $key => $element) {
+                $attrs = TwigVisualService::getAttributes($element);
+                foreach ($attrs as $k => $attr) {
+                    $attributes[$key . '.' . $k] = $attr;
+                }
+            }
+        }
+
+        // Prepare templates
         foreach ($uiBlockConfig['components'] as $key => &$opts) {
             if (!isset($opts['type'])) {
                 continue;
@@ -746,14 +759,14 @@ class TwigVisualService {
                 $opts['value'] = $data['data'][$key];
             }
             if (isset($opts['template'])) {
-                $opts['template'] = self::replaceTemplateVariables($opts['template'], $data['data']);
+                $opts['template'] = self::replaceTemplateVariables($opts['template'], array_merge($data['data'], $attributes));
             }
             if (isset($opts['templatePath'])) {
-                $opts['templatePath'] = self::replaceTemplateVariables($opts['templatePath'], $data['data']);
+                $opts['templatePath'] = self::replaceTemplateVariables($opts['templatePath'], array_merge($data['data'], $attributes));
                 $opts['templatePath'] .= $nameSuffix;
             }
             if (isset($opts['output'])) {
-                $opts['output'] = self::replaceTemplateVariables($opts['output'], $data['data']);
+                $opts['output'] = self::replaceTemplateVariables($opts['output'], array_merge($data['data'], $attributes));
                 $opts['output'] = str_replace('{{ nameSuffix }}', $nameSuffix, $opts['output']);
                 $opts['output'] = str_replace('.' . $templatesExtension, $nameSuffix . '.' . $templatesExtension, $opts['output']);
             }
@@ -1590,6 +1603,18 @@ class TwigVisualService {
                 $targetElement->textContent = $sourceElement->textContent;
 //            }
         }
+    }
+
+    /**
+     * @param \DOMElement|\DOMNode $element
+     * @return array
+     */
+    public static function getAttributes($element)
+    {
+        if ($element->hasAttributes()) {
+            return $element->getAttributes();
+        }
+        return [];
     }
 
     /**

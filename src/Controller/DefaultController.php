@@ -370,7 +370,7 @@ class DefaultController extends AbstractController
         $configKeys = array_keys($uiBlockConfig['components']);
         
         // Step #2
-        $this->service->prepareOptionsByValues($uiBlockConfig, $data);
+        $this->service->prepareOptionsByValues($uiBlockConfig, $data, $elements);
         
         // Step #3
         if (!$this->service->prepareOptionsByTemplates($uiBlockConfig, $elements, $templateName)) {
