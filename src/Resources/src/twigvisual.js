@@ -1738,7 +1738,9 @@ class TwigVisual {
             this.showLoading(true);
             this.request('/twigvisual/upload_theme', formData, (res) => {
                 if (res.success) {
-                    this.windowReload();
+                    console.log(res);
+
+                    // this.windowReload();
                 } else {
                     this.showLoading(false);
                 }

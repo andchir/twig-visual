@@ -3,7 +3,6 @@
 namespace Andchir\TwigVisualBundle\Controller;
 
 use Andchir\TwigVisualBundle\Service\TwigVisualService;
-use App\Service\UtilsService;
 use IvoPetkov\HTML5DOMDocument;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
@@ -227,7 +226,7 @@ class DefaultController extends AbstractController
         if (!$zipFile) {
             return $this->setError($this->translator->trans('ZIP file has not been uploaded.'));
         }
-        if (!in_array(UtilsService::getExtension($zipFile->getClientOriginalName()), ['zip'])) {
+        if (!in_array(TwigVisualService::getExtension($zipFile->getClientOriginalName()), ['zip'])) {
             return $this->setError($this->translator->trans('File type is not allowed.'));
         }
 
@@ -240,13 +239,14 @@ class DefaultController extends AbstractController
             return $this->setError($e->getMessage());
         }
 
-        TwigVisualService::unZip(
+        $result = TwigVisualService::unZip(
             $dirPath . DIRECTORY_SEPARATOR . $fileName,
             '',
             $this->params->get('app.files_ext_blacklist')
         );
 
         return $this->json([
+            'result' => basename($fileName, '.' . TwigVisualService::getExtension($fileName)),
             'success' => true
         ]);
     }
@@ -275,12 +275,12 @@ class DefaultController extends AbstractController
         if (!$imageFile) {
             return $this->setError($this->translator->trans('Image file has not been uploaded.'));
         }
-        if (!in_array(UtilsService::getExtension($imageFile->getClientOriginalName()), ['jpg','jpeg','png','gif'])) {
+        if (!in_array(TwigVisualService::getExtension($imageFile->getClientOriginalName()), ['jpg','jpeg','png','gif'])) {
             return $this->setError($this->translator->trans('File type is not allowed.'));
         }
         
         $fileName = $imageFile->getClientOriginalName();
-        $ext = UtilsService::getExtension($fileName);
+        $ext = TwigVisualService::getExtension($fileName);
         $baseUrl = $request->getBaseUrl();
         $rootPath = $this->service->getParameter('kernel.project_dir');
         $dirPath = $this->service->getConfigValue('file_upload_dir_path');
