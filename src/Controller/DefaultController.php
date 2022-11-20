@@ -214,6 +214,44 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/upload_theme", methods={"POST"})
+     * @IsGranted("ROLE_ADMIN")
+     */
+    public function uploadThemeFileAction(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        /** @var UploadedFile $zipFile */
+        $zipFile = $request->files->get('file');
+
+        if (!$zipFile) {
+            return $this->setError($this->translator->trans('ZIP file has not been uploaded.'));
+        }
+        if (!in_array(UtilsService::getExtension($zipFile->getClientOriginalName()), ['zip'])) {
+            return $this->setError($this->translator->trans('File type is not allowed.'));
+        }
+
+        $fileName = $zipFile->getClientOriginalName();
+        $dirPath = $this->params->get('app.web_dir_path') . DIRECTORY_SEPARATOR . 'assets';
+
+        try {
+            $zipFile->move($dirPath, $fileName);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
+
+        TwigVisualService::unZip(
+            $dirPath . DIRECTORY_SEPARATOR . $fileName,
+            '',
+            $this->params->get('app.files_ext_blacklist')
+        );
+
+        return $this->json([
+            'success' => true
+        ]);
+    }
+
+    /**
      * @Route("/replace_image", methods={"POST"})
      * @IsGranted("ROLE_ADMIN")
      * @param Request $request
@@ -416,8 +454,6 @@ class DefaultController extends AbstractController
                 }
             }
         }
-
-        // var_dump($uiBlockConfig['components']); exit;
 
         try {
             $this->service->saveTemplateContent($doc, $templateFilePath);
