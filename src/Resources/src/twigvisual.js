@@ -846,9 +846,6 @@ class TwigVisual {
                 case 'hidden':
 
                     value = cmp.value || '';
-                    if (cmp.fromAttribute) {
-                        value = this.parentElement.getAttribute(cmp.fromAttribute).replace('twv-selected-element', '').trim();
-                    }
                     d.innerHTML = `<input type="hidden" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">`;
                     div.appendChild(d);
 
@@ -857,9 +854,6 @@ class TwigVisual {
                 case 'number':
 
                     value = cmp.value || '';
-                    if (cmp.fromAttribute) {
-                        value = this.parentElement.getAttribute(cmp.fromAttribute).replace('twv-selected-element', '').trim();
-                    }
                     if (cmp.styleName) {
                         const compStyles = window.getComputedStyle(this.parentElement);
                         if (compStyles[cmp.styleName]) {
