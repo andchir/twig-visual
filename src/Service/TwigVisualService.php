@@ -129,6 +129,7 @@ class TwigVisualService {
                     'value' => $v['value'] ?? '',
                     'required' => !empty($v['required']),
                     'styleName' => $v['styleName'] ?? '',
+                    'fromAttribute' => $v['fromAttribute'] ?? '',
                     'options' => $v['options'] ?? []
                 ];
             }

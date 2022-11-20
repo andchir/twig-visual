@@ -678,6 +678,9 @@ class TwigVisual {
             Array.from(componentsContainer.querySelectorAll('input[type="number"]')).forEach((el) => {
                 data.data[el.name] = el.value;
             });
+            Array.from(componentsContainer.querySelectorAll('input[type="hidden"]')).forEach((el) => {
+                data.data[el.name] = el.value;
+            });
             Array.from(componentsContainer.querySelectorAll('select')).forEach((el) => {
                 data.data[el.name] = el.value;
             });
@@ -814,6 +817,7 @@ class TwigVisual {
         const div = document.createElement('div');
         div.className = 'twv-pt-1 twv-mb-3';
         let optionsHTML;
+        let value;
 
         this.components.forEach((cmp) => {
 
@@ -839,10 +843,23 @@ class TwigVisual {
                     div.appendChild(d);
 
                     break;
+                case 'hidden':
+
+                    value = cmp.value || '';
+                    if (cmp.fromAttribute) {
+                        value = this.parentElement.getAttribute(cmp.fromAttribute).replace('twv-selected-element', '').trim();
+                    }
+                    d.innerHTML = `<input type="hidden" id="tww-field-option-${cmp.name}" class="twv-form-control" name="${cmp.name}" value="${value}">`;
+                    div.appendChild(d);
+
+                    break;
                 case 'text':
                 case 'number':
 
-                    let value = cmp.value || '';
+                    value = cmp.value || '';
+                    if (cmp.fromAttribute) {
+                        value = this.parentElement.getAttribute(cmp.fromAttribute).replace('twv-selected-element', '').trim();
+                    }
                     if (cmp.styleName) {
                         const compStyles = window.getComputedStyle(this.parentElement);
                         if (compStyles[cmp.styleName]) {
