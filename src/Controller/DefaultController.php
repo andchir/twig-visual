@@ -580,12 +580,18 @@ class DefaultController extends AbstractController
                     $elements[$index]->innerHTML = $innerHTML;
                     
                     break;
-                case 'edit_link':
+                case 'edit_attribute':
+
+                    $attributeName = $options['attribute'] ?? '';
+                    $value = $options['value'] ?? '';
+                    $target = $options['target'] ?? '_self';
 
                     $attributes = [
-                        'href' => $options['href'] ?? '',
-                        'target' => $options['target'] ?? ''
+                        $attributeName => $value
                     ];
+                    if ($attributeName === 'href') {
+                        $attributes['target'] = $target;
+                    }
                     try {
                         foreach ($attributes as $key => $value) {
                             $elements[$index]->setAttribute($key, $value);

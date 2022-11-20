@@ -1378,6 +1378,7 @@ class TwigVisual {
                 <select id="tww-field-element-attr-name" class="twv-custom-select">
                     <option value="href">Href</option>
                     <option value="title">Title</option>
+                    <option value="placeholder">Placeholder</option>
                     <option value="class">Class</option>
                 </select>
             </div>
@@ -1456,9 +1457,12 @@ class TwigVisual {
         this.container.querySelector('.twv-button-add-list')
             .addEventListener('click', (e) => {
                 e.preventDefault();
-                this.addToActionBatch('edit_link', this.data.source.xpath, {
-                    href: div.querySelector('input[type="text"]').value,
-                    target: div.querySelector('select').value
+                const attributeName = attributeNameFieldEl.value;
+                const attributeValue = attributeValueFieldEl.value;
+                this.addToActionBatch('edit_attribute', this.data.source.xpath, {
+                    attribute: attributeName,
+                    value: attributeValue,
+                    target: div.querySelector('#tww-field-link-target').value
                 });
             });
 
