@@ -58,44 +58,12 @@ class DefaultController extends AbstractController
         $themeName = $data['theme'];
         $mainpage = $data['mainpage'];
 
-        $templatesDirPath = $this->service->getTemplatesDirPath();
-        $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($themeName);
-        
-        if (!is_dir($publicTemplateDirPath)) {
-            return $this->setError($this->translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
-                '%themePath%' => str_replace($this->service->getRootDirPath(), '', $publicTemplateDirPath)
-            ]));
+        try {
+            $this->createTheme($themeName, $mainpage);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
         }
 
-        $mainPagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $mainpage;
-        if (TwigVisualService::getExtension($mainpage) !== 'html') {
-            return $this->setError($this->translator->trans('The main page file must be of type HTML.'));
-        }
-        if (!$mainpage || !file_exists($mainPagePublicFilePath)) {
-            return $this->setError($this->translator->trans('Home page file not found.'));
-        }
-
-        $templateDirPath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName;
-        $mainPageTemplateFilePath = $templateDirPath . DIRECTORY_SEPARATOR . 'homepage';
-        $mainPageTemplateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
-        
-        if (!$this->service->copyDefaultFiles($themeName)) {
-            return $this->setError($this->translator->trans('Error copying files by default.'));
-        }
-        if (!is_dir($templateDirPath)) {
-            mkdir($templateDirPath);
-        }
-
-        // Create data file
-        $cacheFilePath = $this->service->getDataFilePath($themeName);
-        if (file_exists($cacheFilePath) && is_writable($cacheFilePath)) {
-            unlink($cacheFilePath);
-        }
-        file_put_contents($cacheFilePath, '');
-        
-        $templateContent = $this->service->prepareTemplateContent($mainPagePublicFilePath, $themeName);
-        file_put_contents($mainPageTemplateFilePath, $templateContent);
-        
         return $this->json([
             'success' => true,
             'message' => $this->translator->trans('Templates theme created successfully.')
@@ -218,8 +186,6 @@ class DefaultController extends AbstractController
      */
     public function uploadThemeFileAction(Request $request)
     {
-        $data = json_decode($request->getContent(), true);
-
         /** @var UploadedFile $zipFile */
         $zipFile = $request->files->get('file');
 
@@ -244,9 +210,17 @@ class DefaultController extends AbstractController
             '',
             $this->params->get('app.files_ext_blacklist')
         );
+        $themeName = basename($fileName, '.' . TwigVisualService::getExtension($fileName));
+        $mainPage = $request->get('mainpage');
+
+        try {
+            $this->createTheme($themeName, $mainPage);
+        } catch (\Exception $e) {
+            return $this->setError($e->getMessage());
+        }
 
         return $this->json([
-            'result' => basename($fileName, '.' . TwigVisualService::getExtension($fileName)),
+            'result' => $themeName,
             'success' => true
         ]);
     }
@@ -738,6 +712,55 @@ class DefaultController extends AbstractController
         return $this->json([
             'success' => true
         ]);
+    }
+
+    /**
+     * @param string $themeName
+     * @param string $mainPage
+     * @return bool
+     * @throws \Twig\Error\LoaderError
+     */
+    public function createTheme($themeName, $mainPage)
+    {
+        $templatesDirPath = $this->service->getTemplatesDirPath();
+        $publicTemplateDirPath = $this->service->getPublicTemplateDirPath($themeName);
+
+        if (!is_dir($publicTemplateDirPath)) {
+            throw new \Exception($this->translator->trans('Please upload the template files (HTML, CSS, images) at "%themePath%".', [
+                '%themePath%' => str_replace($this->service->getRootDirPath(), '', $publicTemplateDirPath)
+            ]));
+        }
+
+        $mainPagePublicFilePath = $publicTemplateDirPath . DIRECTORY_SEPARATOR . $mainPage;
+        if (TwigVisualService::getExtension($mainPage) !== 'html') {
+            throw new \Exception($this->translator->trans('The main page file must be of type HTML.'));
+        }
+        if (!$mainPage || !file_exists($mainPagePublicFilePath)) {
+            throw new \Exception($this->translator->trans('Home page file not found.'));
+        }
+
+        $templateDirPath = $templatesDirPath . DIRECTORY_SEPARATOR . $themeName;
+        $mainPageTemplateFilePath = $templateDirPath . DIRECTORY_SEPARATOR . 'homepage';
+        $mainPageTemplateFilePath .= '.' . $this->service->getConfigValue('templates_extension');
+
+        if (!$this->service->copyDefaultFiles($themeName)) {
+            throw new \Exception($this->translator->trans('Error copying files by default.'));
+        }
+        if (!is_dir($templateDirPath)) {
+            mkdir($templateDirPath);
+        }
+
+        // Create data file
+        $cacheFilePath = $this->service->getDataFilePath($themeName);
+        if (file_exists($cacheFilePath) && is_writable($cacheFilePath)) {
+            unlink($cacheFilePath);
+        }
+        file_put_contents($cacheFilePath, '');
+
+        $templateContent = $this->service->prepareTemplateContent($mainPagePublicFilePath, $themeName);
+        file_put_contents($mainPageTemplateFilePath, $templateContent);
+
+        return true;
     }
 
     /**

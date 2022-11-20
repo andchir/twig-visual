@@ -22,7 +22,8 @@ class TwigVisual {
             locale: 'en',
             urlGetCollections: '/admin/content_types',
             urlGetCollectionFields: '/admin/content_types/by_name/',
-            urlCreateContent: '/admin/products/'
+            urlCreateContent: '/admin/products/',
+            urlSwitchTheme: '/admin/settings/switch_theme/'
         }, options);
         this.translations = window.twv_translations || {};
         this.state = 'inactive';
@@ -1657,7 +1658,6 @@ class TwigVisual {
     }
 
     addNewThemeInit() {
-
         this.clearMessage();
         const innerContainerEl = this.container.querySelector('.twv-inner');
         innerContainerEl.innerHTML = '';
@@ -1738,9 +1738,7 @@ class TwigVisual {
             this.showLoading(true);
             this.request('/twigvisual/upload_theme', formData, (res) => {
                 if (res.success) {
-                    console.log(res);
-
-                    // this.windowReload();
+                    this.switchTheme(res.result);
                 } else {
                     this.showLoading(false);
                 }
@@ -1829,6 +1827,18 @@ class TwigVisual {
             e.preventDefault();
             innerContainerEl.innerHTML = '';
         });
+    }
+
+    switchTheme(themeName) {
+        this.showLoading(true);
+        this.request(`${this.options['urlSwitchTheme']}${themeName}`, {
+            themeName
+        }, (res) => {
+            this.windowReload();
+        }, (err) => {
+            this.addAlertMessage(err.error || err);
+            this.showLoading(false);
+        }, 'POST');
     }
 
     /**
