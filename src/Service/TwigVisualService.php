@@ -1615,7 +1615,11 @@ class TwigVisualService {
     public static function getAttributes($element)
     {
         if ($element->hasAttributes()) {
-            return $element->getAttributes();
+            $attributes = $element->getAttributes();
+            if (!isset($attributes['placeholder'])) {
+                $attributes['placeholder'] = '';
+            }
+            return $attributes;
         }
         return [];
     }

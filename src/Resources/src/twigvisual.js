@@ -32,6 +32,7 @@ class TwigVisual {
         this.listenerOnMouseOut = this.onMouseOut.bind(this);
         this.listenerOnMouseWheel = this.onMouseWheel.bind(this);
         this.listenerOnMouseClick = this.onSelectedElementClick.bind(this);
+        this.listenerOnMouseMouseDown = this.onSelectedElementMouseDown.bind(this);
         this.currentElements = [];
         this.selectedElement = null;
 
@@ -135,6 +136,7 @@ class TwigVisual {
             parentEl.addEventListener('mouseout', this.listenerOnMouseOut);
             parentEl.addEventListener('wheel', this.listenerOnMouseWheel, {passive: false});
             parentEl.addEventListener('click', this.listenerOnMouseClick);
+            parentEl.addEventListener('mousedown', this.listenerOnMouseMouseDown);
             this.state = 'active';
         } else {
             this.container.style.display = 'block';
@@ -142,6 +144,7 @@ class TwigVisual {
             parentEl.removeEventListener('mouseout', this.listenerOnMouseOut);
             parentEl.removeEventListener('wheel', this.listenerOnMouseWheel);
             parentEl.removeEventListener('click', this.listenerOnMouseClick);
+            parentEl.removeEventListener('mousedown', this.listenerOnMouseMouseDown);
 
             // Remove attribute disabled
             if (this.container.querySelector('.twv-ui-components')) {
@@ -271,6 +274,11 @@ class TwigVisual {
         e.stopPropagation();
 
         this.selectModeApply(e.target);
+    }
+
+    onSelectedElementMouseDown(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     selectModeApply(element = null) {
@@ -2043,6 +2051,8 @@ class TwigVisual {
         <div class="twv-alert twv-alert-${type}">${message}</div>
         `;
         innerContainerEl.appendChild(div);
+        this.animateCSS(innerContainerEl.querySelector('.twv-alert'), 'headShake');
+
         innerContainerEl.scrollTop = innerContainerEl.scrollHeight;
 
         div.addEventListener('mouseenter', () => {
@@ -2057,7 +2067,9 @@ class TwigVisual {
     clearMessage() {
         const innerContainerEl = this.container.querySelector('.twv-inner');
         if (innerContainerEl.querySelector('.twv-alert')) {
-            this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+            this.animateCSS(innerContainerEl, 'hinge', () => {
+                this.removeEl(innerContainerEl.querySelector('.twv-alert'));
+            });
         }
     }
 
