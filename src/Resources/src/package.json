@@ -12,7 +12,7 @@
   "author": "Andchir",
   "license": "",
   "devDependencies": {
-    "@symfony/webpack-encore": "^0.29.1"
+    "@symfony/webpack-encore": "^4.1.2"
   },
   "dependencies": {
     "animate.css": "^4.1.1"
