@@ -23,7 +23,8 @@ class TwigVisual {
             urlGetCollections: '/admin/content_types',
             urlGetCollectionFields: '/admin/content_types/by_name/',
             urlCreateContent: '/admin/products/',
-            urlSwitchTheme: '/admin/settings/switch_theme/'
+            urlSwitchTheme: '/admin/settings/switch_theme/',
+            urlThemesList: '/admin/settings/themes_list'
         }, options);
         this.translations = window.twv_translations || {};
         this.state = 'inactive';
@@ -55,6 +56,7 @@ class TwigVisual {
 
     init() {
         this.container = this.createContainer();
+        this.themesListSelectInit();
 
         // Start button
         const buttonStart = this.container.querySelector('.twv-button-start-select');
@@ -360,6 +362,7 @@ class TwigVisual {
             }
 
             this.removeSelectionInner();
+            this.themesListSelectInit();
         }
     }
 
@@ -1718,6 +1721,35 @@ class TwigVisual {
         });
     }
 
+    themesListSelectInit() {
+
+        console.log('themesListSelectInit', this.container);
+
+        const innerContainerEl = this.container.querySelector('.twv-inner');
+        innerContainerEl.innerHTML = `
+        <div class="twv-mb-3">
+            <label class="twv-display-block twv-mb-1" for="tww-select-theme">${this.trans('Site theme')}</label>
+            <select id="tww-select-theme" class="twv-custom-select"></select>
+        </div>
+        `;
+
+        const selectEl = innerContainerEl.querySelector('select');
+        let optionsHTML = '';
+        this.request(this.options.urlThemesList, {}, (res) => {
+            res.items.forEach((item) => {
+                optionsHTML += `<option value="${item.name}"${item.isActive ? ' selected="selected"' : ''}>${item.name}</option>`;
+            });
+            selectEl.innerHTML = optionsHTML;
+        }, (err) => {
+            this.addAlertMessage(err.error || err);
+            this.showLoading(false);
+        });
+
+        selectEl.addEventListener('change', (e) => {
+            this.switchTheme(e.target.value);
+        });
+    }
+
     addNewThemeInit() {
         this.clearMessage();
         const innerContainerEl = this.container.querySelector('.twv-inner');
@@ -1776,6 +1808,7 @@ class TwigVisual {
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
             innerContainerEl.innerHTML = '';
+            this.themesListSelectInit();
         });
 
         innerContainerEl.querySelector('.twv-button-upload > input').addEventListener('change', (e) => {
@@ -1880,6 +1913,7 @@ class TwigVisual {
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
             innerContainerEl.innerHTML = '';
+            this.themesListSelectInit();
         });
     }
 
