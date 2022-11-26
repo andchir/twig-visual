@@ -14,5 +14,7 @@
   "devDependencies": {
     "@symfony/webpack-encore": "^0.29.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "animate.css": "^4.1.1"
+  }
 }

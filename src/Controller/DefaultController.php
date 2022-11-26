@@ -365,8 +365,9 @@ class DefaultController extends AbstractController
         if ($this->service->getIsError()) {
             return $this->setError($this->service->getErrorMessage());
         }
+        $useInnerHTML = !empty($uiBlockConfig['components']['root']['useInnerHTML']);
         $elements['root'] = $node;
-        $uiBlockConfig['components']['root']['sourceHTML'] = $node->outerHTML;
+        $uiBlockConfig['components']['root']['sourceHTML'] = $useInnerHTML ? $node->innerHTML : $node->outerHTML;
         $configKeys = array_keys($uiBlockConfig['components']);
         
         // Step #2

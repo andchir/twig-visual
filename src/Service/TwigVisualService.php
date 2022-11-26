@@ -621,6 +621,7 @@ class TwigVisualService {
                     'template' => "<{$key}>{{ {$elKey} | raw }}</{$key}>"
                 ];
             }
+            $useInnerHTML = !empty($uiBlockConfig['components'][$key]['useInnerHTML']);
             $uiBlockConfig['components'][$key]['sourceHTML'] = $elements[$key]->outerHTML;
 
             if (!empty($uiBlockConfig['components'][$key]['isChildItem'])) {
@@ -808,7 +809,9 @@ class TwigVisualService {
                 $key
             );
 
-            $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($elements[$key]->outerHTML));
+            $useInnerHTML = !empty($opts['useInnerHTML']);
+            $html = $useInnerHTML ? $elements[$key]->innerHTML : $elements[$key]->outerHTML;
+            $opts['outerHTML'] = self::replaceByTag($templateCode, $key, self::unescapeUrls($html));
 
             if (!empty($opts['output'])) {
                 $elements[$key] = self::replaceHTMLElement($elements[$key], $opts['output'], $key);

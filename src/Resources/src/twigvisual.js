@@ -228,8 +228,10 @@ class TwigVisual {
                 // Submit data
                 buttonCancel.addEventListener('click', (e) => {
                     e.preventDefault();
-                    innerContainerEl.innerHTML = '';
-                    this.selectionModeDestroy(true);
+                    this.animateCSS(innerContainerEl, 'backOutLeft', () => {
+                        innerContainerEl.innerHTML = '';
+                        this.selectionModeDestroy(true);
+                    });
                 });
 
                 break;
@@ -362,7 +364,6 @@ class TwigVisual {
             }
 
             this.removeSelectionInner();
-            this.themesListSelectInit();
         }
     }
 
@@ -757,13 +758,15 @@ class TwigVisual {
                 this.selectModeToggle();
                 return;
             }
-            if (selectEl.value) {
-                selectEl.value = '';
-                this.selectionModeDestroy();
-                this.onBlockUiTypeChange(elementSelected);
-            } else {
-                this.selectionModeDestroy(true);
-            }
+            this.animateCSS(componentsContainer, 'backOutLeft', () => {
+                if (selectEl.value) {
+                    selectEl.value = '';
+                    this.selectionModeDestroy();
+                    this.onBlockUiTypeChange(elementSelected);
+                } else {
+                    this.selectionModeDestroy(true);
+                }
+            });
         });
     }
 
@@ -1034,6 +1037,8 @@ class TwigVisual {
             }
         });
         componentsContainer.appendChild(div);
+
+        this.animateCSS(componentsContainer, 'zoomIn');
     }
 
     updateCollectionFieldsButtonsList(targetContainerEl, fields) {
@@ -1722,9 +1727,6 @@ class TwigVisual {
     }
 
     themesListSelectInit() {
-
-        console.log('themesListSelectInit', this.container);
-
         const innerContainerEl = this.container.querySelector('.twv-inner');
         innerContainerEl.innerHTML = `
         <div class="twv-mb-3">
@@ -1732,6 +1734,7 @@ class TwigVisual {
             <select id="tww-select-theme" class="twv-custom-select"></select>
         </div>
         `;
+        this.animateCSS(innerContainerEl, 'zoomIn');
 
         const selectEl = innerContainerEl.querySelector('select');
         let optionsHTML = '';
@@ -1779,6 +1782,7 @@ class TwigVisual {
         `;
 
         innerContainerEl.appendChild(div);
+        this.animateCSS(innerContainerEl, 'zoomIn');
 
         innerContainerEl.querySelector('button.twv-button-submit').addEventListener('click', (e) => {
             e.preventDefault();
@@ -1807,8 +1811,10 @@ class TwigVisual {
 
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
-            innerContainerEl.innerHTML = '';
-            this.themesListSelectInit();
+            this.animateCSS(innerContainerEl, 'backOutLeft', () => {
+                innerContainerEl.innerHTML = '';
+                this.themesListSelectInit();
+            });
         });
 
         innerContainerEl.querySelector('.twv-button-upload > input').addEventListener('change', (e) => {
@@ -1880,6 +1886,7 @@ class TwigVisual {
         `;
 
         innerContainerEl.appendChild(div);
+        this.animateCSS(innerContainerEl, 'zoomIn');
 
         innerContainerEl.querySelector('button.twv-button-submit').addEventListener('click', (e) => {
             e.preventDefault();
@@ -1912,8 +1919,10 @@ class TwigVisual {
 
         innerContainerEl.querySelector('button.twv-button-cancel').addEventListener('click', (e) => {
             e.preventDefault();
-            innerContainerEl.innerHTML = '';
-            this.themesListSelectInit();
+            this.animateCSS(innerContainerEl, 'backOutLeft', () => {
+                innerContainerEl.innerHTML = '';
+                this.themesListSelectInit();
+            });
         });
     }
 
@@ -1990,6 +1999,23 @@ class TwigVisual {
             this.addAlertMessage(err.error || err);
             this.showLoading(false);
         }, 'POST');
+    }
+
+    animateCSS(node, animation, callBackFunc) {
+        const prefix = 'animate__';
+        const animationName = `${prefix}${animation}`;
+
+        node.classList.add(`${prefix}animated`, animationName);
+
+        function handleAnimationEnd(event) {
+            event.stopPropagation();
+            node.classList.remove(`${prefix}animated`, animationName);
+            if (typeof callBackFunc === 'function') {
+                callBackFunc(node);
+            }
+        }
+
+        node.addEventListener('animationend', handleAnimationEnd, {once: true});
     }
 
     showLoading(enabled = true) {
