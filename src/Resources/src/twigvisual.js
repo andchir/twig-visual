@@ -2067,7 +2067,7 @@ class TwigVisual {
     clearMessage() {
         const innerContainerEl = this.container.querySelector('.twv-inner');
         if (innerContainerEl.querySelector('.twv-alert')) {
-            this.animateCSS(innerContainerEl, 'hinge', () => {
+            this.animateCSS(innerContainerEl.querySelector('.twv-alert'), 'hinge', () => {
                 this.removeEl(innerContainerEl.querySelector('.twv-alert'));
             });
         }
