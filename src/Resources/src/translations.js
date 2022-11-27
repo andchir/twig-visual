@@ -35,6 +35,7 @@ module.exports = {
         'Are you sure you want to return the item to its original state?': 'Вы уверены, что хотите вернуть исходное состояние элемента?',
         'Theme name': 'Название темы',
         'HTML-file of the main page': 'HTML-файл главной страницы',
+        'Site theme': 'Тема сайта',
         'Template name': 'Название шаблона',
         'HTML-file': 'HTML-файл',
         'The selected item must have tag {tagName}.': 'Выбранный элемент должен иметь тег {tagName}.',
