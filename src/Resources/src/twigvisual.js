@@ -330,10 +330,8 @@ class TwigVisual {
 
     /**
      * Destroy selection mode
-     * @param {boolean} reset
-     * @param {boolean} resetData
      */
-    selectionModeDestroy(reset = false, resetData = true) {
+    selectionModeDestroy(reset = false, resetData = true, resetContent = true) {
         if (document.querySelector('.twv-info')) {
             this.removeEl(document.querySelector('.twv-info'));
         }
@@ -361,7 +359,7 @@ class TwigVisual {
             const elementSelected = document.querySelector('.twv-selected-element');
             if (elementSelected) {
                 elementSelected.contentEditable = false;
-                if (elementSelected.dataset.twvContent) {
+                if (resetContent && elementSelected.dataset.twvContent) {
                     elementSelected.innerHTML = elementSelected.dataset.twvContent;
                     elementSelected.dataset.twvContent = '';
                 }
@@ -1958,7 +1956,7 @@ class TwigVisual {
             xpath,
             options
         });
-        this.selectionModeDestroy(true);
+        this.selectionModeDestroy(true, true, false);
 
         const buttonEl = this.container.querySelector('.twv-button-execute-batch');
         buttonEl.querySelector('span').textContent = `${this.actions.length}`;
