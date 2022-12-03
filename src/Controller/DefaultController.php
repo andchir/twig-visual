@@ -463,7 +463,12 @@ class DefaultController extends AbstractController
         }
         $templateName = $data['templateName'];
         $xpath = $data['xpath'];
-        $xpathTarget = $data['xpathTarget'] ?? ($data['data']['source'] ?? '');
+        $xpathTarget = $data['xpathTarget'] ?? '';
+        if (!$xpathTarget) {
+            $xpathTarget = isset($data['data']['source']) && is_array($data['data']['source'])
+                ? ($data['data']['source']['xpath'] ?? '')
+                : ($data['data']['source'] ?? '');
+        }
         $insertMode = $data['insertMode'] ?? ($data['data']['insertMode'] ?? TwigVisualService::INSERT_MODE_AFTER);
         $insertContent = '';
 
@@ -643,7 +648,7 @@ class DefaultController extends AbstractController
         }
         $templateName = $data['templateName'];
 
-        $themeDirPath = $this->service->getCurrentThemeDirPath();
+        $themeDirPath = $this->service->getThemeDirPath();
         $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . $templateName;
         
         if (!file_exists($templatePath)) {

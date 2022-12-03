@@ -228,7 +228,7 @@ class TwigVisual {
                     }, 'POST');
                 });
 
-                // Submit data
+                // Cancel
                 buttonCancel.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.animateCSS(innerContainerEl, 'backOutLeft', () => {

@@ -263,7 +263,7 @@ class TwigVisualService {
     public function copyDefaultFiles($themeName)
     {
         $defaultFiles = $this->getConfigValue('default_copy');
-        $currentThemeDirPath = $this->getCurrentThemeDirPath();
+        $currentThemeDirPath = $this->getThemeDirPath('default');
         $newThemeDirPath = dirname($currentThemeDirPath) . DIRECTORY_SEPARATOR . $themeName;
         if (!is_dir($newThemeDirPath)) {
             mkdir($newThemeDirPath);
@@ -296,7 +296,7 @@ class TwigVisualService {
     public function getIncludesList($cleanExtensions = false)
     {
         $templatesExtension = $this->getConfigValue('templates_extension');
-        $themeDirPath = $this->getCurrentThemeDirPath();
+        $themeDirPath = $this->getThemeDirPath();
         $templatesDirPath = $themeDirPath . DIRECTORY_SEPARATOR . self::INCLUDES_DIRNAME;
         if (!is_dir($templatesDirPath)) {
             return [];
@@ -318,7 +318,7 @@ class TwigVisualService {
      */
     public function parseIncludes($templateCode)
     {
-        $themeDirPath = $this->getCurrentThemeDirPath();
+        $themeDirPath = $this->getThemeDirPath();
         
         $pattern = "/\{% include '([^\']+)' %\}/";
         preg_match_all($pattern, $templateCode, $matches);
@@ -346,7 +346,7 @@ class TwigVisualService {
     {
         $updateIncludeSource = $this->getConfigValue('updateIncludeSource', '', true);
         $includes = $this->getIncludesList();
-        $themeDirPath = $this->getCurrentThemeDirPath();
+        $themeDirPath = $this->getThemeDirPath();
         foreach ($includes as $templateName) {
             $commentKey = 'twv-include-' . self::INCLUDES_DIRNAME . DIRECTORY_SEPARATOR . $templateName;
             $commentContent = self::getCommentContent($commentKey, $templateCode);
@@ -654,7 +654,7 @@ class TwigVisualService {
                     break;
                 }
                 $templatesExtension = $this->getConfigValue('templates_extension');
-                $themeDirPath = $this->getCurrentThemeDirPath();
+                $themeDirPath = $this->getThemeDirPath();
                 $includes = $this->getIncludesList(true);
                 $templatePath = $themeDirPath . DIRECTORY_SEPARATOR . TwigVisualService::INCLUDES_DIRNAME;
                 $templatePath .= DIRECTORY_SEPARATOR . $includeTemplateName . '.' . $templatesExtension;
@@ -1120,7 +1120,7 @@ class TwigVisualService {
      */
     public function getDataFilePath($themeName = '')
     {
-        $themeDirPath = $this->getCurrentThemeDirPath($themeName);
+        $themeDirPath = $this->getThemeDirPath($themeName);
         return $themeDirPath . DIRECTORY_SEPARATOR . 'twigvisual-data.yaml';
     }
 
@@ -1208,7 +1208,7 @@ class TwigVisualService {
      * @return string
      * @throws \Twig\Error\LoaderError
      */
-    public function getCurrentThemeDirPath($themeName = '')
+    public function getThemeDirPath($themeName = '')
     {
         $currentThemeName = $this->getCurrentThemeName();
         $currentThemeDirPath = dirname($this->twig->getLoader()->getSourceContext('homepage.html.twig')->getPath());
