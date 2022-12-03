@@ -622,6 +622,7 @@ class DefaultController extends AbstractController
         }
 
         try {
+            $this->service->setConfigValue('saveBackupCopy', true);
             $this->service->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             return $this->setError($e->getMessage());

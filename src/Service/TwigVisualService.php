@@ -386,6 +386,7 @@ class TwigVisualService {
         $node->innerHTML = $innerHTML;
 
         try {
+            $this->setConfigValue('saveBackupCopy', true);
             $this->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
@@ -416,6 +417,7 @@ class TwigVisualService {
         }
 
         try {
+            $this->setConfigValue('saveBackupCopy', true);
             $this->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
@@ -453,6 +455,7 @@ class TwigVisualService {
             }
         }
         try {
+            $this->setConfigValue('saveBackupCopy', true);
             $this->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
@@ -968,6 +971,7 @@ class TwigVisualService {
         }
 
         try {
+            $this->setConfigValue('saveBackupCopy', true);
             $this->saveTemplateContent($doc, $templateFilePath);
         } catch (\Exception $e) {
             $this->setErrorMessage($e->getMessage());
